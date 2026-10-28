@@ -203,11 +203,11 @@ const A = {
 };
 const ORDER = ["months","acc","event","bounty","pts","tl","ehp"];
 const RANKS = [
-  {name:"Trialist", reqs:[["tl",1750],["gear"],["trial"]], acc:[]},
-  {name:"Clan Mate", reqs:[["months",1],["event",1],["tl",1750]], acc:[],
+  {name:"Trialist", reqs:[["tl",2000],["gear"],["trial"]], acc:[]},
+  {name:"Clan Mate", reqs:[["months",1],["event",1],["tl",2000]], acc:[],
     perk:"<b>Additional Perks:</b> Eligible to give feedback for Trialist ranks. Eligible to participate in all clan events."},
   ...[
-    [2,3,4,3,7,1750,null],[3,7,7,8,20,1750,null],[5,20,14,13,54,2000,1100],
+    [2,3,4,3,7,2000,null],[3,7,7,8,20,2000,null],[5,20,14,13,54,2000,1100],
     [7,40,20,18,95,2000,1500],[10,65,28,30,141,2200,2000],[13,90,30,35,191,2300,2000],[16,120,35,40,247,2376,2500]
   ].map((v,i) => ({name:"Rank " + (i+1), n:i+1, reqs:ORDER.map((k,j) => v[j] == null ? null : [k, v[j]]).filter(Boolean), acc:[]}))
 ];
