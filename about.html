@@ -83,6 +83,8 @@ main{animation-delay:.1s}
 .vals li{padding:14px 0;border-bottom:1px solid var(--line);color:var(--mute);font-size:14px}
 .vals li:last-child{border-bottom:0}
 .vals b{display:block;margin-bottom:2px;color:#fff;font-size:15px;font-weight:600}
+.lead.sm{font-size:17px;color:var(--mute)}
+.tip{margin:28px 0 0;padding:2px 0 2px 16px;border-left:2px solid #fff;font-size:15px;color:#e8e8e8}
 
 /* Ranks */
 .rbtns{display:flex;gap:6px;padding:20px 0 4px;overflow-x:auto;scrollbar-width:thin}
@@ -118,7 +120,7 @@ main{animation-delay:.1s}
 <nav><img class="navlogo" alt="" src="data:image/png;base64,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"><a href="/">Home</a><a class="on" href="about.html">About Us</a><a href="members.html">Members</a><a href="bosses.html">Bosses</a><a href="events.html">Events</a><a class="navbtn" href="https://discord.gg/kingdomclan">Apply<span class="long"> on Discord</span></a><span class="navsoc"><a href="https://x.com/Kingdom_OSRS" target="_blank" rel="noopener" aria-label="Kingdom on X (Twitter)" title="X (Twitter)"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg></a><a href="https://wiseoldman.net/groups/1152" target="_blank" rel="noopener" aria-label="Kingdom on Wise Old Man" title="Wise Old Man"><img src="wom.png" alt=""></a><a href="https://templeosrs.com/groups/overview.php?id=1710" target="_blank" rel="noopener" aria-label="Kingdom on TempleOSRS" title="TempleOSRS"><img src="temple.png" alt=""></a></span></nav>
 <header class="phero">
   <h1>About Kingdom</h1>
-  <p>Who we are · How to join · Clan ranks</p>
+  <p>Who we are · Your trial · Clan ranks</p>
 </header>
 <main>
   <section class="sec">
@@ -135,6 +137,25 @@ main{animation-delay:.1s}
           <li><b>Fun</b> We hope to improve each player's experience while playing the game by creating a welcoming atmosphere with regular events.</li>
           <li><b>Trust &amp; teamwork</b> Trusting in each other leads to a healthier, more respectful family, regardless of rank/stature. We have each other's back.</li>
           <li><b>Communication</b> Transparency in the ranking system, bios for ranks, feedback addressed directly.</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <section class="sec" id="trial">
+    <div class="sech"><h2>Your trial</h2><small>One month as a Trialist</small></div>
+    <div class="intro">
+      <div>
+        <p class="lead sm">We are excited to have you in the clan and look forward to getting to know you. An important part of the culture in this clan is voice chatting, in-game chatting, participation in events and joining for activities. Our hope is that by joining this community you are no longer playing isolated and instead know and can hang out with others.</p>
+        <p class="tip">As you do content with others, ask them to post anonymous feedback in your trial thread.</p>
+      </div>
+      <div>
+        <div class="mlab">Trialist expectations</div>
+        <ul class="vals">
+          <li><b>Activity</b> Be active in voice/clan chat and Discord. Join in on voice chat, events, or group content when you can.</li>
+          <li><b>Attitude</b> Be friendly and respectful. We want to add members who contribute and bring good vibes, not just numbers.</li>
+          <li><b>Participation</b> Show up for at least one clan event, requiring voice chat.</li>
+          <li><b>Trial length &amp; feedback</b> One month. During this month, members will provide feedback. Admins use feedback to pass trialists to the Clan Mate rank. Please take it upon yourself to meet members; no feedback after one month will not be sufficient.</li>
         </ul>
       </div>
     </div>
