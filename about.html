@@ -7,7 +7,7 @@
 <style>
 :root{--bg:#080808;--panel:#121212;--panel2:#1c1c1c;--line:#2a2a2a;--ink:#fff;--mute:#a0a0a0;
 color-scheme:dark;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
-html{scroll-padding-top:env(safe-area-inset-top,0px)}
+html{scroll-padding-top:env(safe-area-inset-top,0px);scrollbar-gutter:stable}
 *{box-sizing:border-box}
 body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.55 Inter,system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif}
 nav{display:flex;align-items:center;justify-content:center;gap:4px;padding:14px 12px;border-bottom:1px solid var(--line)}
@@ -71,8 +71,8 @@ main>.card{animation-delay:.74s}
 .vals{list-style:none;margin:0;padding:0}
 .vals li{margin-bottom:10px;padding-left:14px;border-left:2px solid var(--line)}
 .vals b{color:#fff}
-.rbtns{display:flex;flex-wrap:wrap;gap:8px;padding:16px 18px;border-bottom:1px solid var(--line)}
-.rb{display:flex;align-items:center;gap:8px;background:var(--panel2);color:#fff;border:1px solid var(--line);border-radius:9px;padding:7px 14px 7px 9px;font:600 14px/1.2 inherit;font-family:inherit;cursor:pointer;transition:background .15s,border-color .15s}
+.rbtns{display:flex;gap:6px;padding:16px 18px;border-bottom:1px solid var(--line);overflow-x:auto;scrollbar-width:thin}
+.rb{flex:none;display:flex;align-items:center;gap:6px;background:var(--panel2);color:#fff;border:1px solid var(--line);border-radius:9px;padding:6px 11px 6px 7px;white-space:nowrap;font:600 14px/1.2 inherit;font-family:inherit;cursor:pointer;transition:background .15s,border-color .15s}
 .rb:hover{border-color:#555}
 .rb[aria-selected="true"]{background:#fff;color:#000;border-color:#fff}
 .rb .bi{width:26px;height:26px;display:grid;place-items:center}
