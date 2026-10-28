@@ -21,7 +21,11 @@ nav a.on,nav a:hover{color:#fff;background:var(--panel2)}
 .hero .tag{color:#fff;font-weight:700;font-size:20px;letter-spacing:.04em;margin-bottom:6px}
 .hero .req{font-size:14px;margin-bottom:18px}
 .hero .req a{color:#fff;text-decoration:underline;text-underline-offset:3px}
-.members{display:inline-block;margin-bottom:24px;font-size:13px;color:var(--mute);border:1px solid var(--line);border-radius:99px;padding:3px 12px}
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:var(--line);max-width:720px;margin:32px auto 0}
+.stat{background:var(--panel);padding:16px 10px}
+.stat b{display:block;font-size:22px;font-weight:700;font-variant-numeric:tabular-nums}
+.stat small{display:block;color:var(--mute);font-size:13px}
+@media(max-width:560px){.stats{grid-template-columns:1fr 1fr}}
 .btn{display:block;width:max-content;margin:0 auto;background:#5865F2;color:#fff;text-decoration:none;font-weight:700;font-size:15px;padding:11px 26px;border-radius:9px;transition:background .15s,transform .15s}
 .btn:hover{background:#4752C4;transform:translateY(-1px)}
 main{max-width:1000px;margin:0 auto;padding:8px 16px 56px}
@@ -43,9 +47,9 @@ footer{text-align:center;padding:24px;color:var(--mute);font-size:13px;border-to
 
 #bg{position:fixed;inset:0;width:100%;height:100%;z-index:0;pointer-events:none}
 nav,.hero,main,footer{position:relative;z-index:1}
+nav{position:sticky;top:0;z-index:10;background:rgba(8,8,8,.85);-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px)}
 @keyframes rise{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}
 .logo{animation:rise 1s cubic-bezier(.2,.7,.2,1) both}
-.members{animation:rise .8s .25s cubic-bezier(.2,.7,.2,1) both}
 .btn{animation:rise .8s .4s cubic-bezier(.2,.7,.2,1) both}
 .card{animation:rise .7s .5s cubic-bezier(.2,.7,.2,1) both;transition:border-color .25s}
 .grid .card:nth-child(2){animation-delay:.62s}
@@ -67,8 +71,13 @@ main>.card{animation-delay:.74s}
   <h1 id="clanName">Kingdom</h1>
   <p class="tag">OSRS PVM / Social Clan</p>
   <p class="req"><a href="about.html">Click here</a> for requirements</p>
-  <span class="members" id="members">Members</span>
   <a class="btn" id="apply" href="#">Apply on Discord</a>
+  <section class="card stats">
+    <div class="stat"><b id="sMembers">—</b><small>Members</small></div>
+    <div class="stat"><b id="sLevel">—</b><small>Avg Total Level</small></div>
+    <div class="stat"><b id="sEhb">—</b><small>Avg EHB</small></div>
+    <div class="stat"><b id="sXp">—</b><small>Avg Total XP</small></div>
+  </section>
 </header>
 
 <main>
@@ -76,10 +85,14 @@ main>.card{animation-delay:.74s}
     <section class="card"><h2>Recent Collection Logs</h2><div id="clogs"></div></section>
     <section class="card"><h2>Recent Achievements</h2><div id="ach"></div></section>
   </div>
-  <section class="card"><h2>Monthly Top Earners</h2><div id="top"></div></section>
+  <div class="grid">
+    <section class="card"><h2>Monthly Top EHP</h2><div id="ehp"></div></section>
+    <section class="card"><h2>Monthly Top EHB</h2><div id="ehb"></div></section>
+  </div>
+  <section class="card"><h2>Monthly Top XP</h2><div id="top"></div></section>
   <p class="note" id="note"></p>
 </main>
-<footer>Kingdom · Not affiliated with Jagex · Data from Wise Old Man &amp; TempleOSRS</footer>
+<footer>Made with ❤️ by Sean</footer>
 
 <script>
 // ---- EDIT THESE ----
@@ -109,14 +122,17 @@ const SAMPLE = {
     {p:"Zezima",n:"1,000 Vorkath kills",m:"vorkath",t:Date.now()-27*36e5},
     {p:"Mod Mage",n:"Base 70 Stats",m:"overall",t:Date.now()-50*36e5}],
   top: [{p:"Zezima",x:12450000},{p:"Iron Bob",x:9820000},{p:"PkerDave",x:7310000},{p:"LumbyLad",x:5990000},{p:"Mod Mage",x:4120000}],
-  members: null
+  ehp: [{p:"Iron Bob",x:54.2},{p:"Zezima",x:48.7},{p:"LumbyLad",x:31.5},{p:"Mod Mage",x:22.9},{p:"PkerDave",x:12.4}],
+  ehb: [{p:"PkerDave",x:97.6},{p:"Zezima",x:81.3},{p:"Iron Bob",x:60.8},{p:"LumbyLad",x:44.1},{p:"Mod Mage",x:19.5}],
+  members: null,
+  stats: null
 };
 
 const $ = id => document.getElementById(id);
 const esc = s => String(s).replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
 const ago = t => { const m = Math.max(1, Math.round((Date.now()-t)/6e4));
   if (m < 60) return m+"m ago"; if (m < 1440) return Math.round(m/60)+"h ago"; return Math.round(m/1440)+"d ago"; };
-const fmt = n => n >= 1e6 ? (n/1e6).toFixed(1)+"M" : n >= 1e3 ? (n/1e3).toFixed(0)+"K" : String(n);
+const fmt = n => n >= 1e9 ? (n/1e9).toFixed(2)+"B" : n >= 1e6 ? (n/1e6).toFixed(1)+"M" : n >= 1e3 ? (n/1e3).toFixed(0)+"K" : String(n);
 const DBG = [];
 const BASES = {temple:["/api/temple/","https://templeosrs.com/api/"], wom:["/api/wom/","https://api.wiseoldman.net/v2/"]};
 const get = async (svc, path) => { let err;
@@ -142,13 +158,25 @@ document.addEventListener("error", e => { const t = e.target;
 function render(d){
   $("clogs").innerHTML = d.clogs.map(c => `<div class="row">${icon(wikiFile(c.i), "📜", c.id ? "https://static.runelite.net/cache/item/icon/" + c.id + ".png" : "")}<div><b>${esc(c.p)}</b> received ${esc(c.i)}<small>${ago(c.t)}</small></div></div>`).join("") || '<div class="row">Nothing yet.</div>';
   $("ach").innerHTML = d.ach.map(a => `<div class="row">${icon(achSrc(a.m), SKILLS.includes(a.m) || a.m === "overall" ? "🏆" : "💀")}<div><b>${esc(a.p)}</b> · ${esc(a.n)}<small>${ago(a.t)}</small></div></div>`).join("") || '<div class="row">Nothing yet.</div>';
-  $("top").innerHTML = d.top.map((e,i) => `<div class="row"><span class="rank">${i+1}</span><div><b>${esc(e.p)}</b></div><span class="xp">${fmt(e.x)} xp</span></div>`).join("") || '<div class="row">Nothing yet.</div>';
-  $("members").textContent = d.members ? d.members + " members" : "Members";
+  const board = (l, val) => l.map((e,i) => `<div class="row"><span class="rank">${i+1}</span><div><b>${esc(e.p)}</b></div><span class="xp">${val(e.x)}</span></div>`).join("") || '<div class="row">Nothing yet.</div>';
+  $("top").innerHTML = board(d.top, x => fmt(x) + " xp");
+  $("ehp").innerHTML = board(d.ehp, x => x.toFixed(1) + " EHP");
+  $("ehb").innerHTML = board(d.ehb, x => x.toFixed(1) + " EHB");
+  const s = d.stats, num = n => Math.round(n).toLocaleString();
+  $("sMembers").textContent = d.members ? num(d.members) : "—";
+  $("sLevel").textContent = s ? num(s.lvl) : "—";
+  $("sEhb").textContent = s ? num(s.ehb) : "—";
+  $("sXp").textContent = s ? fmt(s.xp) : "—";
 }
 
 async function load(){
   const out = JSON.parse(JSON.stringify(SAMPLE)); const errs = []; let live = 0;
   const job = (label, p) => p.catch(e => { errs.push(label + ": " + e.message); });
+  // Temple's monthly top list for a skill/metric; "xp" holds hours for ehp/ehb. Temple ignores count, so trim to 10.
+  const top = (label, skill, key) => job(label, get("temple", `current_top/month.php?skill=${skill}&group=${CONFIG.templeGroup}&count=10`).then(j => {
+    const k = Object.keys(j).find(k => k.toLowerCase() === "month");
+    const l = vals(k ? j[k] : j).filter(x => x && x.xp != null).map(x => ({p:x.nickname||x.player, x:Number(x.xp)})).slice(0, 10);
+    if (l.length) { out[key] = l; live++; } else errs.push(label + ": unexpected response"); }));
   const jobs = [
     job("Collection logs", get("temple", `collection-log/group_recent_items.php?group=${CONFIG.templeGroup}&count=8&onlynotable=1`).then(j => {
       const l = vals(j.data).filter(x => x && x.name).map(x => ({p:x.player_name_with_capitalization||x.player, i:x.name, id:x.id, t:(x.date_unix||0)*1000}));
@@ -156,11 +184,13 @@ async function load(){
     job("Achievements", get("wom", `groups/${CONFIG.womGroup}/achievements?limit=8`).then(j => {
       const l = vals(j).map(a => ({p:(a.player&&a.player.displayName)||"Unknown", n:a.name, m:a.metric, t:new Date(a.createdAt).getTime()}));
       if (l.length) { out.ach = l; live++; } else errs.push("Achievements: none returned"); })),
-    job("Top earners", get("temple", `current_top/month.php?skill=overall&group=${CONFIG.templeGroup}&count=10`).then(j => {
-      const k = Object.keys(j).find(k => k.toLowerCase() === "month");
-      const l = vals(k ? j[k] : j).filter(x => x && x.xp != null).map(x => ({p:x.nickname||x.player, x:Number(x.xp)}));
-      if (l.length) { out.top = l; live++; } else errs.push("Top earners: unexpected response"); })),
-    job("Members", get("wom", `groups/${CONFIG.womGroup}`).then(j => { if (j.memberCount) out.members = j.memberCount; }))
+    top("Top XP", "overall", "top"),
+    top("Top EHP", "ehp", "ehp"),
+    top("Top EHB", "ehb", "ehb"),
+    job("Members", get("wom", `groups/${CONFIG.womGroup}`).then(j => { if (j.memberCount) out.members = j.memberCount; })),
+    job("Clan stats", get("wom", `groups/${CONFIG.womGroup}/statistics`).then(j => {
+      const d = j.averageStats && j.averageStats.data;
+      if (d) out.stats = {lvl:d.skills.overall.level, xp:d.skills.overall.experience, ehb:d.computed.ehb.value}; }))
   ];
   await Promise.allSettled(jobs);
   render(out);
@@ -169,7 +199,7 @@ async function load(){
     pre.textContent = DBG.join("\n\n----\n\n"); document.body.appendChild(pre); }
   $("note").textContent = errs.length ? "Sample data shown where live data failed. " + errs.join(" | ") : "";
 }
-['clogs','ach','top'].forEach(i => $(i).innerHTML = '<div class="row"><small>Loading…</small></div>');
+['clogs','ach','ehp','ehb','top'].forEach(i => $(i).innerHTML = '<div class="row"><small>Loading…</small></div>');
 load();
 // Slow drifting dust motes in the background
 (function(){
