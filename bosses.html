@@ -4,6 +4,16 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Bosses | Kingdom</title>
+<meta name="description" content="Clan kill count leaderboards for every boss in Old School RuneScape.">
+<meta name="theme-color" content="#080808">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Kingdom">
+<meta property="og:title" content="Kingdom Boss Leaderboards">
+<meta property="og:description" content="Clan kill count leaderboards for every boss in Old School RuneScape.">
+<meta property="og:image" content="og.png">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="icon" type="image/png" href="icon.png">
+<link rel="apple-touch-icon" href="icon.png">
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&family=Geist+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
@@ -187,7 +197,7 @@ function renderBoard(k, rows){
 function more(rows){
   const next = rows.slice(shown, shown + CONFIG.perPage);
   $("rows").insertAdjacentHTML("beforeend", next.map((r, i) => { const n = shown + i;
-    return `<tr><td><span class="rk${n < 3 ? " m" + (n + 1) : ""}">${n + 1}</span></td><td><a href="https://wiseoldman.net/players/${encodeURIComponent(r[0])}" target="_blank" rel="noopener">${esc(r[0])}</a></td><td class="k">${num(r[1])}</td><td class="g">${r[2] > 0 ? num(r[2]) : "—"}</td></tr>`; }).join(""));
+    return `<tr><td><span class="rk${n < 3 ? " m" + (n + 1) : ""}">${n + 1}</span></td><td><a href="player.html?name=${encodeURIComponent(r[0])}">${esc(r[0])}</a></td><td class="k">${num(r[1])}</td><td class="g">${r[2] > 0 ? num(r[2]) : "—"}</td></tr>`; }).join(""));
   shown += next.length;
   const left = rows.length - shown;
   $("more").hidden = left <= 0;

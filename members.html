@@ -4,6 +4,16 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Members | Kingdom</title>
+<meta name="description" content="Every Kingdom member with total level, XP, EHB and EHP.">
+<meta name="theme-color" content="#080808">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Kingdom">
+<meta property="og:title" content="Kingdom Members">
+<meta property="og:description" content="Every Kingdom member with total level, XP, EHB and EHP.">
+<meta property="og:image" content="og.png">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="icon" type="image/png" href="icon.png">
+<link rel="apple-touch-icon" href="icon.png">
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&family=Geist+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
@@ -53,6 +63,9 @@ main{animation-delay:.1s}
 /* Members table */
 .tools{display:flex;gap:16px;align-items:flex-end;justify-content:space-between;flex-wrap:wrap;padding-bottom:14px;border-bottom:1px solid var(--line2)}
 .tools h2{margin:0;font:600 clamp(22px,3vw,28px)/1.1 var(--sans);letter-spacing:-.03em}
+.filters{flex:1;display:flex;gap:10px;justify-content:flex-end;flex-wrap:wrap}
+.pick{background:var(--bg);border:1px solid var(--line2);color:#fff;border-radius:6px;padding:8px 10px;font:14px/1.3 var(--sans);cursor:pointer}
+.pick:focus{outline:none;border-color:#fff}
 .search{flex:1;min-width:180px;max-width:300px;background:none;border:1px solid var(--line2);color:#fff;border-radius:6px;padding:8px 12px;font:14px/1.3 var(--sans)}
 .search::placeholder{color:var(--dim)}
 .search:focus{outline:none;border-color:#fff}
@@ -93,10 +106,10 @@ td.msg{padding:36px 0;text-align:center;color:var(--mute);font-family:var(--sans
 </header>
 <main>
   <section class="sec">
-    <div class="tools"><h2 id="count">Kingdom Members</h2><input class="search" id="q" type="search" placeholder="Search members…" aria-label="Search members" autocomplete="off"></div>
+    <div class="tools"><h2 id="count">Kingdom Members</h2><div class="filters"><select class="pick" id="rank" aria-label="Filter by rank"><option value="">All ranks</option></select><input class="search" id="q" type="search" placeholder="Search members…" aria-label="Search members" autocomplete="off"></div></div>
     <div class="tbl"><table>
       <thead><tr id="head"></tr></thead>
-      <tbody id="rows"><tr><td colspan="6" class="msg">Loading members…</td></tr></tbody>
+      <tbody id="rows"><tr><td colspan="7" class="msg">Loading members…</td></tr></tbody>
     </table></div>
     <div class="pager" id="pager"></div>
   </section>
@@ -127,9 +140,11 @@ const COLS = [
   {k:"lvl",  label:"Total Level"},
   {k:"xp",   label:"Overall XP"},
   {k:"ehb",  label:"EHB"},
-  {k:"ehp",  label:"EHP"}
+  {k:"ehp",  label:"EHP"},
+  {k:"joined", label:"Joined"}
 ];
-const S = { all: [], q: "", key: "xp", dir: -1, page: 0 };
+const S = { all: [], q: "", rank: "", key: "xp", dir: -1, page: 0 };
+const joined = t => t ? new Date(t).toLocaleDateString(undefined, {month:"short", year:"numeric"}) : "—";
 
 const sortVal = (m, k) => k === "name" ? m.name.toLowerCase() : m[k];
 function sorted(){
@@ -145,16 +160,16 @@ function render(){
   $("head").innerHTML = COLS.map(c => `<th${c.k ? ` data-k="${c.k}"` : ""} class="${c.k === S.key ? "on" + (S.dir > 0 ? " asc" : "") : ""}">${c.label}</th>`).join("");
   const q = S.q.trim().toLowerCase();
   const list = sorted().map((m, i) => ({...m, n: i + 1}))
-    .filter(m => !q || m.name.toLowerCase().includes(q) || m.user.includes(q));
+    .filter(m => (!S.rank || m.role === S.rank) && (!q || m.name.toLowerCase().includes(q) || m.user.includes(q)));
   const pages = Math.max(1, Math.ceil(list.length / CONFIG.perPage));
   S.page = Math.min(S.page, pages - 1);
   const rows = list.slice(S.page * CONFIG.perPage, (S.page + 1) * CONFIG.perPage);
   $("rows").innerHTML = rows.map(m => `<tr>
     <td class="n">${m.n}</td>
-    <td><span class="player"><img src="${roleIcon(m.role)}" alt="${esc(roleName(m.role))}" title="${esc(roleName(m.role))}" loading="lazy" onerror="this.style.visibility='hidden'"><a href="https://wiseoldman.net/players/${encodeURIComponent(m.user)}" target="_blank" rel="noopener">${esc(m.name)}</a></span></td>
-    <td>${num(m.lvl)}</td><td>${num(m.xp)}</td><td>${num(m.ehb)}</td><td>${num(m.ehp)}</td></tr>`).join("")
-    || `<tr><td colspan="6" class="msg">No members match “${esc(S.q)}”.</td></tr>`;
-  $("count").textContent = q ? `${list.length} of ${S.all.length} members` : `${S.all.length} Kingdom Members`;
+    <td><span class="player"><img src="${roleIcon(m.role)}" alt="${esc(roleName(m.role))}" title="${esc(roleName(m.role))}" loading="lazy" onerror="this.style.visibility='hidden'"><a href="player.html?name=${encodeURIComponent(m.name)}">${esc(m.name)}</a></span></td>
+    <td>${num(m.lvl)}</td><td>${num(m.xp)}</td><td>${num(m.ehb)}</td><td>${num(m.ehp)}</td><td>${joined(m.joined)}</td></tr>`).join("")
+    || `<tr><td colspan="7" class="msg">No members match${q ? ` “${esc(S.q)}”` : ""}${S.rank ? ` in ${esc(roleName(S.rank))}` : ""}.</td></tr>`;
+  $("count").textContent = q || S.rank ? `${list.length} of ${S.all.length} members` : `${S.all.length} Kingdom Members`;
   let p = `<button data-p="${S.page - 1}" ${S.page ? "" : "disabled"}>‹ Prev</button>`;
   for (let i = 0; i < pages; i++) p += `<button data-p="${i}"${i === S.page ? ' aria-current="page"' : ""}>${i + 1}</button>`;
   p += `<button data-p="${S.page + 1}" ${S.page < pages - 1 ? "" : "disabled"}>Next ›</button>`;
@@ -166,8 +181,9 @@ $("head").addEventListener("click", e => { const k = e.target.closest("th")?.dat
   if (k === S.key) S.dir *= -1; else { S.key = k; S.dir = COLS.find(c => c.k === k).text ? 1 : -1; }
   S.page = 0; render(); });
 $("pager").addEventListener("click", e => { const b = e.target.closest("button"); if (!b || b.disabled) return;
-  S.page = +b.dataset.p; render(); document.querySelector("main .card").scrollIntoView({behavior:"smooth", block:"start"}); });
+  S.page = +b.dataset.p; render(); document.querySelector("main .sec").scrollIntoView({behavior:"smooth", block:"start"}); });
 $("q").addEventListener("input", e => { S.q = e.target.value; S.page = 0; render(); });
+$("rank").addEventListener("change", e => { S.rank = e.target.value; S.page = 0; render(); });
 
 async function load(){
   try {
@@ -177,10 +193,14 @@ async function load(){
     ]);
     const lvl = {}; levels.forEach(h => { if (h.data && h.data.level > 0) lvl[h.player.id] = h.data.level; });
     S.all = (group.memberships || []).map(m => ({ role: m.role, name: m.player.displayName, user: m.player.username,
-      lvl: lvl[m.player.id] ?? null, xp: m.player.exp, ehb: m.player.ehb, ehp: m.player.ehp }));
+      lvl: lvl[m.player.id] ?? null, xp: m.player.exp, ehb: m.player.ehb, ehp: m.player.ehp,
+      joined: m.createdAt ? new Date(m.createdAt).getTime() : null }));
+    // Wise Old Man lists members highest rank first, so the dropdown follows the clan's rank order
+    const counts = {}; S.all.forEach(m => counts[m.role] = (counts[m.role] || 0) + 1);
+    $("rank").innerHTML = `<option value="">All ranks</option>` + Object.keys(counts).map(r => `<option value="${esc(r)}">${esc(roleName(r))} (${counts[r]})</option>`).join("");
     render();
   } catch (e) {
-    $("rows").innerHTML = `<tr><td colspan="6" class="msg">Couldn't load members from Wise Old Man (${esc(e.message)}). Try again later.</td></tr>`;
+    $("rows").innerHTML = `<tr><td colspan="7" class="msg">Couldn't load members from Wise Old Man (${esc(e.message)}). Try again later.</td></tr>`;
   }
 }
 load();

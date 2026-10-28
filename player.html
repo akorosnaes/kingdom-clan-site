@@ -1,0 +1,325 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Player | Kingdom</title>
+<meta name="description" content="Stats, gains, boss kills and recent drops for a Kingdom member.">
+<meta name="theme-color" content="#080808">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Kingdom">
+<meta property="og:title" content="Kingdom Player Profile">
+<meta property="og:description" content="Stats, gains, boss kills and recent drops for a Kingdom member.">
+<meta property="og:image" content="og.png">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="icon" type="image/png" href="icon.png">
+<link rel="apple-touch-icon" href="icon.png">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&family=Geist+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#080808;--panel:#121212;--panel2:#1c1c1c;--line:#232323;--line2:#333;--ink:#fff;--mute:#9a9a9a;--dim:#5f5f5f;
+--sans:Geist,Inter,system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;--mono:"Geist Mono",ui-monospace,"SF Mono",Menlo,Consolas,monospace;
+color-scheme:dark;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+html{scroll-padding-top:env(safe-area-inset-top,0px);scrollbar-gutter:stable}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.55 var(--sans);-webkit-font-smoothing:antialiased}
+
+/* Nav */
+nav{position:sticky;top:0;z-index:10;display:flex;align-items:center;justify-content:center;gap:2px;padding:12px;border-bottom:1px solid var(--line);background:rgba(8,8,8,.88);-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px)}
+nav a{color:var(--mute);text-decoration:none;padding:6px 14px;font-size:14px;font-weight:500;border-radius:6px;transition:color .15s}
+nav a:hover{color:#fff}
+nav a.on{color:#fff;background:var(--panel2)}
+nav a.navbtn{margin-left:10px;background:#5865F2;color:#fff;font-weight:600;white-space:nowrap}
+nav a.navbtn:hover{background:#4752C4}
+.navlogo{height:22px;width:auto;display:block;margin-right:12px}
+@media(max-width:600px){nav{gap:0;padding:10px 4px;justify-content:safe center;overflow-x:auto}nav a{padding:6px 7px;font-size:13px;white-space:nowrap}nav .navlogo,nav .long{display:none}nav a.navbtn{margin-left:4px}}
+
+/* Page title */
+.phero{max-width:1080px;margin:0 auto;padding:64px 20px 0}
+.phero h1{margin:0;font:600 clamp(36px,6vw,56px)/1.05 var(--sans);letter-spacing:-.04em}
+.phero p{margin:14px 0 0;font:500 12px/1.4 var(--mono);letter-spacing:.16em;text-transform:uppercase;color:var(--mute)}
+main{max-width:1080px;margin:0 auto;padding:8px 20px 72px}
+
+/* Section headers, labels, shared bits */
+.sec{margin-top:56px}
+.sech{display:flex;align-items:flex-end;justify-content:space-between;gap:16px;flex-wrap:wrap;padding-bottom:14px;border-bottom:1px solid var(--line2)}
+.sech h2{margin:0;font:600 clamp(22px,3vw,28px)/1.1 var(--sans);letter-spacing:-.03em}
+.sech small{font:500 12px/1 var(--mono);color:var(--mute);letter-spacing:.06em}
+.mlab{font:500 11px/1 var(--mono);letter-spacing:.14em;text-transform:uppercase;color:var(--mute)}
+.rk{flex:none;display:inline-grid;place-items:center;min-width:22px;font:500 13px/1 var(--mono);color:var(--dim)}
+.rk.m1{color:#fff}
+.msg{padding:28px 0;color:var(--mute);font-size:14px}
+.ghost{background:none;border:1px solid var(--line2);border-radius:6px;color:#fff;padding:8px 16px;font:500 13px/1.2 var(--sans);cursor:pointer;transition:border-color .15s}
+.ghost:hover{border-color:#fff}
+
+footer{text-align:center;padding:28px 20px;color:var(--dim);font:12px/1 var(--mono);letter-spacing:.04em;border-top:1px solid var(--line)}
+
+/* One quiet entrance for the page */
+@keyframes fade{from{opacity:0}to{opacity:1}}
+.phero,main{animation:fade .6s ease both}
+main{animation-delay:.1s}
+@media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+
+/* Player header */
+.pname{display:flex;align-items:center;gap:16px;min-width:0}
+.pname img{flex:none;width:34px;height:34px;image-rendering:pixelated}
+.pname h1{overflow-wrap:anywhere}
+.links{display:flex;gap:18px;flex-wrap:wrap;margin-top:18px}
+.links a{color:var(--mute);font:500 13px/1 var(--sans);text-decoration:none;transition:color .15s}
+.links a:hover{color:#fff}
+
+/* Big numbers */
+.stats{display:grid;grid-template-columns:repeat(4,1fr);margin-top:40px;border-top:1px solid var(--line);border-bottom:1px solid var(--line)}
+.stat{padding:22px 16px 20px}
+.stat:first-child{padding-left:0}
+.stat+.stat{border-left:1px solid var(--line)}
+.stat b{display:block;font:500 clamp(26px,4vw,38px)/1 var(--mono);letter-spacing:-.03em}
+.stat small{display:block;margin-top:10px;font:500 11px/1 var(--mono);letter-spacing:.14em;text-transform:uppercase;color:var(--mute)}
+.stat.sm b{font-size:clamp(22px,3vw,28px)}
+@media(max-width:600px){.stats{grid-template-columns:1fr 1fr}.stat:nth-child(3){border-left:0;padding-left:0}.stat:nth-child(n+3){border-top:1px solid var(--line)}}
+
+/* Lists */
+.cols{display:grid;grid-template-columns:1fr 1fr;column-gap:56px}
+@media(max-width:760px){.cols{grid-template-columns:1fr}}
+.col h3{margin:22px 0 4px;font:500 11px/1 var(--mono);letter-spacing:.14em;text-transform:uppercase;color:var(--mute)}
+.row{display:flex;gap:14px;align-items:center;padding:13px 0;border-bottom:1px solid var(--line)}
+.row:last-child{border-bottom:0}
+.ic{flex:none;width:30px;height:30px;display:grid;place-items:center}
+.ic img{max-width:30px;max-height:30px;display:block}
+.row div{flex:1;min-width:0}
+.row b{font-weight:600}
+.row small{display:block;margin-top:2px;font:400 12px/1.3 var(--mono);color:var(--dim)}
+.xp{flex:none;font:500 14px/1 var(--mono);font-variant-numeric:tabular-nums}
+.seg{display:flex;gap:18px}
+.seg button{background:none;border:0;border-bottom:1px solid transparent;padding:0 0 4px;color:var(--mute);font:500 13px/1 var(--sans);cursor:pointer;transition:color .15s,border-color .15s}
+.seg button:hover{color:#fff}
+.seg button[aria-pressed="true"]{color:#fff;border-bottom-color:#fff}
+
+/* Skills and bosses grids */
+.grid{display:grid;grid-template-columns:repeat(3,1fr);column-gap:40px}
+@media(max-width:860px){.grid{grid-template-columns:1fr 1fr}}
+@media(max-width:520px){.grid{grid-template-columns:1fr}}
+.cell{display:flex;align-items:center;gap:12px;padding:11px 0;border-bottom:1px solid var(--line);color:#fff;text-decoration:none}
+a.cell:hover span{text-decoration:underline;text-underline-offset:4px}
+.cell img{flex:none;width:22px;height:22px;object-fit:contain}
+.cell span{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:14px}
+.cell b{flex:none;font:500 15px/1 var(--mono);font-variant-numeric:tabular-nums}
+.cell small{flex:none;width:64px;text-align:right;font:12px/1 var(--mono);color:var(--dim)}
+.cell.max b{color:#fff}
+.cell.low b{color:var(--mute)}
+.more{display:block;margin:24px auto 0}
+
+/* No player picked */
+.find{display:flex;gap:10px;margin-top:28px;max-width:420px}
+.find input{flex:1;min-width:0;background:none;border:1px solid var(--line2);color:#fff;border-radius:6px;padding:9px 12px;font:14px/1.3 var(--sans)}
+.find input:focus{outline:none;border-color:#fff}
+</style>
+</head>
+<body>
+<nav><img class="navlogo" alt="" src="data:image/png;base64,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"><a href="/">Home</a><a href="about.html">About Us</a><a href="members.html">Members</a><a href="bosses.html">Bosses</a><a href="events.html">Events</a><a class="navbtn" href="https://discord.gg/kingdomclan">Apply<span class="long"> on Discord</span></a></nav>
+<header class="phero">
+  <div class="pname"><img id="role" alt="" hidden><h1 id="name">Player</h1></div>
+  <p id="meta">Loading…</p>
+  <div class="links" id="links"></div>
+</header>
+<main id="main">
+  <div class="stats">
+    <div class="stat"><b id="sLevel">—</b><small>Total level</small></div>
+    <div class="stat"><b id="sXp">—</b><small>Overall XP</small></div>
+    <div class="stat"><b id="sEhp">—</b><small>EHP</small></div>
+    <div class="stat"><b id="sEhb">—</b><small>EHB</small></div>
+  </div>
+
+  <section class="sec">
+    <div class="sech">
+      <h2>Gains</h2>
+      <div class="seg" id="period" role="group" aria-label="Gains period">
+        <button type="button" data-p="day">Day</button><button type="button" data-p="week">Week</button><button type="button" data-p="month">Month</button>
+      </div>
+    </div>
+    <div class="stats" style="margin-top:0;border-top:0">
+      <div class="stat sm"><b id="gXp">—</b><small>XP</small></div>
+      <div class="stat sm"><b id="gEhp">—</b><small>EHP</small></div>
+      <div class="stat sm"><b id="gEhb">—</b><small>EHB</small></div>
+      <div class="stat sm"><b id="gLvl">—</b><small>Levels</small></div>
+    </div>
+    <div class="cols">
+      <div class="col"><h3>Top skills</h3><div id="gskills"></div></div>
+      <div class="col"><h3>Top bosses</h3><div id="gbosses"></div></div>
+    </div>
+  </section>
+
+  <section class="sec">
+    <div class="sech"><h2>Recent activity</h2></div>
+    <div class="cols">
+      <div class="col"><h3 id="clogh">Collection log</h3><div id="clogs"></div></div>
+      <div class="col"><h3>Achievements</h3><div id="ach"></div></div>
+    </div>
+  </section>
+
+  <section class="sec">
+    <div class="sech"><h2>Skills</h2></div>
+    <div class="grid" id="skills"></div>
+  </section>
+
+  <section class="sec">
+    <div class="sech"><h2>Bosses</h2><small id="bcount"></small></div>
+    <div class="grid" id="bosses"></div>
+    <button class="ghost more" id="bmore" type="button" hidden></button>
+  </section>
+</main>
+<footer>Kingdom</footer>
+
+<script>
+// ---- EDIT THESE ----
+const CONFIG = { womGroup: 1152, bossesShown: 18 };
+// --------------------
+
+const $ = id => document.getElementById(id);
+const esc = s => String(s).replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const num = n => n == null ? "—" : Math.round(n).toLocaleString();
+const fmt = n => n >= 1e9 ? (n/1e9).toFixed(2)+"B" : n >= 1e6 ? (n/1e6).toFixed(1)+"M" : n >= 1e3 ? (n/1e3).toFixed(0)+"K" : String(Math.round(n));
+const ago = t => { const m = Math.max(1, Math.round((Date.now()-t)/6e4));
+  if (m < 60) return m+"m ago"; if (m < 1440) return Math.round(m/60)+"h ago"; return Math.round(m/1440)+"d ago"; };
+const month = t => new Date(t).toLocaleDateString(undefined, {month:"short", year:"numeric"});
+const cap = s => s.charAt(0).toUpperCase() + s.slice(1);
+const roleName = r => r.split("_").map(cap).join(" ");
+
+const WOM_IMG = "https://cdn.jsdelivr.net/gh/wise-old-man/wise-old-man@master/app/public/img/";
+const metricIcon = m => WOM_IMG + "metrics/" + m + ".png";
+const roleIcon = r => WOM_IMG + "group_roles/" + r + ".png";
+const WIKI = "https://oldschool.runescape.wiki/images/";
+const wikiFile = n => WIKI + encodeURIComponent(cap(n).replace(/ /g,"_")) + ".png";
+const icon = (src, alt) => `<span class="ic">${src ? `<img src="${src}" alt="" loading="lazy" data-alt="${alt||""}">` : ""}</span>`;
+document.addEventListener("error", e => { const t = e.target; if (t.tagName !== "IMG") return;
+  if (t.closest(".ic")) { if (t.dataset.alt && !t.dataset.tried) { t.dataset.tried = 1; t.src = t.dataset.alt; } else t.remove(); }
+  else t.style.visibility = "hidden"; }, true);
+
+// Wise Old Man first (per-visitor rate limit), our proxy as a fallback. A 404 or 429 is final, no point retrying elsewhere.
+const BASES = {wom:["https://api.wiseoldman.net/v2/","/api/wom/"], temple:["/api/temple/","https://templeosrs.com/api/"]};
+const get = async (svc, path) => { let err;
+  for (const b of BASES[svc]) {
+    try { const r = await fetch(b + path);
+      if (!r.ok) { const e = new Error("HTTP " + r.status); e.status = r.status; throw e; }
+      return await r.json(); }
+    catch (e) { err = e; if (e.status === 404 || e.status === 429) break; } }
+  throw err; };
+const why = e => e.status === 429 ? "too many requests, try again in a minute" : e.message;
+
+// Boss names that don't title-case nicely (same list as the Bosses page)
+const NAMES = {
+  chambers_of_xeric_challenge_mode: "Chambers of Xeric (CM)", theatre_of_blood_hard_mode: "Theatre of Blood (HM)",
+  tombs_of_amascut_expert: "Tombs of Amascut (Expert)", kreearra: "Kree'arra", kril_tsutsaroth: "K'ril Tsutsaroth",
+  vetion: "Vet'ion", tzkal_zuk: "TzKal-Zuk", tztok_jad: "TzTok-Jad", nightmare: "The Nightmare",
+  phosanis_nightmare: "Phosani's Nightmare", mimic: "The Mimic"
+};
+const title = k => NAMES[k] || k.split("_").map((w,i) => (i && ["of","the","and"].includes(w)) ? w : cap(w)).join(" ");
+const TYPES = {ironman:"Ironman", hardcore:"Hardcore Ironman", ultimate:"Ultimate Ironman"};
+const BUILDS = {f2p:"F2P", lvl3:"Level 3", f2p_lvl3:"F2P Level 3", zerker:"Zerker", def1:"1 Defence", hp10:"10 HP"};
+const none = t => `<div class="row"><small>${t}</small></div>`;
+
+const user = (new URLSearchParams(location.search).get("name") || "").trim();
+const S = { meta: [], role: null, gains: {}, period: "week", allBosses: false, bosses: [] };
+
+function setMeta(){
+  const r = S.role;
+  if (r) { $("role").src = roleIcon(r.role); $("role").alt = $("role").title = roleName(r.role); $("role").hidden = false; }
+  $("meta").textContent = [r ? roleName(r.role) : null, ...S.meta, r ? "Member since " + month(r.createdAt) : null].filter(Boolean).join(" · ");
+}
+
+function showPlayer(p){
+  document.title = p.displayName + " | Kingdom";
+  $("name").textContent = p.displayName;
+  const enc = encodeURIComponent(p.displayName);
+  $("links").innerHTML = `<a href="https://wiseoldman.net/players/${enc}" target="_blank" rel="noopener">Wise Old Man ↗</a>` +
+    `<a href="https://templeosrs.com/player/overview.php?player=${enc}" target="_blank" rel="noopener">TempleOSRS ↗</a>`;
+  S.meta = ["Combat " + p.combatLevel, TYPES[p.type], BUILDS[p.build], "Updated " + ago(new Date(p.updatedAt).getTime())];
+  setMeta();
+  const d = (p.latestSnapshot && p.latestSnapshot.data) || {skills:{}, bosses:{}, activities:{}};
+  const o = d.skills.overall || {};
+  $("sLevel").textContent = num(o.level); $("sXp").textContent = fmt(p.exp); $("sEhp").textContent = num(p.ehp); $("sEhb").textContent = num(p.ehb);
+
+  $("skills").innerHTML = Object.values(d.skills).filter(s => s.metric !== "overall").map(s =>
+    `<div class="cell${s.level >= 99 ? " max" : s.level < 50 ? " low" : ""}"><img src="${metricIcon(s.metric)}" alt="" loading="lazy"><span>${cap(s.metric)}</span><b>${s.level}</b><small>${s.experience > 0 ? fmt(s.experience) : "—"}</small></div>`).join("");
+
+  S.bosses = Object.values(d.bosses).filter(b => b.kills > 0).sort((a, b) => b.kills - a.kills);
+  $("bcount").textContent = S.bosses.length ? `${S.bosses.length} with kills` : "";
+  showBosses();
+
+  const logged = d.activities && d.activities.collections_logged;
+  if (logged && logged.score > 0) $("clogh").textContent = `Collection log · ${num(logged.score)} logged`;
+}
+
+function showBosses(){
+  const l = S.allBosses ? S.bosses : S.bosses.slice(0, CONFIG.bossesShown);
+  $("bosses").innerHTML = l.map(b => `<a class="cell" href="bosses.html#${b.metric}"><img src="${metricIcon(b.metric)}" alt="" loading="lazy"><span>${esc(title(b.metric))}</span><b>${num(b.kills)}</b></a>`).join("")
+    || `<div class="msg">No boss kills on the hiscores yet.</div>`;
+  $("bmore").hidden = S.bosses.length <= CONFIG.bossesShown;
+  $("bmore").textContent = S.allBosses ? "Show fewer" : `Show all ${S.bosses.length}`;
+}
+$("bmore").addEventListener("click", () => { S.allBosses = !S.allBosses; showBosses(); });
+
+// Gains for the last day / week / month
+const PER = {day:"day", week:"week", month:"month"};
+const sign = (n, f) => n > 0 ? "+" + f(n) : n < 0 ? "−" + f(-n) : "0";
+function loadGains(){
+  const per = S.period;
+  document.querySelectorAll("#period button").forEach(b => b.setAttribute("aria-pressed", b.dataset.p === per));
+  ["gXp","gEhp","gEhb","gLvl"].forEach(id => $(id).textContent = "—");
+  $("gskills").innerHTML = $("gbosses").innerHTML = none("Loading…");
+  (S.gains[per] ||= get("wom", `players/${encodeURIComponent(user)}/gained?period=${per}`)).then(g => {
+    if (S.period !== per) return;
+    const d = g.data, sk = Object.values(d.skills), o = d.skills.overall;
+    $("gXp").textContent = sign(o.experience.gained, fmt);
+    $("gEhp").textContent = sign(d.computed.ehp.value.gained, n => n.toFixed(1));
+    $("gEhb").textContent = sign(d.computed.ehb.value.gained, n => n.toFixed(1));
+    $("gLvl").textContent = sign(o.level.gained, num);
+    const top = sk.filter(s => s.metric !== "overall" && s.experience.gained > 0).sort((a, b) => b.experience.gained - a.experience.gained).slice(0, 5);
+    $("gskills").innerHTML = top.map(s => `<div class="row">${icon(metricIcon(s.metric))}<div><b>${cap(s.metric)}</b>${s.level.gained > 0 ? `<small>+${s.level.gained} level${s.level.gained > 1 ? "s" : ""} · now ${s.level.end}</small>` : `<small>level ${s.level.end}</small>`}</div><span class="xp">+${fmt(s.experience.gained)} xp</span></div>`).join("")
+      || none(`No XP gained in the last ${PER[per]}.`);
+    const kc = Object.values(d.bosses).filter(b => b.kills.gained > 0 && b.kills.start >= 0).sort((a, b) => b.kills.gained - a.kills.gained).slice(0, 5);
+    $("gbosses").innerHTML = kc.map(b => `<div class="row">${icon(metricIcon(b.metric))}<div><b>${esc(title(b.metric))}</b><small>${num(b.kills.end)} total</small></div><span class="xp">+${num(b.kills.gained)} kc</span></div>`).join("")
+      || none(`No boss kills in the last ${PER[per]}.`);
+  }).catch(e => { if (S.period !== per) return; delete S.gains[per];
+    $("gskills").innerHTML = none(`Couldn't load gains (${esc(why(e))}).`); $("gbosses").innerHTML = ""; });
+}
+$("period").addEventListener("click", e => { const b = e.target.closest("button");
+  if (!b || b.dataset.p === S.period) return; S.period = b.dataset.p; loadGains(); });
+
+function noPlayer(msg){
+  $("main").hidden = true;
+  $("name").textContent = "Find a player";
+  $("meta").textContent = msg;
+  $("links").outerHTML = `<form class="find" id="find"><input name="name" placeholder="Player name" aria-label="Player name" autocomplete="off" required><button class="ghost" type="submit">Look up</button></form>`;
+}
+
+async function load(){
+  if (!user) return noPlayer("Look up any Kingdom member");
+  const u = encodeURIComponent(user);
+  $("name").textContent = user;
+  $("clogs").innerHTML = $("ach").innerHTML = none("Loading…");
+  loadGains();
+
+  get("wom", `players/${u}/groups`).then(l => { S.role = l.find(m => m.groupId === CONFIG.womGroup) || null;
+    if (!S.role) S.meta.push("Not in Kingdom"); setMeta(); }).catch(() => {});
+
+  get("wom", `players/${u}/achievements`).then(l => {
+    l.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+    $("ach").innerHTML = l.slice(0, 6).map(a => { const t = new Date(a.createdAt).getTime();
+      return `<div class="row">${icon(metricIcon(a.metric))}<div><b>${esc(a.name)}</b><small>${t > 1e12 ? ago(t) : "date unknown"}</small></div></div>`; }).join("") || none("No achievements yet.");
+  }).catch(e => $("ach").innerHTML = none(`Couldn't load achievements (${esc(why(e))}).`));
+
+  get("temple", `collection-log/player_recent_items.php?player=${u}&count=6`).then(j => {
+    if (j.error) throw new Error(j.error.Code === 402 ? "not synced" : j.error.Message);
+    $("clogs").innerHTML = (j.data || []).map(c => `<div class="row">${icon(wikiFile(c.name), c.id ? "https://static.runelite.net/cache/item/icon/" + c.id + ".png" : "")}<div><b>${esc(c.name)}</b><small>${ago(c.date_unix * 1000)}</small></div></div>`).join("") || none("Nothing logged yet.");
+  }).catch(e => $("clogs").innerHTML = none(e.message === "not synced"
+    ? "Collection log isn't synced to TempleOSRS yet (use the TempleOSRS RuneLite plugin)."
+    : `Couldn't load the collection log (${esc(why(e))}).`));
+
+  try { showPlayer(await get("wom", `players/${u}`)); }
+  catch (e) { noPlayer(e.status === 404 ? `No player called “${user}” on Wise Old Man` : `Couldn't load ${user} (${why(e)})`); }
+}
+load();
+</script>
+</body>
+</html>

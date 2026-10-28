@@ -4,6 +4,16 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Kingdom | OSRS Clan</title>
+<meta name="description" content="Kingdom is an Old School RuneScape PvM &amp; social clan. Live clan stats, top gainers, events and boss leaderboards.">
+<meta name="theme-color" content="#080808">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Kingdom">
+<meta property="og:title" content="Kingdom | OSRS Clan">
+<meta property="og:description" content="Kingdom is an Old School RuneScape PvM &amp; social clan. Live clan stats, top gainers, events and boss leaderboards.">
+<meta property="og:image" content="og.png">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="icon" type="image/png" href="icon.png">
+<link rel="apple-touch-icon" href="icon.png">
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&family=Geist+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
@@ -58,6 +68,8 @@ main{max-width:1080px;margin:0 auto;padding:16px 20px 72px}
 .ic img{max-width:30px;max-height:30px;display:block}
 .row div{flex:1;min-width:0}
 .row b{font-weight:600}
+a.pl{color:inherit;text-decoration:none}
+a.pl:hover{text-decoration:underline;text-underline-offset:3px}
 .row small{display:block;margin-top:2px;font:400 12px/1.3 var(--mono);color:var(--dim)}
 .xp{flex:none;font:500 14px/1 var(--mono);font-variant-numeric:tabular-nums}
 .rank{flex:none;width:22px;font:500 13px/1 var(--mono);color:var(--dim)}
@@ -182,12 +194,13 @@ document.addEventListener("error", e => { const t = e.target;
   if (t.dataset.alt && !t.dataset.tried) { t.dataset.tried = 1; t.src = t.dataset.alt; } else t.remove(); }, true);
 
 const none = '<div class="row">Nothing yet.</div>';
-const board = (l, val) => l.map((e,i) => `<div class="row"><span class="rank">${i+1}</span><div><b>${esc(e.p)}</b></div><span class="xp">${val(e.x)}</span></div>`).join("") || none;
+const plink = n => `<a class="pl" href="player.html?name=${encodeURIComponent(n)}">${esc(n)}</a>`;
+const board = (l, val) => l.map((e,i) => `<div class="row"><span class="rank">${i+1}</span><div><b>${plink(e.p)}</b></div><span class="xp">${val(e.x)}</span></div>`).join("") || none;
 const num = n => Math.round(n).toLocaleString();
 // One renderer per section, so each can fill in as soon as its own data arrives
 const SHOW = {
-  clogs: l => $("clogs").innerHTML = l.map(c => `<div class="row">${icon(wikiFile(c.i), c.id ? "https://static.runelite.net/cache/item/icon/" + c.id + ".png" : "")}<div><b>${esc(c.p)}</b> received ${esc(c.i)}<small>${ago(c.t)}</small></div></div>`).join("") || none,
-  ach: l => $("ach").innerHTML = l.map(a => `<div class="row">${icon(metricIcon(a.m))}<div><b>${esc(a.p)}</b> · ${esc(a.n)}<small>${ago(a.t)}</small></div></div>`).join("") || none,
+  clogs: l => $("clogs").innerHTML = l.map(c => `<div class="row">${icon(wikiFile(c.i), c.id ? "https://static.runelite.net/cache/item/icon/" + c.id + ".png" : "")}<div><b>${plink(c.p)}</b> received ${esc(c.i)}<small>${ago(c.t)}</small></div></div>`).join("") || none,
+  ach: l => $("ach").innerHTML = l.map(a => `<div class="row">${icon(metricIcon(a.m))}<div><b>${plink(a.p)}</b> · ${esc(a.n)}<small>${ago(a.t)}</small></div></div>`).join("") || none,
   top: l => $("top").innerHTML = board(l, x => fmt(x) + " xp"),
   ehp: l => $("ehp").innerHTML = board(l, x => x.toFixed(1) + " EHP"),
   ehb: l => $("ehb").innerHTML = board(l, x => x.toFixed(1) + " EHB"),
