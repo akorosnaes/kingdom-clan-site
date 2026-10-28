@@ -42,6 +42,7 @@ nav .navsoc a{display:grid;place-items:center;padding:7px}
 .fsoc{display:none}
 .fsoc a{display:grid;place-items:center;padding:8px;color:var(--mute)}
 @media(max-width:960px){.navsoc{position:static;transform:none;margin-left:8px}}
+@media(max-width:760px){nav .navlogo{display:none}nav a{white-space:nowrap}}
 .navlogo{height:22px;width:auto;display:block;margin-right:12px}
 @media(max-width:600px){nav{gap:0;padding:10px 4px;justify-content:safe center;overflow-x:auto}nav a{padding:6px 7px;font-size:13px;white-space:nowrap}nav .navlogo,nav .long,.navsoc{display:none}.fsoc{display:flex;justify-content:center;gap:8px;margin:-12px 0 14px}nav a.navbtn{margin-left:4px}}
 
@@ -187,7 +188,9 @@ const T = {
   bounty: [v => `${v} Bounty points`, "chest"],
   pts:    [v => `${v} Total points`, "💯"],
   tl:     [v => `${v} Total level`, "Stats icon"],
-  ehp:    [v => `${v} EHP + EHB`, "hourglass"]
+  ehp:    [v => `${v} EHP + EHB`, "hourglass"],
+  gear:   [() => "Gear check", "🛡️"],
+  trial:  [() => "Undergo trial", "⚖️"]
 };
 // Accolade chips: icon for each
 const A = {
@@ -200,7 +203,7 @@ const A = {
 };
 const ORDER = ["months","acc","event","bounty","pts","tl","ehp"];
 const RANKS = [
-  {name:"Trialist", reqs:[["tl",1750]], acc:[]},
+  {name:"Trialist", reqs:[["tl",1750],["gear"],["trial"]], acc:[]},
   {name:"Clan Mate", reqs:[["months",1],["event",1],["tl",1750]], acc:[],
     perk:"<b>Additional Perks:</b> Eligible to give feedback for Trialist ranks. Eligible to participate in all clan events."},
   ...[
