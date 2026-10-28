@@ -1,0 +1,2 @@
+/api/temple/*  https://templeosrs.com/api/:splat  200
+/api/wom/*  https://api.wiseoldman.net/v2/:splat  200
