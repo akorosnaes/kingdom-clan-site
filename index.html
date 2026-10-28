@@ -51,9 +51,9 @@ nav,.hero,main,footer{position:relative;z-index:1}
 nav{position:sticky;top:0;z-index:10;background:rgba(8,8,8,.85);-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px)}
 @keyframes rise{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}
 .logo{animation:rise 1s cubic-bezier(.2,.7,.2,1) both}
-.card{animation:rise .7s .5s cubic-bezier(.2,.7,.2,1) both;transition:border-color .25s}
-.grid .card:nth-child(2){animation-delay:.62s}
-main>.card{animation-delay:.74s}
+.card{animation:rise .7s .2s cubic-bezier(.2,.7,.2,1) both;transition:border-color .25s}
+.grid .card:nth-child(2){animation-delay:.28s}
+main>.card{animation-delay:.36s}
 .card:hover{border-color:#444}
 .row{animation:rise .45s ease both;transition:background .15s}
 .row:hover{background:var(--panel2)}
@@ -154,51 +154,62 @@ document.addEventListener("error", e => { const t = e.target;
   if (t.tagName !== "IMG" || !t.dataset.fb) return;
   if (t.dataset.alt && !t.dataset.tried) { t.dataset.tried = 1; t.src = t.dataset.alt; } else t.replaceWith(t.dataset.fb); }, true);
 
-function render(d){
-  $("clogs").innerHTML = d.clogs.map(c => `<div class="row">${icon(wikiFile(c.i), "📜", c.id ? "https://static.runelite.net/cache/item/icon/" + c.id + ".png" : "")}<div><b>${esc(c.p)}</b> received ${esc(c.i)}<small>${ago(c.t)}</small></div></div>`).join("") || '<div class="row">Nothing yet.</div>';
-  $("ach").innerHTML = d.ach.map(a => `<div class="row">${icon(achSrc(a.m), SKILLS.includes(a.m) || a.m === "overall" ? "🏆" : "💀")}<div><b>${esc(a.p)}</b> · ${esc(a.n)}<small>${ago(a.t)}</small></div></div>`).join("") || '<div class="row">Nothing yet.</div>';
-  const board = (l, val) => l.map((e,i) => `<div class="row"><span class="rank">${i+1}</span><div><b>${esc(e.p)}</b></div><span class="xp">${val(e.x)}</span></div>`).join("") || '<div class="row">Nothing yet.</div>';
-  $("top").innerHTML = board(d.top, x => fmt(x) + " xp");
-  $("ehp").innerHTML = board(d.ehp, x => x.toFixed(1) + " EHP");
-  $("ehb").innerHTML = board(d.ehb, x => x.toFixed(1) + " EHB");
-  const s = d.stats, num = n => Math.round(n).toLocaleString();
-  $("sMembers").textContent = d.members ? num(d.members) : "—";
-  $("sLevel").textContent = s ? num(s.lvl) : "—";
-  $("sEhb").textContent = s ? num(s.ehb) : "—";
-  $("sXp").textContent = s ? fmt(s.xp) : "—";
-}
+const none = '<div class="row">Nothing yet.</div>';
+const board = (l, val) => l.map((e,i) => `<div class="row"><span class="rank">${i+1}</span><div><b>${esc(e.p)}</b></div><span class="xp">${val(e.x)}</span></div>`).join("") || none;
+const num = n => Math.round(n).toLocaleString();
+// One renderer per section, so each can fill in as soon as its own data arrives
+const SHOW = {
+  clogs: l => $("clogs").innerHTML = l.map(c => `<div class="row">${icon(wikiFile(c.i), "📜", c.id ? "https://static.runelite.net/cache/item/icon/" + c.id + ".png" : "")}<div><b>${esc(c.p)}</b> received ${esc(c.i)}<small>${ago(c.t)}</small></div></div>`).join("") || none,
+  ach: l => $("ach").innerHTML = l.map(a => `<div class="row">${icon(achSrc(a.m), SKILLS.includes(a.m) || a.m === "overall" ? "🏆" : "💀")}<div><b>${esc(a.p)}</b> · ${esc(a.n)}<small>${ago(a.t)}</small></div></div>`).join("") || none,
+  top: l => $("top").innerHTML = board(l, x => fmt(x) + " xp"),
+  ehp: l => $("ehp").innerHTML = board(l, x => x.toFixed(1) + " EHP"),
+  ehb: l => $("ehb").innerHTML = board(l, x => x.toFixed(1) + " EHB"),
+  members: n => $("sMembers").textContent = num(n),
+  stats: s => { $("sLevel").textContent = num(s.lvl); $("sEhb").textContent = num(s.ehb); $("sXp").textContent = fmt(s.xp); }
+};
 
-async function load(){
-  const out = JSON.parse(JSON.stringify(SAMPLE)); const errs = []; let live = 0;
-  const job = (label, p) => p.catch(e => { errs.push(label + ": " + e.message); });
+// Last visit's data, shown instantly while fresh data loads (per-browser only)
+const CACHE_KEY = "kingdom-home-v1";
+let cache = {};
+try { cache = JSON.parse(localStorage.getItem(CACHE_KEY)) || {}; } catch (e) {}
+const save = (k, v) => { cache[k] = v; try { localStorage.setItem(CACHE_KEY, JSON.stringify(cache)); } catch (e) {} };
+Object.keys(SHOW).forEach(k => { if (cache[k]) SHOW[k](cache[k]); else if ($(k)) $(k).innerHTML = '<div class="row"><small>Loading…</small></div>'; });
+
+function load(){
+  const errs = [];
+  const need = (l, why) => { if (!l.length) throw new Error(why); return l; };
+  const job = (key, label, p) => p.then(v => {
+      if (JSON.stringify(v) !== JSON.stringify(cache[key])) SHOW[key](v);   // skip re-render (and re-animation) when nothing changed
+      save(key, v);
+    }).catch(e => {
+      if (!cache[key] && SAMPLE[key]) SHOW[key](SAMPLE[key]);
+      errs.push(`${label} (${cache[key] ? "showing saved" : "showing sample"}): ${e.message}`);
+      $("note").textContent = "Couldn't load some live data. " + errs.join(" | ");
+    });
   // Temple's monthly top list for a skill/metric; "xp" holds hours for ehp/ehb. Temple ignores count, so trim to 10.
-  const top = (label, skill, key) => job(label, get("temple", `current_top/month.php?skill=${skill}&group=${CONFIG.templeGroup}&count=10`).then(j => {
+  const top = (key, label, skill) => job(key, label, get("temple", `current_top/month.php?skill=${skill}&group=${CONFIG.templeGroup}&count=10`).then(j => {
     const k = Object.keys(j).find(k => k.toLowerCase() === "month");
-    const l = vals(k ? j[k] : j).filter(x => x && x.xp != null).map(x => ({p:x.nickname||x.player, x:Number(x.xp)})).slice(0, 10);
-    if (l.length) { out[key] = l; live++; } else errs.push(label + ": unexpected response"); }));
+    return need(vals(k ? j[k] : j).filter(x => x && x.xp != null).map(x => ({p:x.nickname||x.player, x:Number(x.xp)})).slice(0, 10), "unexpected response"); }));
   const jobs = [
-    job("Collection logs", get("temple", `collection-log/group_recent_items.php?group=${CONFIG.templeGroup}&count=8&onlynotable=1`).then(j => {
-      const l = vals(j.data).filter(x => x && x.name).map(x => ({p:x.player_name_with_capitalization||x.player, i:x.name, id:x.id, t:(x.date_unix||0)*1000}));
-      if (l.length) { out.clogs = l; live++; } else errs.push("Collection logs: no items returned (members need the TempleOSRS plugin synced)"); })),
-    job("Achievements", get("wom", `groups/${CONFIG.womGroup}/achievements?limit=8`).then(j => {
-      const l = vals(j).map(a => ({p:(a.player&&a.player.displayName)||"Unknown", n:a.name, m:a.metric, t:new Date(a.createdAt).getTime()}));
-      if (l.length) { out.ach = l; live++; } else errs.push("Achievements: none returned"); })),
-    top("Top XP", "overall", "top"),
-    top("Top EHP", "ehp", "ehp"),
-    top("Top EHB", "ehb", "ehb"),
-    job("Members", get("wom", `groups/${CONFIG.womGroup}`).then(j => { if (j.memberCount) out.members = j.memberCount; })),
-    job("Clan stats", get("wom", `groups/${CONFIG.womGroup}/statistics`).then(j => {
+    job("clogs", "Collection logs", get("temple", `collection-log/group_recent_items.php?group=${CONFIG.templeGroup}&count=8&onlynotable=1`).then(j =>
+      need(vals(j.data).filter(x => x && x.name).map(x => ({p:x.player_name_with_capitalization||x.player, i:x.name, id:x.id, t:(x.date_unix||0)*1000})),
+        "no items returned (members need the TempleOSRS plugin synced)"))),
+    job("ach", "Achievements", get("wom", `groups/${CONFIG.womGroup}/achievements?limit=8`).then(j =>
+      need(vals(j).map(a => ({p:(a.player&&a.player.displayName)||"Unknown", n:a.name, m:a.metric, t:new Date(a.createdAt).getTime()})), "none returned"))),
+    top("top", "Top XP", "overall"),
+    top("ehp", "Top EHP", "ehp"),
+    top("ehb", "Top EHB", "ehb"),
+    job("members", "Members", get("wom", `groups/${CONFIG.womGroup}`).then(j => { if (!j.memberCount) throw new Error("no member count"); return j.memberCount; })),
+    job("stats", "Clan stats", get("wom", `groups/${CONFIG.womGroup}/statistics`).then(j => {
       const d = j.averageStats && j.averageStats.data;
-      if (d) out.stats = {lvl:d.skills.overall.level, xp:d.skills.overall.experience, ehb:d.computed.ehb.value}; }))
+      if (!d) throw new Error("no averages");
+      return {lvl:d.skills.overall.level, xp:d.skills.overall.experience, ehb:d.computed.ehb.value}; }))
   ];
-  await Promise.allSettled(jobs);
-  render(out);
-  if (/debug/.test(location.search)) { const pre = document.createElement("pre");
-    pre.style.cssText = "white-space:pre-wrap;word-break:break-all;background:#000;color:#9f9;padding:12px;margin:16px;font-size:12px;border:1px solid #333";
-    pre.textContent = DBG.join("\n\n----\n\n"); document.body.appendChild(pre); }
-  $("note").textContent = errs.length ? "Sample data shown where live data failed. " + errs.join(" | ") : "";
+  Promise.allSettled(jobs).then(() => {
+    if (/debug/.test(location.search)) { const pre = document.createElement("pre");
+      pre.style.cssText = "white-space:pre-wrap;word-break:break-all;background:#000;color:#9f9;padding:12px;margin:16px;font-size:12px;border:1px solid #333";
+      pre.textContent = DBG.join("\n\n----\n\n"); document.body.appendChild(pre); } });
 }
-['clogs','ach','ehp','ehb','top'].forEach(i => $(i).innerHTML = '<div class="row"><small>Loading…</small></div>');
 load();
 // Slow drifting dust motes in the background
 (function(){
