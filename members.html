@@ -138,8 +138,8 @@ const CONFIG = { womGroup: 1152, perPage: 50 };
 const $ = id => document.getElementById(id);
 const esc = s => String(s).replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
 const num = n => n == null ? "—" : Math.round(n).toLocaleString();
-// Wise Old Man role names that are our numbered ranks (same as the About page); other roles keep their own name
-const RANK_NAMES = { helper:"Trialist", elite:"Clan Mate", recruit:"Rank 1", pawn:"Rank 2", corporal:"Rank 3", novice:"Rank 4", sergeant:"Rank 5", colonel:"Rank 6", marshal:"Rank 7" };
+// Our names for Wise Old Man roles (numbered ranks match the About page); any other role keeps its Wise Old Man name
+const RANK_NAMES = { general:"Owner", captain:"Officer", lieutenant:"Community Leader", astral:"Legacy Star", quester:"Events Team", helper:"Trialist", elite:"Clan Mate", recruit:"Rank 1", pawn:"Rank 2", corporal:"Rank 3", novice:"Rank 4", sergeant:"Rank 5", colonel:"Rank 6", marshal:"Rank 7" };
 const roleName = r => RANK_NAMES[r] || r.split("_").map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(" ");
 // Wise Old Man's own role icons, served from their open-source repo
 const roleIcon = r => `https://cdn.jsdelivr.net/gh/wise-old-man/wise-old-man@master/app/public/img/group_roles/${r}.png`;
@@ -175,7 +175,7 @@ function render(){
   $("head").innerHTML = COLS.map(c => `<th${c.k ? ` data-k="${c.k}"` : ""} class="${c.k === S.key ? "on" + (S.dir > 0 ? " asc" : "") : ""}">${c.label}</th>`).join("");
   const q = S.q.trim().toLowerCase();
   const list = sorted().map((m, i) => ({...m, n: i + 1}))
-    .filter(m => (!S.rank || m.role === S.rank) && (!q || m.name.toLowerCase().includes(q) || m.user.includes(q)));
+    .filter(m => (!S.rank || roleName(m.role) === S.rank) && (!q || m.name.toLowerCase().includes(q) || m.user.includes(q)));
   const pages = Math.max(1, Math.ceil(list.length / CONFIG.perPage));
   S.page = Math.min(S.page, pages - 1);
   const rows = list.slice(S.page * CONFIG.perPage, (S.page + 1) * CONFIG.perPage);
@@ -183,7 +183,7 @@ function render(){
     <td class="n">${m.n}</td>
     <td><span class="player"><img src="${roleIcon(m.role)}" alt="${esc(roleName(m.role))}" title="${esc(roleName(m.role))}" loading="lazy" onerror="this.style.visibility='hidden'"><a href="player.html?name=${encodeURIComponent(m.name)}">${esc(m.name)}</a></span></td>
     <td>${num(m.lvl)}</td><td>${num(m.xp)}</td><td>${num(m.ehb)}</td><td>${num(m.ehp)}</td><td>${num(m.clog)}</td></tr>`).join("")
-    || `<tr><td colspan="7" class="msg">No members match${q ? ` “${esc(S.q)}”` : ""}${S.rank ? ` in ${esc(roleName(S.rank))}` : ""}.</td></tr>`;
+    || `<tr><td colspan="7" class="msg">No members match${q ? ` “${esc(S.q)}”` : ""}${S.rank ? ` in ${esc(S.rank)}` : ""}.</td></tr>`;
   $("count").textContent = q || S.rank ? `${list.length} of ${S.all.length} members` : `${S.all.length} Kingdom Members`;
   let p = `<button data-p="${S.page - 1}" ${S.page ? "" : "disabled"}>‹ Prev</button>`;
   for (let i = 0; i < pages; i++) p += `<button data-p="${i}"${i === S.page ? ' aria-current="page"' : ""}>${i + 1}</button>`;
@@ -212,8 +212,9 @@ async function load(){
     S.all = (group.memberships || []).map(m => ({ role: m.role, name: m.player.displayName, user: m.player.username,
       lvl: lvl[m.player.id] ?? null, xp: m.player.exp, ehb: m.player.ehb, ehp: m.player.ehp, clog: clog[m.player.id] ?? null }));
     // Wise Old Man lists members highest rank first, so the dropdown follows the clan's rank order
-    const counts = {}; S.all.forEach(m => counts[m.role] = (counts[m.role] || 0) + 1);
-    $("rank").innerHTML = `<option value="">All ranks</option>` + Object.keys(counts).map(r => `<option value="${esc(r)}">${esc(roleName(r))} (${counts[r]})</option>`).join("");
+    // Grouped by the name we show, so roles sharing a name (e.g. Owner) are one option
+    const counts = {}; S.all.forEach(m => { const n = roleName(m.role); counts[n] = (counts[n] || 0) + 1; });
+    $("rank").innerHTML = `<option value="">All ranks</option>` + Object.keys(counts).map(n => `<option value="${esc(n)}">${esc(n)} (${counts[n]})</option>`).join("");
     render();
   } catch (e) {
     $("rows").innerHTML = `<tr><td colspan="7" class="msg">Couldn't load members from Wise Old Man (${esc(e.message)}). Try again later.</td></tr>`;
