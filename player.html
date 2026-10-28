@@ -195,7 +195,9 @@ const ago = t => { const m = Math.max(1, Math.round((Date.now()-t)/6e4));
   if (m < 60) return m+"m ago"; if (m < 1440) return Math.round(m/60)+"h ago"; return Math.round(m/1440)+"d ago"; };
 const month = t => new Date(t).toLocaleDateString(undefined, {month:"short", year:"numeric"});
 const cap = s => s.charAt(0).toUpperCase() + s.slice(1);
-const roleName = r => r.split("_").map(cap).join(" ");
+// Wise Old Man role names that are our numbered ranks (same as the About page); other roles keep their own name
+const RANK_NAMES = { helper:"Trialist", elite:"Clan Mate", recruit:"Rank 1", pawn:"Rank 2", corporal:"Rank 3", novice:"Rank 4", sergeant:"Rank 5", colonel:"Rank 6", marshal:"Rank 7" };
+const roleName = r => RANK_NAMES[r] || r.split("_").map(cap).join(" ");
 
 const WOM_IMG = "https://cdn.jsdelivr.net/gh/wise-old-man/wise-old-man@master/app/public/img/";
 const metricIcon = m => WOM_IMG + "metrics/" + m + ".png";

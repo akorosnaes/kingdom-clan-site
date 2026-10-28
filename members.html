@@ -136,7 +136,9 @@ const CONFIG = { womGroup: 1152, perPage: 50 };
 const $ = id => document.getElementById(id);
 const esc = s => String(s).replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
 const num = n => n == null ? "—" : Math.round(n).toLocaleString();
-const roleName = r => r.split("_").map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(" ");
+// Wise Old Man role names that are our numbered ranks (same as the About page); other roles keep their own name
+const RANK_NAMES = { helper:"Trialist", elite:"Clan Mate", recruit:"Rank 1", pawn:"Rank 2", corporal:"Rank 3", novice:"Rank 4", sergeant:"Rank 5", colonel:"Rank 6", marshal:"Rank 7" };
+const roleName = r => RANK_NAMES[r] || r.split("_").map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(" ");
 // Wise Old Man's own role icons, served from their open-source repo
 const roleIcon = r => `https://cdn.jsdelivr.net/gh/wise-old-man/wise-old-man@master/app/public/img/group_roles/${r}.png`;
 const BASES = ["https://api.wiseoldman.net/v2/", "/api/wom/"];
