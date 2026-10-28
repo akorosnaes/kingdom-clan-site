@@ -44,6 +44,12 @@ main{max-width:1000px;margin:0 auto;padding:8px 16px 56px}
 .xp{flex:none;font-weight:600;font-variant-numeric:tabular-nums}
 .rank{flex:none;width:24px;color:var(--mute);font-weight:600}
 .note{margin-top:8px;color:var(--mute);font-size:12px;text-align:center}
+.lbbar{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin:24px 0 12px}
+.lbbar h2{margin:0;font-size:17px;font-weight:700}
+.seg{display:inline-flex;gap:2px;padding:3px;background:var(--panel);border:1px solid var(--line);border-radius:10px}
+.seg button{background:none;border:0;border-radius:7px;padding:7px 14px;color:var(--mute);font:600 13px/1.2 inherit;font-family:inherit;cursor:pointer;transition:background .15s,color .15s}
+.seg button:hover{color:#fff}
+.seg button[aria-pressed="true"]{background:#fff;color:#000}
 footer{text-align:center;padding:24px;color:var(--mute);font-size:13px;border-top:1px solid var(--line)}
 
 #bg{position:fixed;inset:0;width:100%;height:100%;z-index:0;pointer-events:none}
@@ -54,6 +60,7 @@ nav{position:sticky;top:0;z-index:10;background:rgba(8,8,8,.85);-webkit-backdrop
 .card{animation:rise .7s .2s cubic-bezier(.2,.7,.2,1) both;transition:border-color .25s}
 .grid .card:nth-child(2){animation-delay:.28s}
 main>.card{animation-delay:.36s}
+.lbbar{animation:rise .7s .28s cubic-bezier(.2,.7,.2,1) both}
 .card:hover{border-color:#444}
 .row{animation:rise .45s ease both;transition:background .15s}
 .row:hover{background:var(--panel2)}
@@ -84,11 +91,17 @@ main>.card{animation-delay:.36s}
     <section class="card"><h2>Recent Collection Logs</h2><div id="clogs"></div></section>
     <section class="card"><h2>Recent Achievements</h2><div id="ach"></div></section>
   </div>
-  <div class="grid">
-    <section class="card"><h2>Monthly Top EHP</h2><div id="ehp"></div></section>
-    <section class="card"><h2>Monthly Top EHB</h2><div id="ehb"></div></section>
+  <div class="lbbar">
+    <h2>Top Gainers</h2>
+    <div class="seg" id="period" role="group" aria-label="Leaderboard period">
+      <button type="button" data-p="day">Daily</button><button type="button" data-p="week">Weekly</button><button type="button" data-p="month">Monthly</button>
+    </div>
   </div>
-  <section class="card"><h2>Monthly Top XP</h2><div id="top"></div></section>
+  <div class="grid">
+    <section class="card"><h2><span class="per">Monthly</span> Top EHP</h2><div id="ehp"></div></section>
+    <section class="card"><h2><span class="per">Monthly</span> Top EHB</h2><div id="ehb"></div></section>
+  </div>
+  <section class="card"><h2><span class="per">Monthly</span> Top XP</h2><div id="top"></div></section>
   <p class="note" id="note"></p>
 </main>
 <footer>Made with ❤️ by Sean</footer>
@@ -169,36 +182,62 @@ const SHOW = {
 };
 
 // Last visit's data, shown instantly while fresh data loads (per-browser only)
-const CACHE_KEY = "kingdom-home-v1";
+const CACHE_KEY = "kingdom-home-v2";
 let cache = {};
 try { cache = JSON.parse(localStorage.getItem(CACHE_KEY)) || {}; } catch (e) {}
 const save = (k, v) => { cache[k] = v; try { localStorage.setItem(CACHE_KEY, JSON.stringify(cache)); } catch (e) {} };
-Object.keys(SHOW).forEach(k => { if (cache[k]) SHOW[k](cache[k]); else if ($(k)) $(k).innerHTML = '<div class="row"><small>Loading…</small></div>'; });
+const shown = {};   // what each section currently displays, to skip re-renders (and re-animation) when nothing changed
+const put = (key, v) => { const s = JSON.stringify(v); if (shown[key] !== s) { shown[key] = s; SHOW[key](v); } };
+const loading = key => { shown[key] = null; $(key).innerHTML = '<div class="row"><small>Loading…</small></div>'; };
+
+const errs = [];
+const need = (l, why) => { if (!l.length) throw new Error(why); return l; };
+// ck = cache key; isCurrent says whether the result still belongs on screen (the period may have changed meanwhile)
+const job = (key, label, p, ck = key, isCurrent = () => true) => p.then(v => {
+    save(ck, v);
+    if (isCurrent()) put(key, v);
+  }).catch(e => {
+    if (!isCurrent()) return;
+    if (!cache[ck] && SAMPLE[key]) put(key, SAMPLE[key]);
+    errs.push(`${label} (${cache[ck] ? "showing saved" : "showing sample"}): ${e.message}`);
+    $("note").textContent = "Couldn't load some live data. " + errs.join(" | ");
+  });
+
+// Leaderboards: Daily / Weekly / Monthly, top 5 each
+const PERIODS = {day:"Daily", week:"Weekly", month:"Monthly"};
+const BOARDS = [["top","Top XP","overall"], ["ehp","Top EHP","ehp"], ["ehb","Top EHB","ehb"]];
+let period = "month";
+try { const p = localStorage.getItem("kingdom-period"); if (PERIODS[p]) period = p; } catch (e) {}
+function loadBoards(){
+  const per = period;
+  document.querySelectorAll(".per").forEach(s => s.textContent = PERIODS[per]);
+  document.querySelectorAll("#period button").forEach(b => b.setAttribute("aria-pressed", b.dataset.p === per));
+  return BOARDS.map(([key, label, skill]) => {
+    const ck = key + ":" + per;
+    if (cache[ck]) put(key, cache[ck]); else loading(key);
+    // Temple's top list for a skill/metric; "xp" holds hours for ehp/ehb. Temple ignores count, so trim to 5.
+    return job(key, `${PERIODS[per]} ${label}`, get("temple", `current_top/${per}.php?skill=${skill}&group=${CONFIG.templeGroup}&count=5`).then(j => {
+      const k = Object.keys(j).find(k => k !== "info");
+      return need(vals(k ? j[k] : j).filter(x => x && x.xp != null).map(x => ({p:x.nickname||x.player, x:Number(x.xp)})).slice(0, 5), "no gains yet"); }),
+      ck, () => period === per);
+  });
+}
+$("period").addEventListener("click", e => { const b = e.target.closest("button");
+  if (!b || b.dataset.p === period) return;
+  period = b.dataset.p;
+  try { localStorage.setItem("kingdom-period", period); } catch (e) {}
+  loadBoards(); });
+
+["clogs","ach","members","stats"].forEach(k => { if (cache[k]) put(k, cache[k]); else if ($(k)) loading(k); });
 
 function load(){
-  const errs = [];
-  const need = (l, why) => { if (!l.length) throw new Error(why); return l; };
-  const job = (key, label, p) => p.then(v => {
-      if (JSON.stringify(v) !== JSON.stringify(cache[key])) SHOW[key](v);   // skip re-render (and re-animation) when nothing changed
-      save(key, v);
-    }).catch(e => {
-      if (!cache[key] && SAMPLE[key]) SHOW[key](SAMPLE[key]);
-      errs.push(`${label} (${cache[key] ? "showing saved" : "showing sample"}): ${e.message}`);
-      $("note").textContent = "Couldn't load some live data. " + errs.join(" | ");
-    });
-  // Temple's monthly top list for a skill/metric; "xp" holds hours for ehp/ehb. Temple ignores count, so trim to 10.
-  const top = (key, label, skill) => job(key, label, get("temple", `current_top/month.php?skill=${skill}&group=${CONFIG.templeGroup}&count=10`).then(j => {
-    const k = Object.keys(j).find(k => k.toLowerCase() === "month");
-    return need(vals(k ? j[k] : j).filter(x => x && x.xp != null).map(x => ({p:x.nickname||x.player, x:Number(x.xp)})).slice(0, 10), "unexpected response"); }));
   const jobs = [
     job("clogs", "Collection logs", get("temple", `collection-log/group_recent_items.php?group=${CONFIG.templeGroup}&count=8&onlynotable=1`).then(j =>
       need(vals(j.data).filter(x => x && x.name).map(x => ({p:x.player_name_with_capitalization||x.player, i:x.name, id:x.id, t:(x.date_unix||0)*1000})),
         "no items returned (members need the TempleOSRS plugin synced)"))),
     job("ach", "Achievements", get("wom", `groups/${CONFIG.womGroup}/achievements?limit=8`).then(j =>
       need(vals(j).map(a => ({p:(a.player&&a.player.displayName)||"Unknown", n:a.name, m:a.metric, t:new Date(a.createdAt).getTime()})), "none returned"))),
-    top("top", "Top XP", "overall"),
-    top("ehp", "Top EHP", "ehp"),
-    top("ehb", "Top EHB", "ehb"),
+    ...loadBoards(),
     job("members", "Members", get("wom", `groups/${CONFIG.womGroup}`).then(j => { if (!j.memberCount) throw new Error("no member count"); return j.memberCount; })),
     job("stats", "Clan stats", get("wom", `groups/${CONFIG.womGroup}/statistics`).then(j => {
       const d = j.averageStats && j.averageStats.data;
