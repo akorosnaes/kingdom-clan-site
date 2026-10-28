@@ -1,0 +1,13 @@
+# Static site, no build step. Functions power the staff console (Discord login + calendar uploads).
+[build]
+  publish = "."
+
+[functions]
+  directory = "netlify/functions"
+  node_bundler = "esbuild"
+
+# Keep the staff console out of search results
+[[headers]]
+  for = "/admin.html"
+  [headers.values]
+    X-Robots-Tag = "noindex"

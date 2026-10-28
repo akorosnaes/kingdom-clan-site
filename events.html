@@ -40,6 +40,8 @@ nav .navsoc a{display:grid;place-items:center;padding:7px}
 .navsoc img,.fsoc img{height:18px;width:auto;display:block;opacity:.75;transition:opacity .15s}
 .navsoc a:hover img,.fsoc a:hover img{opacity:1}
 .fsoc{display:none}
+footer a.staff{color:inherit;text-decoration:none}
+footer a.staff:hover{color:#fff}
 .fsoc a{display:grid;place-items:center;padding:8px;color:var(--mute)}
 @media(max-width:960px){.navsoc{position:static;transform:none;margin-left:8px}}
 @media(max-width:760px){nav .navlogo{display:none}nav a{white-space:nowrap}}
@@ -77,6 +79,24 @@ main{animation-delay:.1s}
 .sec h2{margin:0;font:600 clamp(22px,3vw,28px)/1.1 var(--sans);letter-spacing:-.03em}
 .sec small{font:500 12px/1 var(--mono);color:var(--mute);letter-spacing:.06em}
 .stack{display:grid;gap:10px}
+
+/* Monthly calendar */
+.mnav{display:flex;align-items:center;gap:6px}
+.mnav[hidden]{display:none}
+.mnav b{min-width:120px;text-align:center;font:500 13px/1 var(--mono);letter-spacing:.04em}
+.mnav button{width:28px;height:28px;display:grid;place-items:center;background:none;border:1px solid var(--line2);border-radius:6px;color:#fff;font:14px/1 var(--sans);cursor:pointer;transition:border-color .15s}
+.mnav button:hover:not(:disabled){border-color:#fff}
+.mnav button:disabled{opacity:.3;cursor:default}
+.cal{margin:0}
+.calbtn{display:block;width:100%;padding:0;border:1px solid var(--line);border-radius:8px;overflow:hidden;background:#0d0d0d;cursor:zoom-in;transition:border-color .15s}
+.calbtn:hover{border-color:var(--line2)}
+.calbtn img{display:block;width:100%;height:auto;aspect-ratio:16/9;object-fit:cover}
+.cal figcaption{margin-top:10px;font:12px/1 var(--mono);color:var(--dim);text-align:right}
+#caldlg{padding:0;border:0;background:none;max-width:96vw;max-height:94vh;overflow:auto}
+#caldlg::backdrop{background:rgba(0,0,0,.85);-webkit-backdrop-filter:blur(3px);backdrop-filter:blur(3px)}
+#caldlg[open]{animation:fade .2s ease both}
+#caldlg img{display:block;width:min(96vw,1600px);height:auto;border-radius:6px;cursor:zoom-out}
+@media(max-width:700px){#caldlg img{width:1100px}}
 
 /* Event banners: each its own rectangle */
 .card{background:#0d0d0d;border:1px solid var(--line);border-radius:8px;overflow:hidden;transition:border-color .15s}
@@ -143,6 +163,13 @@ a.pl:hover{text-decoration:underline;text-underline-offset:3px}
   <p>Competitions, bingos &amp; tile races</p>
 </header>
 <main>
+  <div class="sec" style="margin-top:40px"><h2>Event calendar</h2><div class="mnav" id="months" hidden><button type="button" id="mprev" aria-label="Previous month">‹</button><b id="mlabel"></b><button type="button" id="mnext" aria-label="Next month">›</button></div></div>
+  <figure class="cal" id="cal">
+    <button class="calbtn" id="calbtn" type="button" aria-label="Enlarge calendar"><img id="calimg" alt=""></button>
+    <figcaption id="calcap"></figcaption>
+  </figure>
+  <dialog id="caldlg" aria-label="Event calendar"><img id="caldlgimg" alt=""></dialog>
+
   <div class="sec"><h2>Now &amp; upcoming</h2></div>
   <div class="stack" id="now"><div class="card msg">Loading events…</div></div>
   <div class="sec"><h2>Past events</h2><small id="pastCount"></small></div>
@@ -150,11 +177,48 @@ a.pl:hover{text-decoration:underline;text-underline-offset:3px}
   <button class="more" id="more" type="button" hidden>Show older events</button>
   <p class="msg" id="note" style="text-align:center"></p>
 </main>
-<footer><span class="fsoc"><a href="https://x.com/Kingdom_OSRS" target="_blank" rel="noopener" aria-label="Kingdom on X (Twitter)" title="X (Twitter)"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg></a><a href="https://wiseoldman.net/groups/1152" target="_blank" rel="noopener" aria-label="Kingdom on Wise Old Man" title="Wise Old Man"><img src="wom.png" alt=""></a><a href="https://templeosrs.com/groups/overview.php?id=1710" target="_blank" rel="noopener" aria-label="Kingdom on TempleOSRS" title="TempleOSRS"><img src="temple.png" alt=""></a></span>Kingdom</footer>
+<footer><span class="fsoc"><a href="https://x.com/Kingdom_OSRS" target="_blank" rel="noopener" aria-label="Kingdom on X (Twitter)" title="X (Twitter)"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg></a><a href="https://wiseoldman.net/groups/1152" target="_blank" rel="noopener" aria-label="Kingdom on Wise Old Man" title="Wise Old Man"><img src="wom.png" alt=""></a><a href="https://templeosrs.com/groups/overview.php?id=1710" target="_blank" rel="noopener" aria-label="Kingdom on TempleOSRS" title="TempleOSRS"><img src="temple.png" alt=""></a></span>Kingdom · <a class="staff" href="admin.html">Staff</a></footer>
 
 <script>
 // ---- EDIT THESE ----
 const CONFIG = { womGroup: 1152, discord: "https://discord.gg/kingdomclan", pastPerPage: 8 };
+
+// Monthly calendars, uploaded by staff in the staff console (admin.html) and listed by /api/calendars, newest first.
+// The page opens on this month's calendar; next month (if posted early) is one click forward as "Upcoming".
+(function calendar(){
+  const $ = id => document.getElementById(id);
+  const label = m => new Date(m + "-01T12:00:00").toLocaleDateString(undefined, {month:"long", year:"numeric"});
+  const now = new Date(), thisMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
+  const dlg = $("caldlg"), KEY = "kingdom-calendars-v1";
+  let list = null, cur = 0;
+  const show = i => { cur = i; const c = list[i];
+    $("calimg").src = $("caldlgimg").src = c.url;
+    $("calimg").alt = $("caldlgimg").alt = label(c.month) + " event calendar";
+    $("mlabel").textContent = label(c.month);
+    $("calcap").textContent = (c.month === thisMonth ? "This month" : c.month > thisMonth ? "Upcoming" : "Past calendar") + " · Click to enlarge";
+    $("mprev").disabled = i === list.length - 1; $("mnext").disabled = i === 0;
+    // Warm up the neighbouring months so stepping is instant
+    [list[i + 1], list[i - 1]].forEach(n => { if (n) new Image().src = n.url; }); };
+  const render = l => {
+    if (JSON.stringify(l) === JSON.stringify(list)) return;
+    list = l;
+    if (!list.length) { $("cal").innerHTML = '<div class="card msg">No calendar posted yet. Check the Discord for upcoming events.</div>'; $("months").hidden = true; return; }
+    $("months").hidden = list.length < 2;   // the switcher only shows once there's another month to step to
+    const i = list.findIndex(c => c.month <= thisMonth);
+    show(i < 0 ? list.length - 1 : i);
+  };
+  $("mprev").onclick = () => show(cur + 1);
+  $("mnext").onclick = () => show(cur - 1);
+  $("calbtn").onclick = () => dlg.showModal();
+  dlg.onclick = () => dlg.close();
+  // Last visit's list shows instantly, then the live list replaces it
+  try { const saved = JSON.parse(localStorage.getItem(KEY)); if (Array.isArray(saved)) render(saved); } catch (e) {}
+  if (!list) $("calcap").textContent = "Loading calendar…";
+  fetch("/api/calendars").then(r => { if (!r.ok) throw new Error("HTTP " + r.status); return r.json(); }).then(l => {
+    try { localStorage.setItem(KEY, JSON.stringify(l)); } catch (e) {}
+    render(l);
+  }).catch(() => { if (!list) { $("cal").innerHTML = '<div class="card msg">Couldn\'t load the event calendar. Try again later.</div>'; } });
+})();
 // --------------------
 
 const $ = id => document.getElementById(id);
