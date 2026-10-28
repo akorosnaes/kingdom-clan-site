@@ -121,7 +121,7 @@ td.msg{padding:36px 0;text-align:center;color:var(--mute);font-family:var(--sans
     <div class="tools"><h2 id="count">Kingdom Members</h2><div class="filters"><select class="pick" id="rank" aria-label="Filter by rank"><option value="">All ranks</option></select><input class="search" id="q" type="search" placeholder="Search members…" aria-label="Search members" autocomplete="off"></div></div>
     <div class="tbl"><table>
       <thead><tr id="head"></tr></thead>
-      <tbody id="rows"><tr><td colspan="7" class="msg">Loading members…</td></tr></tbody>
+      <tbody id="rows"><tr><td colspan="8" class="msg">Loading members…</td></tr></tbody>
     </table></div>
     <div class="pager" id="pager"></div>
   </section>
@@ -155,6 +155,7 @@ const COLS = [
   {k:"xp",   label:"Overall XP"},
   {k:"ehb",  label:"EHB"},
   {k:"ehp",  label:"EHP"},
+  {k:"clog", label:"Collection Log"},
   {k:"joined", label:"Joined"}
 ];
 const S = { all: [], q: "", rank: "", key: "xp", dir: -1, page: 0 };
@@ -181,8 +182,8 @@ function render(){
   $("rows").innerHTML = rows.map(m => `<tr>
     <td class="n">${m.n}</td>
     <td><span class="player"><img src="${roleIcon(m.role)}" alt="${esc(roleName(m.role))}" title="${esc(roleName(m.role))}" loading="lazy" onerror="this.style.visibility='hidden'"><a href="player.html?name=${encodeURIComponent(m.name)}">${esc(m.name)}</a></span></td>
-    <td>${num(m.lvl)}</td><td>${num(m.xp)}</td><td>${num(m.ehb)}</td><td>${num(m.ehp)}</td><td>${joined(m.joined)}</td></tr>`).join("")
-    || `<tr><td colspan="7" class="msg">No members match${q ? ` “${esc(S.q)}”` : ""}${S.rank ? ` in ${esc(roleName(S.rank))}` : ""}.</td></tr>`;
+    <td>${num(m.lvl)}</td><td>${num(m.xp)}</td><td>${num(m.ehb)}</td><td>${num(m.ehp)}</td><td>${num(m.clog)}</td><td>${joined(m.joined)}</td></tr>`).join("")
+    || `<tr><td colspan="8" class="msg">No members match${q ? ` “${esc(S.q)}”` : ""}${S.rank ? ` in ${esc(roleName(S.rank))}` : ""}.</td></tr>`;
   $("count").textContent = q || S.rank ? `${list.length} of ${S.all.length} members` : `${S.all.length} Kingdom Members`;
   let p = `<button data-p="${S.page - 1}" ${S.page ? "" : "disabled"}>‹ Prev</button>`;
   for (let i = 0; i < pages; i++) p += `<button data-p="${i}"${i === S.page ? ' aria-current="page"' : ""}>${i + 1}</button>`;
@@ -201,20 +202,22 @@ $("rank").addEventListener("change", e => { S.rank = e.target.value; S.page = 0;
 
 async function load(){
   try {
-    const [group, levels] = await Promise.all([
+    const [group, levels, clogs] = await Promise.all([
       get(`groups/${CONFIG.womGroup}`),
-      get(`groups/${CONFIG.womGroup}/hiscores?metric=overall&limit=500`).catch(() => [])
+      get(`groups/${CONFIG.womGroup}/hiscores?metric=overall&limit=500`).catch(() => []),
+      get(`groups/${CONFIG.womGroup}/hiscores?metric=collections_logged&limit=500`).catch(() => [])
     ]);
     const lvl = {}; levels.forEach(h => { if (h.data && h.data.level > 0) lvl[h.player.id] = h.data.level; });
+    const clog = {}; clogs.forEach(h => { if (h.data && h.data.score >= 0) clog[h.player.id] = h.data.score; });
     S.all = (group.memberships || []).map(m => ({ role: m.role, name: m.player.displayName, user: m.player.username,
-      lvl: lvl[m.player.id] ?? null, xp: m.player.exp, ehb: m.player.ehb, ehp: m.player.ehp,
+      lvl: lvl[m.player.id] ?? null, xp: m.player.exp, ehb: m.player.ehb, ehp: m.player.ehp, clog: clog[m.player.id] ?? null,
       joined: m.createdAt ? new Date(m.createdAt).getTime() : null }));
     // Wise Old Man lists members highest rank first, so the dropdown follows the clan's rank order
     const counts = {}; S.all.forEach(m => counts[m.role] = (counts[m.role] || 0) + 1);
     $("rank").innerHTML = `<option value="">All ranks</option>` + Object.keys(counts).map(r => `<option value="${esc(r)}">${esc(roleName(r))} (${counts[r]})</option>`).join("");
     render();
   } catch (e) {
-    $("rows").innerHTML = `<tr><td colspan="7" class="msg">Couldn't load members from Wise Old Man (${esc(e.message)}). Try again later.</td></tr>`;
+    $("rows").innerHTML = `<tr><td colspan="8" class="msg">Couldn't load members from Wise Old Man (${esc(e.message)}). Try again later.</td></tr>`;
   }
 }
 load();
