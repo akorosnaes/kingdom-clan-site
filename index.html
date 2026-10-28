@@ -269,7 +269,7 @@ $("period").addEventListener("click", e => { const b = e.target.closest("button"
 
 function load(){
   const jobs = [
-    job("clogs", "Collection logs", get("temple", `collection-log/group_recent_items.php?group=${CONFIG.templeGroup}&count=8&onlynotable=1`).then(j =>
+    job("clogs", "Collection logs", get("temple", `collection-log/group_recent_items.php?group=${CONFIG.templeGroup}&count=8`).then(j =>
       need(vals(j.data).filter(x => x && x.name).map(x => ({p:x.player_name_with_capitalization||x.player, i:x.name, id:x.id, t:(x.date_unix||0)*1000})),
         "no items returned (members need the TempleOSRS plugin synced)"))),
     job("ach", "Achievements", get("wom", `groups/${CONFIG.womGroup}/achievements?limit=8`).then(j =>
