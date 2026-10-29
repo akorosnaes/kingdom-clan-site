@@ -4,6 +4,7 @@
   "type": "module",
   "description": "Kingdom OSRS clan site. Static pages plus Netlify functions for the staff console.",
   "dependencies": {
-    "@netlify/blobs": "^11.1.7"
+    "@netlify/blobs": "^11.1.7",
+    "@netlify/functions": "^6.0.3"
   }
 }

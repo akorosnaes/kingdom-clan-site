@@ -1,8 +1,15 @@
 // /api/draft
 //   GET  anyone: the bingo draft board (title, teams with their players, and the undrafted pool)
+//        Served from Netlify's CDN cache so viewers can check every couple of seconds for free;
+//        every save clears that cache. ?staff=1 skips the cache.
 //   PUT  staff:  save the whole board. Send back the "rev" you loaded; if someone else saved since, you get 409 and the latest board.
 import { getStore } from "@netlify/blobs";
+import { purgeCache } from "@netlify/functions";
 import { getStaff, json, sameOrigin } from "../lib/auth.mjs";
+
+const CACHE_TAG = "draft";
+const CDN_CACHE = { "cache-control": "public, max-age=0, must-revalidate",
+  "netlify-cdn-cache-control": "public, durable, s-maxage=60", "cache-tag": CACHE_TAG, "netlify-vary": "query" };
 
 const store = () => getStore({ name: "draft", consistency: "strong" });
 const EMPTY = { rev: 0, title: "", teams: [], pool: [], updated: 0, by: "" };
@@ -41,7 +48,8 @@ function clean(body){
 
 export default async req => {
   const staff = getStaff(req);
-  if (req.method === "GET") return json(await read());
+  if (req.method === "GET")
+    return new URL(req.url).searchParams.has("staff") ? json(await read()) : json(await read(), 200, CDN_CACHE);
 
   if (!staff) return json({ error: "Log in with an approved Discord account first." }, 401);
   if (!sameOrigin(req)) return json({ error: "Bad origin." }, 403);
@@ -56,6 +64,8 @@ export default async req => {
   if (body.rev !== cur.rev) return json({ error: "Someone else changed the draft. Showing the latest version.", board: cur }, 409);
   const next = { ...board, rev: cur.rev + 1, updated: Date.now(), by: staff.name };
   await s.setJSON("board", next);
+  // If the purge fails, viewers still catch up when the cached copy expires (60s)
+  try { await purgeCache({ tags: [CACHE_TAG] }); } catch (e) { console.error("Draft cache purge failed:", e.message); }
   return json(next);
 };
 

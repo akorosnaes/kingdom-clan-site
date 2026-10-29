@@ -133,6 +133,12 @@ a.chip:hover{background:var(--panel2)}
 .chip.sel button:hover{color:#000;background:#ddd}
 @media(hover:none){.chip button{opacity:1}}
 .empty{padding:10px 8px;font-size:13px;color:var(--dim)}
+.phero p.live{display:inline-flex;align-items:center;gap:8px;margin-top:12px;color:#fff}
+.phero p.live[hidden]{display:none}
+.live i{width:7px;height:7px;border-radius:50%;background:#fff;animation:pulse 2s ease-in-out infinite}
+.live.off{color:var(--dim)}
+.live.off i{background:var(--dim);animation:none}
+@keyframes pulse{50%{opacity:.25}}
 .flash{animation:flash 1.2s ease}
 @keyframes flash{from{background:#fff;color:#000}to{background:transparent}}
 </style>
@@ -142,6 +148,7 @@ a.chip:hover{background:var(--panel2)}
 <header class="phero">
   <h1 id="title">Bingo draft</h1>
   <p id="sub">Teams · Draft pool</p>
+  <p class="live" id="live" hidden><i></i><span>Live</span></p>
   <div class="who" id="who" hidden></div>
 </header>
 <main id="main">
@@ -183,7 +190,7 @@ const api = async (path, opts = {}) => {
 // ---------- Rendering ----------
 function chip(name, i, edit){
   const n = i == null ? "" : `<span class="i">${i + 1}</span>`;
-  if (!edit) return `<a class="chip" href="player.html?name=${encodeURIComponent(name)}">${n}<span>${esc(name)}</span></a>`;
+  if (!edit) return `<a class="chip" data-p="${esc(name)}" href="player.html?name=${encodeURIComponent(name)}">${n}<span>${esc(name)}</span></a>`;
   return `<div class="chip${sel === name ? " sel" : ""}" draggable="true" data-p="${esc(name)}">${n}<span>${esc(name)}</span><button type="button" data-x="${esc(name)}" title="${i == null ? "Remove from the draft" : "Back to the list"}" aria-label="Remove">×</button></div>`;
 }
 
@@ -373,17 +380,31 @@ function wireEditing(){
 }
 
 // ---------- Live updates ----------
-// Everyone watching sees picks appear without refreshing. Staff skip a poll while they have unsaved moves.
+// Everyone watching sees picks appear within a couple of seconds. Visitors read the CDN-cached copy
+// (cleared on every save); staff read straight from storage. Staff skip a poll while they have unsaved moves.
+const POLL_MS = 2000;
+const url = () => staff ? "/api/draft?staff=1" : "/api/draft";
+let fails = 0;
+function setLive(ok){
+  const l = $("live"); if (!l) return;
+  l.hidden = !B.teams.length;
+  l.classList.toggle("off", !ok);
+  l.lastChild.textContent = ok ? "Live" : "Reconnecting…";
+}
 async function poll(){
   if (document.hidden || saving || dirty || dragging) return;
   try {
-    const b = await api("/api/draft");
-    if (b.rev !== B.rev && !saving && !dirty && !dragging) {
+    const b = await api(url());
+    fails = 0; setLive(true);
+    // Only move forward: an older copy (e.g. from a cache that hasn't cleared yet) is ignored
+    if (b.rev > B.rev && !saving && !dirty && !dragging) {
+      const before = new Map(B.teams.flatMap((t, i) => t.players.map(p => [p, i])));
       B = b; if (staff) syncSetup();
       if (sel && where(sel) === undefined) sel = null;
-      render();
+      render(); setLive(true);
+      B.teams.forEach((t, i) => t.players.forEach(p => { if (before.get(p) !== i) flashName(p); }));
     }
-  } catch {}
+  } catch { if (++fails >= 3) setLive(false); }
 }
 
 async function start(){
@@ -396,8 +417,9 @@ async function start(){
     $("who").hidden = false;
     wireEditing();
   } catch { staff = null; }
-  render();
-  setInterval(poll, 10000);
+  if (staff) { try { B = await api(url()); } catch {} }
+  render(); setLive(true);
+  setInterval(poll, POLL_MS);
   document.addEventListener("visibilitychange", () => { if (!document.hidden) poll(); });
 }
 start();
