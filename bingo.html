@@ -1,0 +1,492 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Bingo | Kingdom</title>
+<meta name="description" content="Live clan bingo board: every team's tiles, points and bingos.">
+<meta name="theme-color" content="#080808">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Kingdom">
+<meta property="og:title" content="Kingdom Bingo">
+<meta property="og:description" content="Live clan bingo board: every team's tiles, points and bingos.">
+<meta property="og:url" content="https://kingdomosrs.com/bingo.html">
+<meta property="og:image" content="https://kingdomosrs.com/og.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="icon" type="image/png" href="icon.png">
+<link rel="apple-touch-icon" href="icon.png">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&family=Geist+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#080808;--panel:#121212;--panel2:#1c1c1c;--line:#232323;--line2:#333;--ink:#fff;--mute:#9a9a9a;--dim:#5f5f5f;
+--go:#34a853;--wip:#e8b923;
+--sans:Geist,Inter,system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;--mono:"Geist Mono",ui-monospace,"SF Mono",Menlo,Consolas,monospace;
+color-scheme:dark;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+html{scroll-padding-top:env(safe-area-inset-top,0px);scrollbar-gutter:stable}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.55 var(--sans);-webkit-font-smoothing:antialiased}
+
+/* Nav */
+nav{position:sticky;top:0;z-index:10;display:flex;align-items:center;justify-content:center;gap:2px;padding:12px;border-bottom:1px solid var(--line);background:rgba(8,8,8,.88);-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px)}
+nav a{color:var(--mute);text-decoration:none;padding:6px 14px;font-size:14px;font-weight:500;border-radius:6px;transition:color .15s}
+nav a:hover{color:#fff}
+nav a.on{color:#fff;background:var(--panel2)}
+nav a.navbtn{margin-left:10px;background:#5865F2;color:#fff;font-weight:600;white-space:nowrap}
+nav a.navbtn:hover{background:#4752C4}
+.navsoc{position:absolute;right:16px;top:50%;transform:translateY(-50%);display:flex;gap:2px}
+nav .navsoc a{display:grid;place-items:center;padding:7px}
+.navsoc svg,.fsoc svg{width:18px;height:18px;display:block}
+.navsoc img,.fsoc img{height:18px;width:auto;display:block;opacity:.75;transition:opacity .15s}
+.navsoc a:hover img,.fsoc a:hover img{opacity:1}
+.fsoc{display:none}
+footer a.staff{color:inherit;text-decoration:none}
+footer a.staff:hover{color:#fff}
+.fsoc a{display:grid;place-items:center;padding:8px;color:var(--mute)}
+@media(max-width:960px){.navsoc{position:static;transform:none;margin-left:8px}}
+@media(max-width:760px){nav .navlogo,nav .long{display:none}nav a{white-space:nowrap;padding:6px 10px}}
+.navlogo{height:22px;width:auto;display:block;margin-right:12px}
+@media(max-width:600px){nav{gap:0;padding:10px 4px;justify-content:safe center;overflow-x:auto}nav a{padding:6px 7px;font-size:13px;white-space:nowrap}nav .navlogo,nav .long,.navsoc{display:none}.fsoc{display:flex;justify-content:center;gap:8px;margin:-12px 0 14px}nav a.navbtn{margin-left:4px}}
+
+/* Page title */
+.phero{max-width:1080px;margin:0 auto;padding:64px 20px 0}
+.phero h1{margin:0;font:600 clamp(36px,6vw,56px)/1.05 var(--sans);letter-spacing:-.04em}
+.phero p{margin:14px 0 0;font:500 12px/1.4 var(--mono);letter-spacing:.16em;text-transform:uppercase;color:var(--mute)}
+main{max-width:1080px;margin:0 auto;padding:8px 20px 72px}
+
+/* Section headers, labels, shared bits */
+.sec{margin-top:56px}
+.sech{display:flex;align-items:flex-end;justify-content:space-between;gap:16px;flex-wrap:wrap;padding-bottom:14px;border-bottom:1px solid var(--line2);margin-bottom:20px}
+.sech h2{margin:0;font:600 clamp(22px,3vw,28px)/1.1 var(--sans);letter-spacing:-.03em}
+.sech small{font:500 12px/1 var(--mono);color:var(--mute);letter-spacing:.06em}
+.msg{padding:28px 0;color:var(--mute);font-size:14px}
+.ghost{background:none;border:1px solid var(--line2);border-radius:6px;color:#fff;padding:8px 16px;font:500 13px/1.2 var(--sans);cursor:pointer;transition:border-color .15s}
+.ghost:hover{border-color:#fff}
+.primary{background:#fff;color:#000;border:0;border-radius:6px;padding:9px 18px;font:600 13px/1.2 var(--sans);cursor:pointer}
+.primary:hover{background:#ddd}
+
+footer{text-align:center;padding:28px 20px;color:var(--dim);font:12px/1 var(--mono);letter-spacing:.04em;border-top:1px solid var(--line)}
+
+/* One quiet entrance for the page */
+@keyframes fade{from{opacity:0}to{opacity:1}}
+.phero,main{animation:fade .6s ease both}
+main{animation-delay:.1s}
+@media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+
+/* Live indicator and staff bar */
+.phero p.live{display:inline-flex;align-items:center;gap:8px;margin-top:12px;color:#fff}
+.phero p.live[hidden]{display:none}
+.live i{width:7px;height:7px;border-radius:50%;background:#fff;animation:pulse 2s ease-in-out infinite}
+.live.off{color:var(--dim)}
+.live.off i{background:var(--dim);animation:none}
+@keyframes pulse{50%{opacity:.25}}
+.who{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-top:18px;font-size:14px;color:var(--mute)}
+.who img{width:24px;height:24px;border-radius:50%}
+.who a{color:#fff}
+.save{margin-left:auto;font:500 12px/1 var(--mono);letter-spacing:.06em;color:var(--dim)}
+.save.bad{color:#fff}
+
+/* Staff setup */
+.setup{margin-top:40px;border:1px solid var(--line);border-radius:8px;background:var(--panel)}
+.setup summary{display:flex;align-items:center;justify-content:space-between;padding:16px 20px;cursor:pointer;list-style:none;font-weight:600}
+.setup summary::-webkit-details-marker{display:none}
+.setup summary::after{content:"+";font:400 20px/1 var(--mono);color:var(--mute)}
+.setup[open] summary::after{content:"−"}
+.sgrid{display:grid;gap:18px;padding:4px 20px 20px}
+.lab{display:grid;gap:8px;font:500 11px/1 var(--mono);letter-spacing:.14em;text-transform:uppercase;color:var(--mute)}
+.inp{width:100%;background:var(--bg);border:1px solid var(--line2);border-radius:6px;color:#fff;padding:9px 12px;font:14px/1.4 var(--sans);letter-spacing:0;text-transform:none}
+.inp:focus{outline:none;border-color:#fff}
+select.inp{appearance:none;background-image:linear-gradient(45deg,transparent 50%,#9a9a9a 50%),linear-gradient(135deg,#9a9a9a 50%,transparent 50%);background-position:calc(100% - 17px) 55%,calc(100% - 12px) 55%;background-size:5px 5px;background-repeat:no-repeat;padding-right:32px}
+.tlist{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:8px}
+.trow{display:flex;gap:6px}
+.trow input[type=color]{flex:none;width:38px;height:auto;padding:4px;background:var(--bg);border:1px solid var(--line2);border-radius:6px;cursor:pointer}
+.trow input[type=color]::-webkit-color-swatch-wrapper{padding:0}
+.trow input[type=color]::-webkit-color-swatch{border:0;border-radius:3px}
+.trow input[type=color]::-moz-color-swatch{border:0;border-radius:3px}
+.trow button{flex:none;width:38px;background:none;border:1px solid var(--line2);border-radius:6px;color:var(--mute);font:16px/1 var(--sans);cursor:pointer}
+.trow button:hover{border-color:#fff;color:#fff}
+.srow{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.srow .sp{flex:1}
+.srow p{margin:0;font-size:13px;color:var(--mute)}
+
+/* Team boards */
+.teams{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:16px}
+.team{border:1px solid var(--line);border-radius:10px;background:var(--panel);padding:16px}
+.th{display:flex;align-items:baseline;gap:10px}
+.th b{flex:1;min-width:0;font-size:16px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.th span{flex:none;font:500 13px/1 var(--mono);color:var(--mute)}
+.th span em{font-style:normal;color:#fff}
+.bar{height:6px;margin:10px 0 14px;border-radius:3px;background:var(--line);overflow:hidden}
+.bar i{display:block;height:100%;background:#fff;border-radius:3px;transition:width .4s ease}
+.dot{display:inline-block;width:10px;height:10px;margin-right:9px;border-radius:50%;vertical-align:0}
+.g6{display:grid;grid-template-columns:repeat(5,1fr) .9fr;gap:5px}
+.tt{position:relative;aspect-ratio:1;display:grid;place-items:center;border:1px solid var(--line2);border-radius:6px;background:var(--panel2);transition:background .2s,border-color .2s}
+.tt img{width:62%;height:62%;object-fit:contain;image-rendering:pixelated}
+.tt img.cust,.tile img.cust{image-rendering:auto;border-radius:4px}
+.tt .ab{font:600 12px/1 var(--mono);color:var(--mute)}
+.tt.s1{border-color:var(--wip);background:rgba(232,185,35,.16)}
+.tt.s2{border-color:var(--go);background:rgba(52,168,83,.55)}
+.tt.s2::after{content:"✓";position:absolute;top:2px;right:4px;font:700 10px/1 var(--sans);color:#fff}
+.edit .tt{cursor:pointer}
+.edit .tt:hover{border-color:#fff}
+.bg{display:grid;place-items:center;border:1px solid var(--line2);border-radius:6px;font:600 9px/1 var(--mono);letter-spacing:.08em;color:var(--dim);min-height:22px;transition:all .3s}
+.bg.on{border-color:var(--go);color:#fff;background:rgba(52,168,83,.25);box-shadow:0 0 12px rgba(52,168,83,.55),inset 0 0 8px rgba(52,168,83,.35);text-shadow:0 0 6px rgba(52,168,83,.9)}
+.tf{margin-top:12px;font:500 11px/1.4 var(--mono);letter-spacing:.06em;color:var(--dim)}
+.legend{display:flex;gap:16px;flex-wrap:wrap;font-size:13px;color:var(--mute)}
+.legend span{display:inline-flex;align-items:center;gap:7px}
+.legend i{width:12px;height:12px;border-radius:3px;border:1px solid var(--line2);background:var(--panel2)}
+.legend i.s1{border-color:var(--wip);background:rgba(232,185,35,.16)}
+.legend i.s2{border-color:var(--go);background:rgba(52,168,83,.55)}
+
+/* Tile list (the board itself) */
+.board{display:grid;grid-template-columns:repeat(5,1fr);gap:8px}
+.tile{position:relative;display:flex;flex-direction:column;align-items:center;gap:8px;padding:16px 8px 12px;border:1px solid var(--line);border-radius:8px;background:var(--panel);text-align:center;min-width:0}
+.tile img{width:54px;height:54px;object-fit:contain;image-rendering:pixelated}
+.tile .ab{width:54px;height:54px;display:grid;place-items:center;font:600 18px/1 var(--mono);color:var(--mute);border:1px dashed var(--line2);border-radius:6px}
+.tile b{font-size:13px;font-weight:600;line-height:1.25;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;overflow-wrap:anywhere}
+.tile small{font:500 11px/1 var(--mono);color:var(--mute)}
+.tile .no{position:absolute;top:6px;left:8px;font:500 10px/1 var(--mono);color:var(--dim)}
+.tile.blank b{color:var(--dim);font-weight:500}
+.edit .tile{cursor:pointer;transition:border-color .15s}
+.edit .tile:hover{border-color:var(--line2)}
+.tile.sel{border-color:#fff;background:var(--panel2)}
+@media(max-width:600px){.board{gap:4px}.tile{padding:10px 2px 8px;gap:5px}.tile img,.tile .ab{width:36px;height:36px}.tile b{font-size:10px}.tile small{font-size:9px}.tile .no{display:none}}
+
+/* Tile editor */
+.ted{display:grid;grid-template-columns:1.4fr 1.4fr 110px auto;gap:12px;align-items:end;margin-top:16px;padding:16px;border:1px solid #fff;border-radius:8px;background:var(--panel)}
+.ted h3{grid-column:1/-1;margin:0;font-size:15px;font-weight:600}
+.ted h3 span{margin-left:8px;font:500 12px/1 var(--mono);color:var(--mute)}
+.ted .acts{display:flex;gap:6px}
+.eimg{grid-column:1/-1;display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.eimg img,.eimg .ph{width:54px;height:54px;object-fit:contain;border:1px solid var(--line2);border-radius:6px;background:var(--bg)}
+.eimg .ph{display:grid;place-items:center;font:500 10px/1 var(--mono);color:var(--dim)}
+.upl{position:relative;overflow:hidden}
+.upl input{position:absolute;inset:0;opacity:0;cursor:pointer}
+.eimg p{margin:0;font-size:13px;color:var(--mute)}
+@media(max-width:760px){.ted{grid-template-columns:1fr 1fr}.ted .wide{grid-column:1/-1}}
+</style>
+</head>
+<body>
+<nav><img class="navlogo" alt="" src="data:image/png;base64,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"><a href="/">Home</a><a href="about.html">About Us</a><a href="members.html">Members</a><a href="bosses.html">Bosses</a><a href="events.html">Events</a><a class="on" href="bingo.html">Bingo</a><a href="draft.html"><span class="long">Bingo </span>Draft</a><a class="navbtn" href="https://discord.gg/kingdomclan">Apply<span class="long"> on Discord</span></a><span class="navsoc"><a href="https://x.com/Kingdom_OSRS" target="_blank" rel="noopener" aria-label="Kingdom on X (Twitter)" title="X (Twitter)"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg></a><a href="https://wiseoldman.net/groups/1152" target="_blank" rel="noopener" aria-label="Kingdom on Wise Old Man" title="Wise Old Man"><img src="wom.png" alt=""></a><a href="https://templeosrs.com/groups/overview.php?id=1710" target="_blank" rel="noopener" aria-label="Kingdom on TempleOSRS" title="TempleOSRS"><img src="temple.png" alt=""></a></span></nav>
+<header class="phero">
+  <h1 id="title">Bingo</h1>
+  <p id="sub">Teams · Tiles</p>
+  <p class="live" id="live" hidden><i></i><span>Live</span></p>
+  <div class="who" id="who" hidden></div>
+</header>
+<main id="main">
+  <details class="setup" id="setup" hidden>
+    <summary>Bingo setup</summary>
+    <div class="sgrid">
+      <label class="lab">Bingo name<input class="inp" id="bname" maxlength="60" placeholder="e.g. Winter Bingo 2026"></label>
+      <div class="lab">Teams<div class="tlist" id="tlist"></div></div>
+      <div class="srow"><button class="ghost" id="addteam" type="button">Add team</button><button class="ghost" id="drafteams" type="button">Use Bingo Draft teams</button><p id="setmsg"></p><span class="sp"></span>
+        <button class="ghost" id="resetbtn" type="button">Reset all progress</button><button class="ghost" id="clearbtn" type="button">Clear board</button></div>
+    </div>
+  </details>
+  <div id="out"><div class="msg">Loading the bingo board…</div></div>
+</main>
+<footer><span class="fsoc"><a href="https://x.com/Kingdom_OSRS" target="_blank" rel="noopener" aria-label="Kingdom on X (Twitter)" title="X (Twitter)"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg></a><a href="https://wiseoldman.net/groups/1152" target="_blank" rel="noopener" aria-label="Kingdom on Wise Old Man" title="Wise Old Man"><img src="wom.png" alt=""></a><a href="https://templeosrs.com/groups/overview.php?id=1710" target="_blank" rel="noopener" aria-label="Kingdom on TempleOSRS" title="TempleOSRS"><img src="temple.png" alt=""></a></span>Kingdom · <a class="staff" href="admin.html">Staff</a></footer>
+
+<script>
+// Every boss Wise Old Man tracks (same list as the Bosses page). Names that don't title-case nicely are spelled out in NAMES.
+const BOSSES = ["abyssal_sire","alchemical_hydra","amoxliatl","araxxor","artio","barrows_chests","brutus","bryophyta","callisto","calvarion","cerberus","chambers_of_xeric","chambers_of_xeric_challenge_mode","chaos_elemental","chaos_fanatic","commander_zilyana","corporeal_beast","crazy_archaeologist","dagannoth_prime","dagannoth_rex","dagannoth_supreme","deranged_archaeologist","doom_of_mokhaiotl","duke_sucellus","general_graardor","giant_mole","grotesque_guardians","hespori","kalphite_queen","king_black_dragon","kraken","kreearra","kril_tsutsaroth","lunar_chests","mad_angel","maggot_king","mimic","nex","nightmare","phosanis_nightmare","obor","phantom_muspah","sarachnis","scorpia","scurrius","shellbane_gryphon","skotizo","sol_heredit","spindel","tempoross","the_gauntlet","the_corrupted_gauntlet","the_fractured_archive","the_hueycoatl","the_leviathan","the_royal_titans","the_whisperer","theatre_of_blood","theatre_of_blood_hard_mode","thermonuclear_smoke_devil","tombs_of_amascut","tombs_of_amascut_expert","tzkal_zuk","tztok_jad","vardorvis","venenatis","vetion","vorkath","wintertodt","yama","zalcano","zulrah"];
+const NAMES = {
+  chambers_of_xeric_challenge_mode: "Chambers of Xeric (CM)", theatre_of_blood_hard_mode: "Theatre of Blood (HM)",
+  tombs_of_amascut_expert: "Tombs of Amascut (Expert)", kreearra: "Kree'arra", kril_tsutsaroth: "K'ril Tsutsaroth",
+  vetion: "Vet'ion", tzkal_zuk: "TzKal-Zuk", tztok_jad: "TzTok-Jad", nightmare: "The Nightmare",
+  phosanis_nightmare: "Phosani's Nightmare", mimic: "The Mimic"
+};
+const title = k => NAMES[k] || k.split("_").map((w,i) => (i && ["of","the","and"].includes(w)) ? w : w.charAt(0).toUpperCase() + w.slice(1)).join(" ");
+const icon = k => `https://cdn.jsdelivr.net/gh/wise-old-man/wise-old-man@master/app/public/img/metrics/${k}.png`;
+const LIST = BOSSES.map(k => ({k, name: title(k)})).sort((a, b) => a.name.replace(/^The /, "").localeCompare(b.name.replace(/^The /, "")));
+
+const $ = id => document.getElementById(id);
+const esc = s => String(s).replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const num = n => Math.round(n).toLocaleString();
+const STATE = ["Not started", "In progress", "Completed"];
+const LINES = [0,1,2,3,4].flatMap(i => [[0,1,2,3,4].map(c => i * 5 + c), [0,1,2,3,4].map(r => r * 5 + i)]);   // rows and columns
+const blank = () => ({ boss: "", img: "", name: "", points: 0 });
+// Default team colours, handed out in order (same list as the server)
+const COLORS = ["#e5484d", "#3e63dd", "#30a46c", "#f5d90a", "#8e4ec6", "#f76b15", "#12a594", "#d6409f"];
+const colorOf = (team, i) => team.color || COLORS[i % COLORS.length];
+
+let B = null;          // the board: { rev, title, tiles:[25 × {boss, name, points}], teams:[{name, s}], updated, by }
+let staff = null;      // logged-in staff member, or null for visitors
+let selTile = null;    // tile open in the editor
+let dirty = false, saving = false;
+
+const api = async (path, opts = {}) => {
+  const r = await fetch(path, { credentials: "same-origin", cache: "no-store", ...opts });
+  const body = await r.json().catch(() => ({}));
+  if (!r.ok) { const e = new Error(body.error || "HTTP " + r.status); e.status = r.status; e.body = body; throw e; }
+  return body;
+};
+
+// ---------- Scoring ----------
+const tileName = t => t.name || (t.boss ? title(t.boss) : "");
+const isBlank = t => !t.boss && !t.name;
+const total = () => B.tiles.reduce((a, t) => a + t.points, 0);
+const score = team => B.tiles.reduce((a, t, i) => a + (team.s[i] === "2" ? t.points : 0), 0);
+const rowDone = (team, r) => [0,1,2,3,4].every(c => team.s[r * 5 + c] === "2");
+const colDone = (team, c) => [0,1,2,3,4].every(r => team.s[r * 5 + c] === "2");
+const bingos = team => LINES.filter(l => l.every(i => team.s[i] === "2")).length;
+const initials = n => n.split(/\s+/).filter(Boolean).slice(0, 2).map(w => w[0]).join("").toUpperCase() || "?";
+// A tile's picture: the boss icon, the uploaded image for a custom tile, or the tile's initials
+const imgUrl = id => "/api/bingo/images/" + id;
+const face = (t, empty) => t.boss ? `<img src="${icon(t.boss)}" alt="" loading="lazy">`
+  : t.img ? `<img class="cust" src="${imgUrl(t.img)}" alt="" loading="lazy">`
+  : `<span class="ab">${isBlank(t) ? empty : esc(initials(t.name))}</span>`;
+
+// ---------- Rendering ----------
+function teamTile(team, ti, i){
+  const t = B.tiles[i], st = +team.s[i];
+  const tip = `${tileName(t) || "Empty tile"} · ${t.points} pts · ${STATE[st]}`;
+  return `<div class="tt s${st}" title="${esc(tip)}" data-team="${ti}" data-i="${i}">${face(t, "")}</div>`;
+}
+
+function teamCard(team, ti){
+  const pts = score(team), tot = total(), pct = tot ? Math.min(100, pts / tot * 100) : 0;
+  const cells = [];
+  for (let r = 0; r < 5; r++) {
+    for (let c = 0; c < 5; c++) cells.push(teamTile(team, ti, r * 5 + c));
+    cells.push(`<div class="bg${rowDone(team, r) ? " on" : ""}">BINGO</div>`);
+  }
+  for (let c = 0; c < 5; c++) cells.push(`<div class="bg${colDone(team, c) ? " on" : ""}">BINGO</div>`);
+  const done = [...team.s].filter(x => x === "2").length, wip = [...team.s].filter(x => x === "1").length, bn = bingos(team);
+  const color = colorOf(team, ti);
+  return `<section class="team">
+    <div class="th"><b><i class="dot" style="background:${color}"></i>${esc(team.name)}</b><span><em>${num(pts)}</em> / ${num(tot)}</span></div>
+    <div class="bar"><i style="width:${pct}%;background:${color}"></i></div>
+    <div class="g6">${cells.join("")}</div>
+    <div class="tf">${done} done · ${wip} in progress · ${bn} bingo${bn === 1 ? "" : "s"}</div>
+  </section>`;
+}
+
+function boardTile(t, i){
+  const done = B.teams.filter(team => team.s[i] === "2").length;
+  return `<div class="tile${isBlank(t) ? " blank" : ""}${selTile === i ? " sel" : ""}" data-tile="${i}"><span class="no">${i + 1}</span>${face(t, "+")}
+    <b>${isBlank(t) ? (staff ? "Pick a boss" : "Empty") : esc(tileName(t))}</b>
+    <small>${t.points} pts${B.teams.length ? ` · ${done}/${B.teams.length}` : ""}</small></div>`;
+}
+
+function editor(){
+  if (selTile == null) return "";
+  const t = B.tiles[selTile];
+  return `<div class="ted" id="ted">
+    <h3>Tile ${selTile + 1}<span>${t.points} pts</span></h3>
+    <label class="lab wide">Boss<select class="inp" id="eboss"><option value="">Custom tile (no boss)</option>
+      ${LIST.map(b => `<option value="${b.k}"${b.k === t.boss ? " selected" : ""}>${esc(b.name)}</option>`).join("")}</select></label>
+    <label class="lab wide">Tile name<input class="inp" id="ename" maxlength="40" value="${esc(t.name)}" placeholder="${esc(t.boss ? title(t.boss) : "e.g. Any pet")}"></label>
+    <label class="lab">Points<input class="inp" id="epts" type="number" min="0" max="9999" step="1" value="${t.points}"></label>
+    <div class="acts"><button class="ghost" id="eclear" type="button">Clear</button><button class="primary" id="edone" type="button">Done</button></div>
+    ${t.boss ? "" : `<div class="eimg">${t.img ? `<img src="${imgUrl(t.img)}" alt="">` : '<span class="ph">No image</span>'}
+      <label class="ghost upl">${t.img ? "Replace image" : "Upload image"}<input type="file" id="efile" accept="image/png,image/jpeg,image/webp"></label>
+      ${t.img ? '<button class="ghost" id="eimgdel" type="button">Remove image</button>' : ""}
+      <p id="eimgmsg">PNG, JPG or WebP. Square images look best.</p></div>`}
+  </div>`;
+}
+
+function render(){
+  const edit = !!staff, tot = total();
+  document.body.classList.toggle("edit", edit);
+  $("title").textContent = B.title || "Bingo";
+  document.title = (B.title || "Bingo") + " | Kingdom";
+  const used = B.tiles.filter(t => !isBlank(t)).length;
+  $("sub").textContent = used
+    ? `${B.teams.length} team${B.teams.length === 1 ? "" : "s"} · ${used} tiles · ${num(tot)} points`
+    : "Teams · Tiles";
+
+  if (!used && !edit) {
+    $("out").innerHTML = '<div class="msg">No bingo is running right now. Check back when the next bingo is announced.</div>';
+    return;
+  }
+  const teams = B.teams.length
+    ? `<div class="teams">${B.teams.map(teamCard).join("")}</div>`
+    : `<div class="msg">${edit ? "Add teams in Bingo setup above." : "Teams haven't been picked yet."}</div>`;
+
+  $("out").innerHTML = `
+    <section class="sec">
+      <div class="sech"><h2>Teams</h2><div class="legend"><span><i></i>Not started</span><span><i class="s1"></i>In progress</span><span><i class="s2"></i>Completed</span></div></div>
+      ${edit && B.teams.length ? '<p class="msg" style="padding:0 0 14px">Click a team\'s tile to change it: not started → in progress → completed.</p>' : ""}
+      ${teams}
+    </section>
+    <section class="sec">
+      <div class="sech"><h2>Tiles</h2><small>${edit ? "Click a tile to set its boss, name and points" : `${num(tot)} points on the board`}</small></div>
+      <div class="board">${B.tiles.map(boardTile).join("")}</div>
+      ${edit ? editor() : ""}
+    </section>`;
+  setLive(true);
+}
+
+// ---------- Editing (staff only) ----------
+function setStatus(t, bad){ const s = $("savestate"); if (s) { s.textContent = t; s.className = "save" + (bad ? " bad" : ""); } }
+
+// Saves run one at a time; changes made while a save is in flight go out in the next one
+function save(){ dirty = true; if (!saving) flush(); }
+async function flush(){
+  saving = true;
+  while (dirty) {
+    dirty = false; setStatus("Saving…");
+    try {
+      const res = await api("/api/bingo", { method: "PUT", headers: { "content-type": "application/json" },
+        body: JSON.stringify({ rev: B.rev, title: B.title, tiles: B.tiles, teams: B.teams }) });
+      B.rev = res.rev; B.updated = res.updated; B.by = res.by;
+      if (!dirty) setStatus("Saved");
+    } catch (e) {
+      dirty = false;
+      if (e.status === 409 && e.body.board) { B = e.body.board; render(); syncSetup(); setStatus(e.message, true); }
+      else if (e.status === 401) setStatus("Your login expired. Log in again from the Staff page.", true);
+      else setStatus("Couldn't save: " + e.message, true);
+    }
+  }
+  saving = false;
+}
+
+function syncSetup(){
+  if (document.activeElement !== $("bname")) $("bname").value = B.title;
+  if ($("tlist").contains(document.activeElement)) return;
+  $("tlist").innerHTML = B.teams.map((t, i) => `<div class="trow"><input type="color" data-tc="${i}" value="${colorOf(t, i)}" title="Team colour" aria-label="Team ${i + 1} colour"><input class="inp" data-tn="${i}" maxlength="40" value="${esc(t.name)}" aria-label="Team ${i + 1} name"><button type="button" data-tdel="${i}" title="Remove team" aria-label="Remove team">×</button></div>`).join("")
+    || '<p class="msg" style="padding:0">No teams yet.</p>';
+}
+
+// Custom tile images are shrunk in the browser (tiles show them small) and uploaded, then the tile keeps the image's id
+async function shrinkImage(file){
+  const img = await createImageBitmap(file), MAX = 256;
+  const s = Math.min(1, MAX / Math.max(img.width, img.height)), c = document.createElement("canvas");
+  c.width = Math.max(1, Math.round(img.width * s)); c.height = Math.max(1, Math.round(img.height * s));
+  c.getContext("2d").drawImage(img, 0, 0, c.width, c.height);
+  const blob = await new Promise(res => c.toBlob(res, "image/webp", 0.9));
+  return blob && blob.type === "image/webp" ? blob : await new Promise(res => c.toBlob(res, "image/png"));
+}
+async function uploadImage(i, file){
+  if (!file) return;
+  const msg = () => $("eimgmsg");
+  if (msg()) msg().textContent = "Uploading…";
+  try {
+    const fd = new FormData(); fd.append("file", await shrinkImage(file), "tile");
+    const { id } = await api("/api/bingo/images", { method: "POST", body: fd });
+    B.tiles[i].boss = ""; B.tiles[i].img = id;
+    render(); save();
+  } catch (e) {
+    if (msg()) msg().textContent = e.status === 401 ? "Your login expired. Log in again from the Staff page." : "Couldn't upload: " + e.message;
+  }
+}
+
+function addTeam(name){
+  if (B.teams.length >= 16) return;
+  B.teams.push({ name: name || "Team " + (B.teams.length + 1), color: COLORS[B.teams.length % COLORS.length], s: "0".repeat(25) });
+}
+
+function wireEditing(){
+  $("setup").hidden = false;
+  if (!B.teams.length) $("setup").open = true;
+  syncSetup();
+
+  $("bname").addEventListener("change", () => { B.title = $("bname").value.trim().slice(0, 60); render(); save(); });
+  $("addteam").addEventListener("click", () => { addTeam(); syncSetup(); render(); save(); });
+  $("tlist").addEventListener("change", e => {
+    const { tn, tc } = e.target.dataset;
+    if (tc != null) { B.teams[tc].color = e.target.value; render(); save(); return; }
+    if (tn == null) return;
+    B.teams[tn].name = e.target.value.trim().slice(0, 40) || "Team " + (+tn + 1); render(); save();
+  });
+  $("tlist").addEventListener("click", e => {
+    const i = e.target.dataset.tdel; if (i == null) return;
+    const t = B.teams[i];
+    if (/[12]/.test(t.s) && !confirm(`Remove ${t.name}? Their progress will be lost.`)) return;
+    B.teams.splice(i, 1); syncSetup(); render(); save();
+  });
+  $("drafteams").addEventListener("click", async () => {
+    try {
+      const d = await api("/api/draft?staff=1");
+      if (!d.teams.length) { $("setmsg").textContent = "The Bingo Draft has no teams yet."; return; }
+      if (B.teams.length && !confirm(`Replace the ${B.teams.length} teams here with the ${d.teams.length} from the Bingo Draft? Progress is kept for teams with the same name.`)) return;
+      const old = new Map(B.teams.map((t, i) => [t.name.toLowerCase(), { ...t, color: colorOf(t, i) }]));
+      B.teams = d.teams.map((t, i) => { const o = old.get(t.name.toLowerCase());
+        return { name: t.name, color: o ? o.color : COLORS[i % COLORS.length], s: o ? o.s : "0".repeat(25) }; });
+      $("setmsg").textContent = `Using ${d.teams.length} teams from the Bingo Draft.`;
+      syncSetup(); render(); save();
+    } catch (e) { $("setmsg").textContent = "Couldn't load the Bingo Draft: " + e.message; }
+  });
+  $("resetbtn").addEventListener("click", () => {
+    if (!confirm("Reset every team's tiles back to not started?")) return;
+    B.teams.forEach(t => t.s = "0".repeat(25)); render(); save();
+  });
+  $("clearbtn").addEventListener("click", () => {
+    if (!confirm("Clear the whole board? This removes every tile, team and all progress.")) return;
+    B.title = ""; B.tiles = Array.from({ length: 25 }, blank); B.teams = []; selTile = null; syncSetup(); render(); save();
+  });
+
+  const out = $("out");
+  out.addEventListener("click", e => {
+    // Team tile: cycle not started → in progress → completed
+    const tt = e.target.closest(".tt[data-team]");
+    if (tt) {
+      const team = B.teams[tt.dataset.team], i = +tt.dataset.i;
+      team.s = team.s.slice(0, i) + ((+team.s[i] + 1) % 3) + team.s.slice(i + 1);
+      render(); save(); return;
+    }
+    const tile = e.target.closest(".tile[data-tile]");
+    if (tile) { const i = +tile.dataset.tile; selTile = selTile === i ? null : i; render(); if (selTile != null) $("ted").scrollIntoView({ block: "nearest", behavior: "smooth" }); return; }
+    if (e.target.id === "edone") { selTile = null; render(); }
+    if (e.target.id === "eclear" && confirm(`Clear tile ${selTile + 1}?`)) { B.tiles[selTile] = blank(); render(); save(); }
+    if (e.target.id === "eimgdel") { B.tiles[selTile].img = ""; render(); save(); }
+  });
+  out.addEventListener("change", e => {
+    if (selTile == null) return;
+    const t = B.tiles[selTile];
+    if (e.target.id === "efile") { uploadImage(selTile, e.target.files[0]); return; }
+    if (e.target.id === "eboss") { t.boss = e.target.value; if (t.boss) t.img = ""; }
+    else if (e.target.id === "ename") t.name = e.target.value.trim().slice(0, 40);
+    else if (e.target.id === "epts") t.points = Math.max(0, Math.min(9999, Math.round(+e.target.value) || 0));
+    else return;
+    render(); save();
+  });
+  document.addEventListener("keydown", e => { if (e.key === "Escape" && selTile != null) { selTile = null; render(); } });
+}
+
+// ---------- Live updates ----------
+// Everyone watching sees tiles change within a few seconds. Visitors read the CDN-cached copy
+// (cleared on every save); staff read straight from storage. Staff skip a poll while they have unsaved changes.
+const POLL_MS = 3000;
+const url = () => staff ? "/api/bingo?staff=1" : "/api/bingo";
+let fails = 0;
+function setLive(ok){
+  const l = $("live"); if (!l) return;
+  l.hidden = !B.teams.length;
+  l.classList.toggle("off", !ok);
+  l.lastChild.textContent = ok ? "Live" : "Reconnecting…";
+}
+async function poll(){
+  if (document.hidden || saving || dirty) return;
+  // Don't redraw under a staff member who's typing in the tile editor
+  if (staff && $("ted")?.contains(document.activeElement)) return;
+  try {
+    const b = await api(url());
+    fails = 0; setLive(true);
+    // Only move forward: an older copy (e.g. from a cache that hasn't cleared yet) is ignored
+    if (b.rev > B.rev && !saving && !dirty) { B = b; if (staff) syncSetup(); render(); }
+  } catch { if (++fails >= 3) setLive(false); }
+}
+
+async function start(){
+  try { B = await api("/api/bingo"); }
+  catch { $("out").innerHTML = '<div class="msg">Couldn\'t load the bingo board. Try refreshing.</div>'; return; }
+  try {
+    staff = await api("/api/me");
+    $("who").innerHTML = (staff.avatar ? `<img src="https://cdn.discordapp.com/avatars/${staff.id}/${staff.avatar}.png?size=48" alt="">` : "")
+      + `Editing as <b>${esc(staff.name)}</b> · <a href="admin.html">Staff console</a> · <a href="/auth/logout">Log out</a><span class="save" id="savestate"></span>`;
+    $("who").hidden = false;
+    try { B = await api(url()); } catch {}
+    wireEditing();
+  } catch { staff = null; }
+  render();
+  setInterval(poll, POLL_MS);
+  document.addEventListener("visibilitychange", () => { if (!document.hidden) poll(); });
+}
+start();
+</script>
+</body>
+</html>
