@@ -568,7 +568,7 @@ const fmtH = v => (Math.round(v * 10) / 10).toLocaleString(undefined, { minimumF
 function leaderboards(){
   const ehbBox = B.track || staff ? ehbBoard() : "";
   return `<section class="sec">
-    <div class="sech"><h2>Leaderboards</h2><small>EHB gained during the bingo · MVPs by approved drops</small></div>
+    <div class="sech"><h2>Leaderboards</h2><small>EHB gained during the bingo · MVPs by points from approved drops</small></div>
     <div class="lbs${ehbBox ? "" : " one"}">${ehbBox}${mvpBoard()}</div>
   </section>`;
 }
@@ -600,11 +600,12 @@ function mvpBoard(){
     const r = by.get(k) || { name: d.player, team: d.team, drops: 0, pts: 0 };
     r.drops++; r.pts += t ? t.points / need(t) : 0; by.set(k, r);
   });
-  const rows = [...by.values()].sort((a, b) => b.drops - a.drops || b.pts - a.pts);
+  // Most points first; drops break ties
+  const rows = [...by.values()].sort((a, b) => b.pts - a.pts || b.drops - a.drops);
   const shown = lbAll.mvp ? rows : rows.slice(0, 10);
-  return `<div class="lb"><div class="lbh"><b>MVP</b><span>approved drops</span></div>
+  return `<div class="lb"><div class="lbh"><b>MVP</b><span>points from approved drops</span></div>
     ${shown.map((r, i) => `<div class="lbr"><span class="rk">${i + 1}</span><span class="nm">${teamDot(B.teams.find(t => t.name === r.team))}${pname(r.name)}</span>
-      <span class="v">${r.drops} <small>drop${r.drops === 1 ? "" : "s"} · ${Math.round(r.pts)} pts</small></span></div>`).join("")
+      <span class="v">${Math.round(r.pts).toLocaleString()} <small>pts · ${r.drops} drop${r.drops === 1 ? "" : "s"}</small></span></div>`).join("")
       || '<div class="msg">Approved drops will rank players here.</div>'}
     ${rows.length > 10 ? `<button class="ghost sm more" type="button" data-lball="mvp">${lbAll.mvp ? "Top 10 only" : `Show all ${rows.length}`}</button>` : ""}</div>`;
 }
