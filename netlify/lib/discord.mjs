@@ -17,6 +17,17 @@ export function lines(board, team){
   return out;
 }
 
+// The team's score against everything on the board (tile points + every possible bingo), as on the Bingo page
+function standing(board, team){
+  const bonus = board.bonus ?? 25, done = i => team.p[i] >= (board.tiles[i]?.need || 1);
+  const tiles = board.tiles.filter((t, i) => done(i)).length, bingos = lines(board, team).length;
+  const pts = board.tiles.reduce((a, t, i) => a + (done(i) ? t.points || 0 : 0), 0) + bingos * bonus;
+  const total = board.tiles.reduce((a, t) => a + (t.points || 0), 0) + 10 * bonus;
+  const pct = total ? Math.min(100, Math.round(pts / total * 100)) : 0, filled = Math.round(pct / 10);
+  const bar = "🟩".repeat(filled) + "⬛".repeat(10 - filled);
+  return `${bar} **${pct}%**\n${pts.toLocaleString("en-US")} / ${total.toLocaleString("en-US")} pts · ${tiles} tile${tiles === 1 ? "" : "s"} done · ${bingos} bingo${bingos === 1 ? "" : "s"}`;
+}
+
 // Never throws: a Discord hiccup mustn't stop the approval going through
 export async function announceDrop({ board, team, sub, newLines }){
   const url = env("DISCORD_BINGO_WEBHOOK");
@@ -29,11 +40,13 @@ export async function announceDrop({ board, team, sub, newLines }){
     { name: "Logged by", value: sub.by.name, inline: true }
   ];
   if (newLines.length) fields.push({ name: "BINGO!", value: `${newLines.join(", ")} complete · +${board.bonus ?? 25} pts each` });
+  fields.push({ name: `${team.name} progress`.slice(0, 256), value: standing(board, team) });
   const embed = {
     title: `${sub.player} received ${sub.item}`.slice(0, 256),
     url: SITE,
     description: `**${team.name}**${board.title ? ` · ${board.title}` : ""}`,
-    color: parseInt((team.color || "#ffffff").slice(1), 16),
+    // The bar down the left side: green once the drop completes the tile, yellow while it's still in progress
+    color: v >= need ? 0x34a853 : 0xe8b923,
     fields,
     timestamp: new Date(sub.t).toISOString(),
     footer: { text: "Kingdom Bingo" }
