@@ -1,5 +1,5 @@
 // /api/bingo
-//   GET  anyone: the bingo board (25 tiles, each with a boss or custom image, name, points and how many completions it needs),
+//   GET  anyone: the bingo board (25 tiles, each with a boss or custom image, name, description, points and how many completions it needs),
 //        the bonus points per bingo, and every team's colour and progress
 //        Served from Netlify's CDN cache so viewers can check every few seconds for free;
 //        every save clears that cache. ?staff=1 skips the cache.
@@ -17,7 +17,7 @@ const SIZE = 25, MAX_TEAMS = 16;
 const COLORS = ["#e5484d", "#3e63dd", "#30a46c", "#f5d90a", "#8e4ec6", "#f76b15", "#12a594", "#d6409f"];
 const COLOR = /^#[0-9a-f]{6}$/i;
 const MAX_NEED = 99;
-const blankTile = () => ({ boss: "", img: "", name: "", points: 0, need: 1 });
+const blankTile = () => ({ boss: "", img: "", name: "", desc: "", points: 0, need: 1 });
 const BONUS = 25;   // default points for each completed row or column
 const EMPTY = { rev: 0, title: "", bonus: BONUS, tiles: Array.from({ length: SIZE }, blankTile), teams: [], updated: 0, by: "" };
 
@@ -57,7 +57,7 @@ function clean(body){
     if (img && !IMAGE_ID.test(img)) return "Bad tile image.";
     const need = t?.need == null ? 1 : Number(t.need);
     if (!Number.isInteger(need) || need < 1 || need > MAX_NEED) return `Completions needed must be from 1 to ${MAX_NEED}.`;
-    tiles.push({ boss, img, name: text(t?.name, 40), points, need });
+    tiles.push({ boss, img, name: text(t?.name, 40), desc: text(t?.desc, 80), points, need });
   }
   const teams = [];
   for (const [i, t] of body.teams.entries()) {
