@@ -246,7 +246,7 @@ textarea.inp{resize:vertical;min-height:96px;font:13px/1.5 var(--mono)}
 .mine{display:grid;gap:4px;margin-top:20px}
 .mine h3{margin:0 0 6px;font-size:15px;font-weight:600}
 .mr{display:flex;align-items:center;gap:12px;padding:8px 0;border-bottom:1px solid var(--line);font-size:14px}
-.mr span{flex:1;min-width:0}
+.mr > span:first-child{flex:1;min-width:0}
 .mr small{font:500 11px/1 var(--mono);color:var(--dim);white-space:nowrap}
 
 /* Collapsible tiles and the drop log */
@@ -619,7 +619,8 @@ async function flush(){
     try {
       const res = await api("/api/bingo", { method: "PUT", headers: { "content-type": "application/json" },
         body: JSON.stringify({ rev: B.rev, title: B.title, bonus: bonus(), tiles: B.tiles, teams: B.teams, clearLog }) });
-      clearLog = false;
+      // A reset also cleared every submitted drop on the server, so refresh the pending and "your drops" lists
+      if (clearLog) { clearLog = false; loadSubs(); }
       B.rev = res.rev; B.updated = res.updated; B.by = res.by; B.log = res.log;
       // A newly picked boss brings its item list back with the save; show it in the open tile editor
       const newItems = JSON.stringify(res.items) !== JSON.stringify(B.items);
@@ -732,11 +733,11 @@ function wireEditing(){
     } catch (e) { $("setmsg").textContent = "Couldn't load the Bingo Draft: " + e.message; }
   });
   $("resetbtn").addEventListener("click", () => {
-    if (!confirm("Reset every team's tiles back to not started? This also empties the drop log.")) return;
+    if (!confirm("Reset every team's tiles back to not started? This also empties the drop log and clears every submitted drop, including any waiting for approval.")) return;
     B.teams.forEach(t => t.p = Array(25).fill(0)); B.log = []; clearLog = true; render(); save();
   });
   $("clearbtn").addEventListener("click", () => {
-    if (!confirm("Clear the whole board? This removes every tile, team, all progress and the drop log.")) return;
+    if (!confirm("Clear the whole board? This removes every tile, team, all progress, the drop log and every submitted drop.")) return;
     B.log = []; clearLog = true;
     B.title = ""; B.bonus = 25; B.tiles = Array.from({ length: 25 }, blank); B.teams = []; selTile = null; syncSetup(); render(); save();
   });

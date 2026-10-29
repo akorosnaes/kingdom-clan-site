@@ -4,9 +4,10 @@
 //        Served from Netlify's CDN cache so viewers can check every few seconds for free;
 //        every save clears that cache. ?staff=1 skips the cache.
 //   PUT  staff:  save the whole board. Send back the "rev" you loaded; if someone else saved since, you get 409 and the latest board.
-//        The drop log isn't sent back: it only changes through drop approvals, or { clearLog: true } to empty it.
+//        The drop log isn't sent back: it only changes through drop approvals, or { clearLog: true } to empty it
+//        (used by "Reset all progress" and "Clear board"), which also clears every submitted drop.
 import { getStaff, json, sameOrigin } from "../lib/auth.mjs";
-import { BONUS, CACHE_TAG, IMAGE_ID, imageKey, itemsFor, MAX_ITEMS, readBoard, readItemEdits, saveBoard, SIZE, store, text } from "../lib/bingo.mjs";
+import { BONUS, CACHE_TAG, IMAGE_ID, imageKey, itemsFor, MAX_ITEMS, readBoard, readItemEdits, saveBoard, SIZE, store, text, writeSubs } from "../lib/bingo.mjs";
 
 const CDN_CACHE = { "cache-control": "public, max-age=0, must-revalidate",
   "netlify-cdn-cache-control": "public, durable, s-maxage=60", "cache-tag": CACHE_TAG, "netlify-vary": "query" };
@@ -78,6 +79,7 @@ export default async req => {
   const cur = await readBoard(s);
   if (body.rev !== cur.rev) return json({ error: "Someone else changed the bingo board. Showing the latest version.", board: await withItems(cur, s) }, 409);
   const next = await saveBoard({ ...board, rev: cur.rev, log: body.clearLog ? [] : cur.log }, staff.name, s);
+  if (body.clearLog) await writeSubs([], s);
   // Delete custom images the board no longer uses
   const kept = new Set(next.tiles.map(t => t.img));
   await Promise.all(cur.tiles.map(t => t.img).filter(id => id && !kept.has(id)).map(id => s.delete(imageKey(id)).catch(() => {})));
