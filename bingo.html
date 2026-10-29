@@ -149,8 +149,6 @@ select.inp{appearance:none;background-image:linear-gradient(45deg,transparent 50
 .tip small .k1{color:var(--wip)}
 .tip small .k2{color:var(--go)}
 .tt.s2::after{content:"✓";position:absolute;top:2px;right:4px;font:700 10px/1 var(--sans);color:#fff}
-.edit .tt{cursor:pointer}
-.edit .tt:hover{border-color:#fff}
 .bg{display:grid;place-items:center;border:1px solid var(--line2);border-radius:6px;font:600 9px/1 var(--mono);letter-spacing:.08em;color:var(--dim);min-height:22px;transition:all .3s}
 /* Row markers are the same strip turned on its side, with the letters stacked: B I N G O */
 .bg.v{min-height:0;display:flex;flex-direction:column;align-items:center;justify-content:center;letter-spacing:0;line-height:1}
@@ -415,13 +413,6 @@ const NEEDS = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 12, 15, 20, 25, 30, 40, 50, 75, 99
 const need = t => t.need || 1;
 const stateOf = (team, i) => { const v = team.p[i]; return v >= need(B.tiles[i]) ? 2 : v ? 1 : 0; };   // 0 / 1 in progress / 2 completed
 const isDone = (team, i) => stateOf(team, i) === 2;
-// One click forward (dir 1) or back (dir -1): one-and-done tiles go not started → in progress → completed,
-// tiles needing more go 0 → 1 → … → need, and both wrap around
-function step(team, i, dir){
-  const n = need(B.tiles[i]), v = team.p[i];
-  if (n === 1) { const order = [0, -1, 1]; team.p[i] = order[(order.indexOf(v) + dir + 3) % 3]; }
-  else team.p[i] = (Math.max(0, v) + dir + n + 1) % (n + 1);
-}
 const rowDone = (team, r) => [0,1,2,3,4].every(c => isDone(team, r * 5 + c));
 const colDone = (team, c) => [0,1,2,3,4].every(r => isDone(team, r * 5 + c));
 const bingos = team => LINES.filter(l => l.every(i => isDone(team, i))).length;
@@ -522,7 +513,6 @@ function render(){
     <section class="sec">
       ${edit && !B.revealed ? `<p class="staffnote">Only staff can see the tiles right now. Visitors and captains see them once you click Reveal board to all in Bingo setup.</p>` : ""}
       <div class="sech"><h2>Teams</h2><div class="legend"><span><i></i>Not started</span><span><i class="s1"></i>In progress</span><span><i class="s2"></i>Completed</span></div></div>
-      ${edit && B.teams.length ? '<p class="msg" style="padding:0 0 14px">Click a team\'s tile to add progress (one and done tiles: in progress → completed; others count up 1, 2, 3…). Right-click, or long-press on a phone, to go back a step.</p>' : ""}
       ${teams}
     </section>
     <section class="sec">
@@ -668,7 +658,7 @@ function renderReview(){
   if (!staff) { el.innerHTML = ""; return; }
   const list = subs.pending || [];
   el.innerHTML = `<section class="sec">
-    <div class="sech"><h2>Pending drops${list.length ? `<span class="count">${list.length}</span>` : ""}</h2><small>Approving adds the progress and posts it to the drop log</small></div>
+    <div class="sech"><h2>Pending drops${list.length ? `<span class="count">${list.length}</span>` : ""}</h2></div>
     ${list.length ? `<div class="rvl">${list.map(s => { const t = B.tiles[s.tile] || blank();
       return `<div class="rvr"><span class="face">${face(t, "?")}</span>
         <div><b>${esc(s.player)}</b> received <b>${esc(s.item)}</b>
@@ -717,9 +707,9 @@ function renderCaptain(){
   capTeam = team?.name;
 
   const tog = `<button class="ghost sm tog" id="logtog" type="button" aria-expanded="${!logHidden}">${logHidden ? "Show" : "Hide"}</button>`;
-  const head = staff ? `<div class="sech"><h2>Log a drop</h2>${B.teams.length ? `<label class="logteam"><span>For</span><select class="inp" id="logteam" aria-label="Team">
+  const head = staff ? `<div class="sech"><h2>Drop submission</h2>${B.teams.length ? `<label class="logteam"><span>For</span><select class="inp" id="logteam" aria-label="Team">
       ${B.teams.map(t => `<option${t === team ? " selected" : ""}>${esc(t.name)}</option>`).join("")}</select></label>` : ""}<small>drops go to the pending list for approval</small>${tog}</div>`
-    : `<div class="sech"><h2>Log a drop</h2>${team ? `<small><i class="dot" style="background:${teamColor(team.name)}"></i>${esc(team.name)} · drops go to staff for approval</small>` : ""}${tog}</div>`;
+    : `<div class="sech"><h2>Drop submission</h2>${team ? `<small><i class="dot" style="background:${teamColor(team.name)}"></i>${esc(team.name)} · drops go to staff for approval</small>` : ""}${tog}</div>`;
   if (logHidden) { el.innerHTML = `<section class="sec">${head}</section>`; return; }
 
   // Captains can only log while the bingo is running; staff can log any time, so they just get a reminder
@@ -976,21 +966,14 @@ function wireEditing(){
   });
 
   const out = $("out");
+  // Team progress only changes through approved drops (and Undo in the drop log), so team tiles aren't clickable
   out.addEventListener("click", e => {
-    // Team tile: one step forward (see step())
-    const tt = e.target.closest(".tt[data-team]");
-    if (tt) { step(B.teams[tt.dataset.team], +tt.dataset.i, 1); render(); save(); return; }
     const tile = e.target.closest(".tile[data-tile]");
     if (tile) { const i = +tile.dataset.tile; selTile = selTile === i ? null : i; render(); if (selTile != null) $("ted").scrollIntoView({ block: "nearest", behavior: "smooth" }); return; }
     if (e.target.id === "edone") { selTile = null; render(); }
     if (e.target.id === "eclear" && confirm(`Clear tile ${selTile + 1}? Every team's progress on it is reset too.`)) {
       B.tiles[selTile] = blank(); B.teams.forEach(t => t.p[selTile] = 0); render(); save(); }
     if (e.target.id === "eimgdel") { B.tiles[selTile].img = ""; render(); save(); }
-  });
-  // Right-click (long-press on phones) steps a team's tile back, to fix a mistake
-  out.addEventListener("contextmenu", e => {
-    const tt = e.target.closest(".tt[data-team]"); if (!tt) return;
-    e.preventDefault(); step(B.teams[tt.dataset.team], +tt.dataset.i, -1); render(); save();
   });
   out.addEventListener("change", e => {
     if (selTile == null) return;
@@ -1035,12 +1018,11 @@ function wireTips(){
   const out = $("out");
   out.addEventListener("mouseover", e => { const tt = e.target.closest(".tt[data-team]"); if (tt && tt !== tipFor) showTip(tt); });
   out.addEventListener("mouseout", e => { const tt = e.target.closest(".tt[data-team]"); if (tt && !tt.contains(e.relatedTarget)) hideTip(); });
-  // Staff clicks change the tile, so refresh the card in place; visitors tap to show or hide it
+  // Tapping a tile (on phones) shows or hides its card
   out.addEventListener("click", e => {
     const tt = e.target.closest(".tt[data-team]");
     if (!tt) { hideTip(); return; }
-    if (staff) { const k = `.tt[data-team="${tt.dataset.team}"][data-i="${tt.dataset.i}"]`; requestAnimationFrame(() => { const el = $("out").querySelector(k); if (el && el.matches(":hover")) showTip(el); }); }
-    else if (tipFor === tt) hideTip(); else showTip(tt);
+    if (tipFor === tt) hideTip(); else showTip(tt);
   });
   addEventListener("scroll", hideTip, { passive: true });
 }
