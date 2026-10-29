@@ -107,6 +107,31 @@ select.inp{appearance:none;background-image:linear-gradient(45deg,transparent 50
 .trow input[type=color]::-moz-color-swatch{border:0;border-radius:3px}
 .trow button{flex:none;width:38px;background:none;border:1px solid var(--line2);border-radius:6px;color:var(--mute);font:16px/1 var(--sans);cursor:pointer}
 .trow button:hover{border-color:#fff;color:#fff}
+.trow .icobtn{display:grid;place-items:center;padding:0;font-size:18px}
+.trow .icobtn img{width:26px;height:26px;image-rendering:pixelated}
+/* Team icon picker: a popover by the button, or a sheet along the bottom on phones, like an emoji keyboard */
+.icopop{position:absolute;z-index:30;width:352px;max-width:calc(100vw - 24px);display:flex;flex-direction:column;border:1px solid var(--line2);border-radius:12px;background:var(--panel);box-shadow:0 18px 50px rgba(0,0,0,.6);overflow:hidden}
+.icopop[hidden]{display:none}
+.ich{display:flex;gap:8px;padding:10px;border-bottom:1px solid var(--line)}
+.ich .inp{padding:7px 10px;font-size:13px}
+.ich .ghost{flex:none;padding:6px 10px;font-size:12px}
+.icg{position:relative;height:260px;overflow-y:auto;padding:0 8px 8px;overscroll-behavior:contain}
+.icg h4{position:sticky;top:0;z-index:1;margin:0;padding:10px 4px 6px;background:var(--panel);font:500 10px/1 var(--mono);letter-spacing:.14em;text-transform:uppercase;color:var(--mute)}
+.icc{display:grid;grid-template-columns:repeat(auto-fill,minmax(40px,1fr))}
+.icc button{display:grid;place-items:center;aspect-ratio:1;padding:0;background:none;border:0;border-radius:8px;cursor:pointer}
+.icc button:hover,.icc button:focus-visible{background:var(--panel2);outline:none}
+.icc button.on{background:var(--line2)}
+.icc img{width:26px;height:26px;image-rendering:pixelated}
+.icc p{grid-column:1/-1;margin:8px 4px;color:var(--mute);font-size:13px}
+.ict{display:flex;justify-content:space-around;padding:4px 6px;border-top:1px solid var(--line)}
+.ict[hidden]{display:none}
+.ict button{display:grid;place-items:center;width:34px;height:34px;padding:0;background:none;border:0;border-radius:8px;cursor:pointer;opacity:.45;transition:opacity .15s}
+.ict button:hover,.ict button.on{opacity:1}
+.ict button.on{background:var(--panel2)}
+.ict img{width:13px;height:13px;transform:scale(1.5);image-rendering:pixelated}
+@media(max-width:600px){.icopop{position:fixed;left:0!important;right:0;top:auto!important;bottom:0;width:auto;max-width:none;border-radius:14px 14px 0 0;padding-bottom:env(safe-area-inset-bottom,0px)}.icg{height:42vh}}
+.ticon{display:inline-block;width:13px;height:13px;margin-right:9px;vertical-align:-1px;image-rendering:pixelated}
+.th .ticon{width:26px;height:26px;margin-right:8px;vertical-align:-6px}
 .srow2{display:grid;grid-template-columns:1fr 160px;gap:16px}
 .srow3{display:grid;grid-template-columns:220px 220px 1fr;gap:16px;align-items:end}
 .srow3 .hintx{margin:0 0 10px}
@@ -341,6 +366,7 @@ textarea.inp{resize:vertical;min-height:96px;font:13px/1.5 var(--mono)}
   <div id="out"><div class="msg">Loading the bingo board…</div></div>
 </main>
 <div class="tip" id="tip" role="tooltip"></div>
+<div class="icopop" id="icopop" role="dialog" aria-label="Pick a team icon" hidden></div>
 <footer><span class="fsoc"><a href="https://x.com/Kingdom_OSRS" target="_blank" rel="noopener" aria-label="Kingdom on X (Twitter)" title="X (Twitter)"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg></a><a href="https://wiseoldman.net/groups/1152" target="_blank" rel="noopener" aria-label="Kingdom on Wise Old Man" title="Wise Old Man"><img src="wom.png" alt=""></a><a href="https://templeosrs.com/groups/overview.php?id=1710" target="_blank" rel="noopener" aria-label="Kingdom on TempleOSRS" title="TempleOSRS"><img src="temple.png" alt=""></a></span>Kingdom · <a class="staff" href="admin.html">Staff</a></footer>
 
 <script>
@@ -365,6 +391,25 @@ const blank = () => ({ boss: "", img: "", name: "", desc: "", points: 0, need: 1
 // Default team colours, handed out in order (same list as the server)
 const COLORS = ["#e5484d", "#3e63dd", "#30a46c", "#f5d90a", "#8e4ec6", "#f76b15", "#12a594", "#d6409f"];
 const colorOf = (team, i) => team.color || COLORS[i % COLORS.length];
+
+// Team icons: every OSRS clan rank icon (oldschool.runescape.wiki/w/Category:Clan_rank_icons), grouped like an emoji keyboard
+const RANK_ICONS = "Achiever|Adamant|Adept|Administrator|Admiral|Adventurer|Air|Anchor|Apothecary|Archer|Armadylean|Artillery|Artisan|Asgarnian|Assassin|Assistant|Astral|Athlete|Attacker|Bandit|Bandosian|Barbarian|Battlemage|Beast|Berserker|Blisterwood|Blood|Blue|Bob|Body|Brassican|Brawler|Brigadier|Brigand|Bronze|Bruiser|Bulwark|Burglar|Burnt|Cadet|Captain|Carry|Champion|Chaos|Cleric|Collector|Colonel|Commander|Competitor|Completionist|Constructor|Cook|Coordinator|Corporal|Cosmic|Councillor|Crafter|Crew|Crusader|Cutpurse|Death|Defender|Defiler|Deputy owner|Destroyer|Diamond|Diseased|Doctor|Dogsbody|Dragon|Dragonstone|Druid|Duellist|Earth|Elite|Emerald|Enforcer|Epic|Executive|Expert|Explorer|Farmer|Feeder|Fighter|Fire|Firemaker|Firestarter|Fisher|Fletcher|Forager|Fremennik|Gamer|Gatherer|General|Gnome Child|Gnome Elder|Goblin|Gold|Goon|Green|Grey|Guardian|Guest|Guthixian|Harpoon|Healer|Hellcat|Helper|Herbologist|Hero|Hoarder|Holy|Hunter|Ignitor|Illusionist|Imp|Infantry|Inquisitor|Iron|Jade|Jmod|Justiciar|Kandarin|Karamjan|Kharidian|Kitten|Knight|Labourer|Law|Leader|Learner|Legacy|Legend|Legionnaire|Lieutenant|Looter|Lumberjack|Magic|Magician|Major|Maple|Marshal|Master|Maxed|Mediator|Medic|Mentor|Merchant|Mind|Miner|Minion|Misthalinian|Mithril|Moderator|Monarch|Morytanian|Mystic|Myth|Natural|Nature|Necromancer|Ninja|Noble|Novice|Nurse|Oak|Officer|Onyx|Opal|Oracle|Orange|Owner|Page|Paladin|Pawn|Pilgrim|Pine|Pink|Prefect|Priest|Private|Prodigy|Proselyte|Prospector|Protector|Pure|Purple|Pyromancer|Quester|Racer|Raider|Ranger|Record-chaser|Recruit|Recruiter|Red Topaz|Red|Rogue|Ruby|Rune|Runecrafter|Sage|Sapphire|Saradominist|Saviour|Scavenger|Scholar|Scourge|Scout|Scribe|Seer|Senator|Sentry|Serenist|Sergeant|Shaman|Sheriff|Short Green Guy|Skiller|Skulled|Slayer|Smiter|Smith|Smuggler|Sniper|Soul|Specialist|Speed-Runner|Spellcaster|Squire|Staff|Steel|Strider|Striker|Summoner|Superior|Supervisor|Teacher|Templar|Therapist|Thief|Tirannian|Trialist|Trickster|TzKal|TzTok|Unholy|Vagrant|Vanguard|Walker|Wanderer|Warden|Warlock|Warrior|Water|Wild|Willow|Wily|Wintumber|Witch|Wizard|Worker|Wrath|Xerician|Yellow|Yew|Zamorakian|Zarosian|Zealot|Zenyte".split("|");
+const ICON_GROUPS = [
+  { name: "Gods", tab: "Saradominist", icons: "Armadylean|Bandosian|Guthixian|Saradominist|Serenist|Zamorakian|Zarosian|Xerician|Holy|Unholy" },
+  { name: "Runes", tab: "Fire", icons: "Air|Water|Earth|Fire|Mind|Body|Cosmic|Chaos|Nature|Law|Death|Astral|Blood|Soul|Wrath" },
+  { name: "Gems & metals", tab: "Diamond", icons: "Bronze|Iron|Steel|Mithril|Adamant|Rune|Dragon|Gold|Opal|Jade|Red Topaz|Sapphire|Emerald|Ruby|Diamond|Dragonstone|Onyx|Zenyte" },
+  { name: "Colours", tab: "Red", icons: "Red|Orange|Yellow|Green|Blue|Purple|Pink|Grey" },
+  { name: "Skills", tab: "Smith", icons: "Cook|Crafter|Farmer|Firemaker|Firestarter|Fisher|Fletcher|Forager|Gatherer|Harpoon|Herbologist|Hunter|Ignitor|Lumberjack|Miner|Prospector|Pyromancer|Runecrafter|Skiller|Slayer|Smith|Constructor|Thief" },
+  { name: "Nature", tab: "Yew", icons: "Oak|Willow|Maple|Yew|Magic|Pine|Wintumber|Blisterwood|Brassican|Natural|Wild" },
+  { name: "Regions", tab: "Kandarin", icons: "Asgarnian|Fremennik|Kandarin|Karamjan|Kharidian|Misthalinian|Morytanian|Tirannian" },
+  { name: "Creatures", tab: "Gnome Child", icons: "Bob|Gnome Child|Gnome Elder|Goblin|Imp|Kitten|Hellcat|Short Green Guy|TzKal|TzTok|Beast|Burnt|Diseased|Skulled" }
+].map(g => ({ ...g, icons: g.icons.split("|") }));
+// Everything not in a group above is a rank title, so "Ranks" goes first (like "Frequently used")
+ICON_GROUPS.unshift({ name: "Ranks", tab: "Owner", icons: RANK_ICONS.filter(n => !ICON_GROUPS.some(g => g.icons.includes(n))) });
+const rankIcon = n => "https://oldschool.runescape.wiki/images/Clan_icon_-_" + encodeURIComponent(n.replace(/ /g, "_")) + ".png";
+// A team's mark: its clan icon if it has one, otherwise its colour dot
+const teamMark = (team, color) => team?.icon ? `<img class="ticon" src="${rankIcon(team.icon)}" alt="" title="${esc(team.icon)}">`
+  : `<i class="dot" style="background:${color || "var(--line2)"}"></i>`;
 
 let B = null;          // the board: { rev, title, bonus, tiles, teams:[{name, color, captain, p}], log, items:{boss: [names]}, updated, by }
 let staff = null;      // logged-in staff member, or null
@@ -442,7 +487,7 @@ function teamCard(team, ti){
   const done = st.filter(x => x === 2).length, wip = st.filter(x => x === 1).length, bn = bingos(team);
   const color = colorOf(team, ti);
   return `<section class="team">
-    <div class="th"><b><i class="dot" style="background:${color}"></i>${esc(team.name)}</b><span><em>${num(pts)}</em> / ${num(tot)}</span></div>
+    <div class="th"><b>${teamMark(team, color)}${esc(team.name)}</b><span><em>${num(pts)}</em> / ${num(tot)}</span></div>
     <div class="bar"><i style="width:${pct}%;background:${color}"></i></div>
     <div class="g6">${cells.join("")}</div>
     <div class="tf">${done} done · ${wip} in progress · ${bn} bingo${bn === 1 ? "" : "s"}</div>
@@ -497,7 +542,7 @@ function render(){
     hideTip();
     $("out").innerHTML = `<div class="hiddenmsg"><b>The board will be revealed after the draft is completed</b>
       <p>Tiles, standings and the drop log appear then.${B.starts ? ` The bingo starts ${esc(fmtDate(B.starts))} (your time).` : ""}</p>
-      ${B.teams.length ? `<div class="tn">${B.teams.map((t, i) => `<span><i class="dot" style="background:${colorOf(t, i)}"></i>${esc(t.name)}</span>`).join("")}</div>` : ""}</div>`;
+      ${B.teams.length ? `<div class="tn">${B.teams.map((t, i) => `<span>${teamMark(t, colorOf(t, i))}${esc(t.name)}</span>`).join("")}</div>` : ""}</div>`;
     return;
   }
   if (!used && !edit) {
@@ -554,7 +599,7 @@ function bingoTeamOf(name, compTeam){
   const byName = n => n && B.teams.find(t => t.name.trim().toLowerCase() === n.trim().toLowerCase());
   return byName(compTeam) || byName(draftTeamOf(name)?.name) || null;
 }
-const teamDot = t => t ? `<i class="dot" style="background:${teamColor(t.name)}" title="${esc(t.name)}"></i>` : '<i class="dot" style="background:var(--line2)"></i>';
+const teamDot = t => t ? `<span title="${esc(t.name)}">${teamMark(t, teamColor(t.name))}</span>` : teamMark(null);
 const pname = n => `<a href="player.html?name=${encodeURIComponent(n)}">${esc(n)}</a>`;
 const fmtH = v => (Math.round(v * 10) / 10).toLocaleString(undefined, { minimumFractionDigits: 1, maximumFractionDigits: 1 });
 
@@ -636,6 +681,7 @@ async function loadDraft(){
 // ---------- Drop log (approved drops, newest first) ----------
 const when = t => new Date(t).toLocaleString(undefined, { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" });
 const teamColor = name => { const i = B.teams.findIndex(t => t.name === name); return i < 0 ? "var(--dim)" : colorOf(B.teams[i], i); };
+const markOf = name => teamMark(B.teams.find(t => t.name === name), teamColor(name));
 const proofLink = u => `<a href="${esc(u)}" target="_blank" rel="noopener noreferrer nofollow">Proof ↗</a>`;
 function dropLog(){
   const log = B.log || [];
@@ -644,7 +690,7 @@ function dropLog(){
     <div class="sech"><h2>Drop log</h2><small>${log.length} approved drop${log.length === 1 ? "" : "s"}</small></div>
     ${log.length ? `<div class="dl"><div class="lr head"><span>Logged</span><span>Team</span><span>Drop</span><span></span></div>
       ${log.slice(0, logShown).map(d => `<div class="lr"><time datetime="${new Date(d.t).toISOString()}">${when(d.t)}</time>
-        <span class="lt"><i class="dot" style="background:${teamColor(d.team)}"></i>${esc(d.team)}</span>
+        <span class="lt">${markOf(d.team)}${esc(d.team)}</span>
         <span class="ld"><b>${esc(d.player)}</b> received <b>${esc(d.item)}</b><small>${esc(d.tileName)}</small></span>
         <span class="la">${d.proof ? proofLink(d.proof) : ""}${staff ? `<button type="button" data-undo="${esc(d.id)}" title="Remove from the log and take the progress back">Undo</button>` : ""}</span></div>`).join("")}</div>
       ${log.length > logShown ? `<button class="ghost more" id="logmore" type="button">Show ${Math.min(25, log.length - logShown)} more</button>` : ""}`
@@ -662,7 +708,7 @@ function renderReview(){
     ${list.length ? `<div class="rvl">${list.map(s => { const t = B.tiles[s.tile] || blank();
       return `<div class="rvr"><span class="face">${face(t, "?")}</span>
         <div><b>${esc(s.player)}</b> received <b>${esc(s.item)}</b>
-          <small><i class="dot" style="background:${teamColor(s.team)}"></i>${esc(s.team)} · ${esc(s.tileName)} · logged by ${esc(s.by.name)} · ${when(s.t)}</small></div>
+          <small>${markOf(s.team)}${esc(s.team)} · ${esc(s.tileName)} · logged by ${esc(s.by.name)} · ${when(s.t)}</small></div>
         <div class="acts">${proofLink(s.proof)}<button class="ghost sm" type="button" data-rev="reject" data-id="${esc(s.id)}">Reject</button><button class="ok" type="button" data-rev="approve" data-id="${esc(s.id)}">Approve</button></div></div>`; }).join("")}</div>`
     : '<div class="msg" style="padding:8px 0">No drops waiting for approval.</div>'}
   </section>`;
@@ -709,7 +755,7 @@ function renderCaptain(){
   const tog = `<button class="ghost sm tog" id="logtog" type="button" aria-expanded="${!logHidden}">${logHidden ? "Show" : "Hide"}</button>`;
   const head = staff ? `<div class="sech"><h2>Drop submission</h2>${B.teams.length ? `<label class="logteam"><span>For</span><select class="inp" id="logteam" aria-label="Team">
       ${B.teams.map(t => `<option${t === team ? " selected" : ""}>${esc(t.name)}</option>`).join("")}</select></label>` : ""}<small>drops go to the pending list for approval</small>${tog}</div>`
-    : `<div class="sech"><h2>Drop submission</h2>${team ? `<small><i class="dot" style="background:${teamColor(team.name)}"></i>${esc(team.name)} · drops go to staff for approval</small>` : ""}${tog}</div>`;
+    : `<div class="sech"><h2>Drop submission</h2>${team ? `<small>${markOf(team.name)}${esc(team.name)} · drops go to staff for approval</small>` : ""}${tog}</div>`;
   if (logHidden) { el.innerHTML = `<section class="sec">${head}</section>`; return; }
 
   // Captains can only log while the bingo is running; staff can log any time, so they just get a reminder
@@ -850,7 +896,7 @@ function syncSetup(force){
   const capPick = (t, i) => `<select class="inp" data-tcap="${i}" aria-label="Team ${i + 1} captain" title="${captains.length ? "Team captain: can log drops for this team" : "Add captain Discord IDs to CAPTAIN_DISCORD_IDS in Netlify first"}">
     <option value="">No captain</option>${captains.map(c => `<option value="${c.id}"${c.id === t.captain ? " selected" : ""}>${esc(capName(c))}</option>`).join("")}
     ${t.captain && !captains.some(c => c.id === t.captain) ? `<option value="${esc(t.captain)}" selected>Removed captain</option>` : ""}</select>`;
-  $("tlist").innerHTML = B.teams.map((t, i) => `<div class="trow"><input type="color" data-tc="${i}" value="${colorOf(t, i)}" title="Team colour" aria-label="Team ${i + 1} colour"><input class="inp" data-tn="${i}" maxlength="40" value="${esc(t.name)}" aria-label="Team ${i + 1} name">${capPick(t, i)}<button type="button" data-tdel="${i}" title="Remove team" aria-label="Remove team">×</button></div>`).join("")
+  $("tlist").innerHTML = B.teams.map((t, i) => `<div class="trow"><input type="color" data-tc="${i}" value="${colorOf(t, i)}" title="Team colour" aria-label="Team ${i + 1} colour"><button type="button" class="icobtn" data-tico="${i}" title="${t.icon ? "Team icon: " + esc(t.icon) : "Pick a team icon"}" aria-label="Team ${i + 1} icon">${t.icon ? `<img src="${rankIcon(t.icon)}" alt="">` : "☺"}</button><input class="inp" data-tn="${i}" maxlength="40" value="${esc(t.name)}" aria-label="Team ${i + 1} name">${capPick(t, i)}<button type="button" data-tdel="${i}" title="Remove team" aria-label="Remove team">×</button></div>`).join("")
     || '<p class="msg" style="padding:0">No teams yet.</p>';
 }
 
@@ -893,6 +939,56 @@ async function saveItems(i, value){
   } catch (e) { if ($("eitemsmsg")) $("eitemsmsg").textContent = "Couldn't save: " + e.message; }
 }
 
+// ---------- Team icon picker (staff) ----------
+let icoFor = null;   // index of the team whose icon is being picked
+function openIcons(btn, i){
+  icoFor = i;
+  const pop = $("icopop");
+  pop.innerHTML = `<div class="ich"><input class="inp" id="icoq" type="search" placeholder="Search ${RANK_ICONS.length} icons" autocomplete="off" aria-label="Search icons">
+      <button class="ghost" type="button" data-ico="">No icon</button></div>
+    <div class="icg" id="icog"></div>
+    <div class="ict" id="icot">${ICON_GROUPS.map((g, k) => `<button type="button" data-icot="${k}" title="${g.name}" aria-label="${g.name}"><img src="${rankIcon(g.tab)}" alt=""></button>`).join("")}</div>`;
+  fillIcons("");
+  pop.hidden = false;
+  // Under the button, kept on screen (on phones CSS turns it into a sheet along the bottom instead)
+  const r = btn.getBoundingClientRect();
+  pop.style.left = Math.max(12, Math.min(innerWidth - pop.offsetWidth - 12, r.left)) + scrollX + "px";
+  pop.style.top = r.bottom + scrollY + 6 + "px";
+  // Jump to the team's current icon
+  const on = pop.querySelector(".icc button.on");
+  if (on) $("icog").scrollTop = on.offsetTop - 40;
+  markTab();
+  if (matchMedia("(hover: hover)").matches) $("icoq").focus();
+}
+function closeIcons(){ $("icopop").hidden = true; icoFor = null; }
+function fillIcons(q){
+  const cur = B.teams[icoFor]?.icon;
+  const cell = n => `<button type="button" data-ico="${esc(n)}" title="${esc(n)}"${n === cur ? ' class="on"' : ""}><img src="${rankIcon(n)}" alt="${esc(n)}" loading="lazy"></button>`;
+  const groups = q ? [{ name: "Results", icons: RANK_ICONS.filter(n => n.toLowerCase().includes(q)) }] : ICON_GROUPS;
+  $("icog").innerHTML = groups.map((g, k) => `<h4 data-icsec="${k}">${g.name}</h4><div class="icc">${g.icons.map(cell).join("") || "<p>No icons match.</p>"}</div>`).join("");
+  $("icot").hidden = !!q;
+}
+// Light up the tab for the section being scrolled through
+function markTab(){
+  const g = $("icog"); if (!g) return;
+  let k = 0;
+  g.querySelectorAll("h4[data-icsec]").forEach(h => { if (h.offsetTop <= g.scrollTop + 8) k = +h.dataset.icsec; });
+  $("icot").querySelectorAll("button").forEach((b, j) => b.classList.toggle("on", j === k));
+}
+function wireIcons(){
+  const pop = $("icopop");
+  pop.addEventListener("click", e => {
+    const tab = e.target.closest("[data-icot]");
+    if (tab) { const g = $("icog"), h = g.querySelector(`h4[data-icsec="${tab.dataset.icot}"]`); g.scrollTop = h.offsetTop; return; }
+    const b = e.target.closest("[data-ico]"); if (!b || icoFor == null || !B.teams[icoFor]) return;
+    B.teams[icoFor].icon = b.dataset.ico; closeIcons(); syncSetup(true); render(); save();
+  });
+  pop.addEventListener("input", e => { if (e.target.id === "icoq") fillIcons(e.target.value.trim().toLowerCase()); });
+  pop.addEventListener("scroll", markTab, true);
+  document.addEventListener("click", e => { if (!pop.hidden && !pop.contains(e.target) && !e.target.closest("[data-tico]")) closeIcons(); });
+  document.addEventListener("keydown", e => { if (e.key === "Escape" && !pop.hidden) closeIcons(); });
+}
+
 function addTeam(name){
   if (B.teams.length >= 16) return;
   B.teams.push({ name: name || "Team " + (B.teams.length + 1), color: COLORS[B.teams.length % COLORS.length], captain: "", p: Array(25).fill(0) });
@@ -901,7 +997,7 @@ function addTeam(name){
 function wireEditing(){
   $("setup").hidden = false;
   if (!B.teams.length) $("setup").open = true;
-  syncSetup();
+  syncSetup(); wireIcons();
 
   $("bname").addEventListener("change", () => { B.title = $("bname").value.trim().slice(0, 60); render(); save(); });
   // Start and end are typed in the staff member's own timezone and stored as exact moments, so every visitor sees them in theirs
@@ -938,6 +1034,8 @@ function wireEditing(){
     B.teams[tn].name = e.target.value.trim().slice(0, 40) || "Team " + (+tn + 1); render(); save();
   });
   $("tlist").addEventListener("click", e => {
+    const ib = e.target.closest("[data-tico]");
+    if (ib) { icoFor === +ib.dataset.tico && !$("icopop").hidden ? closeIcons() : openIcons(ib, +ib.dataset.tico); return; }
     const i = e.target.dataset.tdel; if (i == null) return;
     const t = B.teams[i];
     if (t.p.some(v => v) && !confirm(`Remove ${t.name}? Their progress will be lost.`)) return;
@@ -950,7 +1048,7 @@ function wireEditing(){
       if (B.teams.length && !confirm(`Replace the ${B.teams.length} teams here with the ${d.teams.length} from the Bingo Draft? Progress is kept for teams with the same name.`)) return;
       const old = new Map(B.teams.map((t, i) => [t.name.toLowerCase(), { ...t, color: colorOf(t, i) }]));
       B.teams = d.teams.map((t, i) => { const o = old.get(t.name.toLowerCase());
-        return { name: t.name, color: o ? o.color : COLORS[i % COLORS.length], captain: o ? o.captain || "" : "", p: o ? o.p : Array(25).fill(0) }; });
+        return { name: t.name, color: o ? o.color : COLORS[i % COLORS.length], icon: o ? o.icon || "" : "", captain: o ? o.captain || "" : "", p: o ? o.p : Array(25).fill(0) }; });
       $("setmsg").textContent = `Using ${d.teams.length} teams from the Bingo Draft.`;
       syncSetup(); render(); save();
     } catch (e) { $("setmsg").textContent = "Couldn't load the Bingo Draft: " + e.message; }

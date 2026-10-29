@@ -80,6 +80,7 @@ main{animation-delay:.1s}
 .tm{border:1px solid var(--line);border-radius:10px;background:var(--panel);overflow:hidden}
 .tmh{display:flex;align-items:center;gap:10px;padding:14px 16px;border-bottom:1px solid var(--line);border-top:3px solid var(--c)}
 .tmh b{font-size:17px;font-weight:600;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.tmh img{flex:none;width:26px;height:26px;image-rendering:pixelated}
 .tmh span{margin-left:auto;font:500 12px/1 var(--mono);color:var(--mute);white-space:nowrap}
 .tmh span em{font-style:normal;color:#fff}
 .sum{display:grid;grid-template-columns:repeat(4,1fr);border-bottom:1px solid var(--line)}
@@ -128,6 +129,8 @@ const LINES = [0,1,2,3,4].flatMap(i => [[0,1,2,3,4].map(c => i * 5 + c), [0,1,2,
 const fmtH = v => (Math.round(v * 10) / 10).toLocaleString(undefined, { minimumFractionDigits: 1, maximumFractionDigits: 1 });
 const num = v => Math.round(v).toLocaleString();
 const key = n => n.trim().toLowerCase();
+// A team's clan rank icon, picked in Bingo setup (from oldschool.runescape.wiki)
+const rankIcon = n => "https://oldschool.runescape.wiki/images/Clan_icon_-_" + encodeURIComponent(n.replace(/ /g, "_")) + ".png";
 
 let B = null;          // the bingo board (staff copy, so it's there before the reveal)
 let draft = [];        // the Bingo Draft's teams [{name, captain, players}]
@@ -197,7 +200,7 @@ function render(){
       const sum = k => rows.reduce((a, r) => a + r[k], 0);
       const tiles = B.tiles.filter((x, j) => isDone(t, j)).length;
       return `<section class="tm" style="--c:${esc(c)}">
-        <div class="tmh"><b>${esc(t.name)}</b><span><em>${rows.length}</em> member${rows.length === 1 ? "" : "s"}</span></div>
+        <div class="tmh">${t.icon ? `<img src="${rankIcon(t.icon)}" alt="" title="${esc(t.icon)}">` : ""}<b>${esc(t.name)}</b><span><em>${rows.length}</em> member${rows.length === 1 ? "" : "s"}</span></div>
         <div class="sum"><div><small>Score</small><b>${num(score(t))}</b></div><div><small>Tiles</small><b>${tiles}</b></div>
           <div><small>Bingos</small><b>${bingos(t)}</b></div><div><small>EHB</small><b>${fmtH(sum("ehb"))}</b></div></div>
         ${rows.length ? `<table><thead><tr><th>Player</th>${th("drops", "Drops")}${th("pts", "Points")}${th("ehb", "EHB")}</tr></thead>

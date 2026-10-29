@@ -1,6 +1,6 @@
 // /api/bingo
 //   GET  anyone: the bingo board (25 tiles, each with a boss or custom image, name, description, points and how many completions it needs),
-//        the bonus points per bingo, every team's colour and progress, the drop log, the item list for each boss on the board,
+//        the bonus points per bingo, every team's colour, icon and progress, the drop log, the item list for each boss on the board,
 //        the start and end times, and the competition link the EHB leaderboard reads.
 //        Until staff reveal the board ("revealed"), the tiles are blanked for everyone but staff ("hidden": true).
 //        Served from Netlify's CDN cache so viewers can check every few seconds for free;
@@ -20,6 +20,7 @@ const COLORS = ["#e5484d", "#3e63dd", "#30a46c", "#f5d90a", "#8e4ec6", "#f76b15"
 const COLOR = /^#[0-9a-f]{6}$/i;
 const BOSS = /^[a-z_]{0,40}$/;      // a Wise Old Man boss name, or "" for a custom tile (which may have an uploaded image)
 const DISCORD_ID = /^\d{5,25}$/;
+const ICON = /^[A-Za-z][A-Za-z -]{0,29}$/;   // an OSRS clan rank icon name, e.g. "Red Topaz" (picked on the Bingo page)
 // The EHB leaderboard reads a Wise Old Man or TempleOSRS competition
 const TRACK = /^https:\/\/(?:www\.)?(?:wiseoldman\.net\/competitions\/\d+|templeosrs\.com\/competitions\/[\w.]*\?(?:[^#\s]*&)?id=\d+)[^\s<>"]*$/i;
 const when = v => Number.isInteger(v) && v > 0 ? v : 0;
@@ -52,7 +53,8 @@ function clean(body){
     const color = COLOR.test(t?.color) ? t.color.toLowerCase() : COLORS[i % COLORS.length];
     const captain = DISCORD_ID.test(t?.captain) ? t.captain : "";
     // A count can't go past what the tile needs; "in progress" (-1) only applies to one-and-done tiles
-    teams.push({ name: text(t?.name, 40) || `Team ${i + 1}`, color, captain,
+    const icon = ICON.test(t?.icon) ? t.icon : "";
+    teams.push({ name: text(t?.name, 40) || `Team ${i + 1}`, color, icon, captain,
       p: p.map((v, j) => v === -1 ? (tiles[j].need === 1 ? -1 : 0) : Math.min(v, tiles[j].need)) });
   }
   const starts = when(body.starts), ends = when(body.ends);
