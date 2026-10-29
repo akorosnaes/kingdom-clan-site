@@ -1,0 +1,406 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Bingo Draft | Kingdom</title>
+<meta name="description" content="Live bingo team draft: who's on which team and who's still up for grabs.">
+<meta name="theme-color" content="#080808">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Kingdom">
+<meta property="og:title" content="Kingdom Bingo Draft">
+<meta property="og:description" content="Live bingo team draft: who's on which team and who's still up for grabs.">
+<meta property="og:url" content="https://kingdomosrs.com/draft.html">
+<meta property="og:image" content="https://kingdomosrs.com/og.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="icon" type="image/png" href="icon.png">
+<link rel="apple-touch-icon" href="icon.png">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&family=Geist+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#080808;--panel:#121212;--panel2:#1c1c1c;--line:#232323;--line2:#333;--ink:#fff;--mute:#9a9a9a;--dim:#5f5f5f;
+--sans:Geist,Inter,system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;--mono:"Geist Mono",ui-monospace,"SF Mono",Menlo,Consolas,monospace;
+color-scheme:dark;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+html{scroll-padding-top:env(safe-area-inset-top,0px);scrollbar-gutter:stable}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.55 var(--sans);-webkit-font-smoothing:antialiased}
+
+/* Nav */
+nav{position:sticky;top:0;z-index:10;display:flex;align-items:center;justify-content:center;gap:2px;padding:12px;border-bottom:1px solid var(--line);background:rgba(8,8,8,.88);-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px)}
+nav a{color:var(--mute);text-decoration:none;padding:6px 14px;font-size:14px;font-weight:500;border-radius:6px;transition:color .15s}
+nav a:hover{color:#fff}
+nav a.on{color:#fff;background:var(--panel2)}
+nav a.navbtn{margin-left:10px;background:#5865F2;color:#fff;font-weight:600;white-space:nowrap}
+nav a.navbtn:hover{background:#4752C4}
+.navsoc{position:absolute;right:16px;top:50%;transform:translateY(-50%);display:flex;gap:2px}
+nav .navsoc a{display:grid;place-items:center;padding:7px}
+.navsoc svg,.fsoc svg{width:18px;height:18px;display:block}
+.navsoc img,.fsoc img{height:18px;width:auto;display:block;opacity:.75;transition:opacity .15s}
+.navsoc a:hover img,.fsoc a:hover img{opacity:1}
+.fsoc{display:none}
+footer a.staff{color:inherit;text-decoration:none}
+footer a.staff:hover{color:#fff}
+.fsoc a{display:grid;place-items:center;padding:8px;color:var(--mute)}
+@media(max-width:960px){.navsoc{position:static;transform:none;margin-left:8px}}
+@media(max-width:760px){nav .navlogo,nav .long{display:none}nav a{white-space:nowrap;padding:6px 10px}}
+.navlogo{height:22px;width:auto;display:block;margin-right:12px}
+@media(max-width:600px){nav{gap:0;padding:10px 4px;justify-content:safe center;overflow-x:auto}nav a{padding:6px 7px;font-size:13px;white-space:nowrap}nav .navlogo,nav .long,.navsoc{display:none}.fsoc{display:flex;justify-content:center;gap:8px;margin:-12px 0 14px}nav a.navbtn{margin-left:4px}}
+
+/* Page title */
+.phero{max-width:1080px;margin:0 auto;padding:64px 20px 0}
+.phero h1{margin:0;font:600 clamp(36px,6vw,56px)/1.05 var(--sans);letter-spacing:-.04em}
+.phero p{margin:14px 0 0;font:500 12px/1.4 var(--mono);letter-spacing:.16em;text-transform:uppercase;color:var(--mute)}
+main{max-width:1080px;margin:0 auto;padding:8px 20px 72px}
+
+/* Section headers, labels, shared bits */
+.sec{margin-top:56px}
+.sech{display:flex;align-items:flex-end;justify-content:space-between;gap:16px;flex-wrap:wrap;padding-bottom:14px;border-bottom:1px solid var(--line2)}
+.sech h2{margin:0;font:600 clamp(22px,3vw,28px)/1.1 var(--sans);letter-spacing:-.03em}
+.sech small{font:500 12px/1 var(--mono);color:var(--mute);letter-spacing:.06em}
+.mlab{font:500 11px/1 var(--mono);letter-spacing:.14em;text-transform:uppercase;color:var(--mute)}
+.msg{padding:28px 0;color:var(--mute);font-size:14px}
+.ghost{background:none;border:1px solid var(--line2);border-radius:6px;color:#fff;padding:8px 16px;font:500 13px/1.2 var(--sans);cursor:pointer;transition:border-color .15s}
+.ghost:hover{border-color:#fff}
+.primary{background:#fff;color:#000;border:0;border-radius:6px;padding:9px 18px;font:600 13px/1.2 var(--sans);cursor:pointer}
+.primary:hover{background:#ddd}
+
+footer{text-align:center;padding:28px 20px;color:var(--dim);font:12px/1 var(--mono);letter-spacing:.04em;border-top:1px solid var(--line)}
+
+/* One quiet entrance for the page */
+@keyframes fade{from{opacity:0}to{opacity:1}}
+.phero,main{animation:fade .6s ease both}
+main{animation-delay:.1s}
+@media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+
+/* Staff bar */
+.who{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-top:18px;font-size:14px;color:var(--mute)}
+.who img{width:24px;height:24px;border-radius:50%}
+.who a{color:#fff}
+.save{margin-left:auto;font:500 12px/1 var(--mono);letter-spacing:.06em;color:var(--dim)}
+.save.bad{color:#fff}
+
+/* Staff setup */
+.setup{margin-top:40px;border:1px solid var(--line);border-radius:8px;background:var(--panel)}
+.setup summary{display:flex;align-items:center;justify-content:space-between;padding:16px 20px;cursor:pointer;list-style:none;font-weight:600}
+.setup summary::-webkit-details-marker{display:none}
+.setup summary::after{content:"+";font:400 20px/1 var(--mono);color:var(--mute)}
+.setup[open] summary::after{content:"−"}
+.sgrid{display:grid;grid-template-columns:1fr 120px;gap:16px;padding:4px 20px 20px}
+.sgrid label{display:grid;gap:8px;font:500 11px/1 var(--mono);letter-spacing:.14em;text-transform:uppercase;color:var(--mute)}
+.sgrid .wide{grid-column:1/-1}
+.sgrid input,.sgrid textarea,.psearch{width:100%;background:var(--bg);border:1px solid var(--line2);border-radius:6px;color:#fff;padding:9px 12px;font:14px/1.4 var(--sans);letter-spacing:0;text-transform:none}
+.sgrid textarea{min-height:96px;resize:vertical;font-family:var(--mono);font-size:13px}
+.sgrid input:focus,.sgrid textarea:focus,.psearch:focus{outline:none;border-color:#fff}
+.srow{grid-column:1/-1;display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.srow p{margin:0 0 0 4px;font-size:13px;color:var(--mute)}
+.srow .sp{flex:1}
+@media(max-width:600px){.sgrid{grid-template-columns:1fr}}
+
+/* Board */
+.hint{margin:28px 0 0;font-size:13px;color:var(--dim)}
+.board{display:grid;grid-template-columns:260px 1fr;gap:20px;align-items:start;margin-top:20px}
+@media(max-width:820px){.board{grid-template-columns:1fr}}
+.zone{border:1px solid var(--line);border-radius:8px;background:var(--panel);transition:border-color .15s,background .15s}
+.zone.over,.zone.target{border-color:#fff;background:var(--panel2)}
+.edit .zone.target{cursor:pointer}
+.zh{display:flex;align-items:center;gap:10px;padding:14px 16px;border-bottom:1px solid var(--line)}
+.zh b{flex:1;min-width:0;font-size:15px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.zh input{flex:1;min-width:0;background:none;border:1px solid transparent;border-radius:4px;color:#fff;padding:3px 6px;margin:-4px -7px;font:600 15px/1.3 var(--sans)}
+.zh input:hover{border-color:var(--line2)}
+.zh input:focus{outline:none;border-color:#fff}
+.zh .n{flex:none;font:500 12px/1 var(--mono);color:var(--mute)}
+.zh .no{flex:none;font:500 12px/1 var(--mono);color:var(--dim)}
+.pool{position:sticky;top:76px}
+.pool .psearch{display:block;width:calc(100% - 24px);margin:12px 12px 0;padding:7px 10px;font-size:13px}
+.pool .chips{max-height:calc(100vh - 220px);overflow:auto}
+@media(max-width:820px){.pool{position:static}.pool .chips{max-height:260px}}
+.teams{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:12px}
+.chips{display:flex;flex-direction:column;gap:2px;padding:8px;min-height:56px}
+.chip{display:flex;align-items:center;gap:8px;padding:6px 8px;border-radius:5px;font-size:14px;color:#fff;text-decoration:none;user-select:none}
+.chip .i{flex:none;min-width:18px;font:500 11px/1 var(--mono);color:var(--dim)}
+.chip span{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+a.chip:hover{background:var(--panel2)}
+.edit .chip{cursor:grab;border:1px solid transparent}
+.edit .chip:hover{background:var(--panel2);border-color:var(--line2)}
+.chip.sel{background:#fff!important;color:#000}
+.chip.sel .i{color:#555}
+.chip.dragging{opacity:.35}
+.chip button{flex:none;width:20px;height:20px;display:grid;place-items:center;background:none;border:0;border-radius:4px;color:var(--dim);font:16px/1 var(--sans);cursor:pointer;opacity:0;transition:opacity .15s}
+.chip:hover button,.chip.sel button{opacity:1}
+.chip button:hover{color:#fff;background:var(--line2)}
+.chip.sel button:hover{color:#000;background:#ddd}
+@media(hover:none){.chip button{opacity:1}}
+.empty{padding:10px 8px;font-size:13px;color:var(--dim)}
+.flash{animation:flash 1.2s ease}
+@keyframes flash{from{background:#fff;color:#000}to{background:transparent}}
+</style>
+</head>
+<body>
+<nav><img class="navlogo" alt="" src="data:image/png;base64,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"><a href="/">Home</a><a href="about.html">About Us</a><a href="members.html">Members</a><a href="bosses.html">Bosses</a><a href="events.html">Events</a><a class="on" href="draft.html">Bingo<span class="long"> Draft</span></a><a class="navbtn" href="https://discord.gg/kingdomclan">Apply<span class="long"> on Discord</span></a><span class="navsoc"><a href="https://x.com/Kingdom_OSRS" target="_blank" rel="noopener" aria-label="Kingdom on X (Twitter)" title="X (Twitter)"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg></a><a href="https://wiseoldman.net/groups/1152" target="_blank" rel="noopener" aria-label="Kingdom on Wise Old Man" title="Wise Old Man"><img src="wom.png" alt=""></a><a href="https://templeosrs.com/groups/overview.php?id=1710" target="_blank" rel="noopener" aria-label="Kingdom on TempleOSRS" title="TempleOSRS"><img src="temple.png" alt=""></a></span></nav>
+<header class="phero">
+  <h1 id="title">Bingo draft</h1>
+  <p id="sub">Teams · Draft pool</p>
+  <div class="who" id="who" hidden></div>
+</header>
+<main id="main">
+  <details class="setup" id="setup" hidden>
+    <summary>Draft setup</summary>
+    <div class="sgrid">
+      <label>Draft name<input id="dname" maxlength="60" placeholder="e.g. Winter Bingo 2026"></label>
+      <label>Teams<input id="dteams" type="number" min="2" max="16" value="4"></label>
+      <label class="wide">Add players to the draft list<textarea id="dadd" placeholder="One RuneScape name per line, or separated by commas"></textarea></label>
+      <div class="srow"><button class="primary" id="addbtn" type="button">Add to draft list</button><p id="addmsg"></p><span class="sp"></span>
+        <button class="ghost" id="resetbtn" type="button">Return everyone to the list</button><button class="ghost" id="clearbtn" type="button">Clear draft</button></div>
+    </div>
+  </details>
+  <p class="hint" id="hint" hidden>Drag a player onto a team. On a phone, tap a player and then tap a team. Drag them back to the list to undo.</p>
+  <div id="out"><div class="msg">Loading the draft…</div></div>
+</main>
+<footer><span class="fsoc"><a href="https://x.com/Kingdom_OSRS" target="_blank" rel="noopener" aria-label="Kingdom on X (Twitter)" title="X (Twitter)"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg></a><a href="https://wiseoldman.net/groups/1152" target="_blank" rel="noopener" aria-label="Kingdom on Wise Old Man" title="Wise Old Man"><img src="wom.png" alt=""></a><a href="https://templeosrs.com/groups/overview.php?id=1710" target="_blank" rel="noopener" aria-label="Kingdom on TempleOSRS" title="TempleOSRS"><img src="temple.png" alt=""></a></span>Kingdom · <a class="staff" href="admin.html">Staff</a></footer>
+
+<script>
+const $ = id => document.getElementById(id);
+const esc = s => String(s).replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const key = n => n.toLowerCase().replace(/[ _-]/g, "");
+const RSN = /^[A-Za-z0-9 _-]{1,12}$/;
+const POOL = -1;   // "team index" for the undrafted list
+
+let B = null;          // the board: { rev, title, teams:[{name, players}], pool, updated, by }
+let staff = null;      // logged-in staff member, or null for visitors
+let sel = null;        // tapped player waiting for a team
+let search = "";
+let dirty = false, saving = false, dragging = false;
+
+const api = async (path, opts = {}) => {
+  const r = await fetch(path, { credentials: "same-origin", cache: "no-store", ...opts });
+  const body = await r.json().catch(() => ({}));
+  if (!r.ok) { const e = new Error(body.error || "HTTP " + r.status); e.status = r.status; e.body = body; throw e; }
+  return body;
+};
+
+// ---------- Rendering ----------
+function chip(name, i, edit){
+  const n = i == null ? "" : `<span class="i">${i + 1}</span>`;
+  if (!edit) return `<a class="chip" href="player.html?name=${encodeURIComponent(name)}">${n}<span>${esc(name)}</span></a>`;
+  return `<div class="chip${sel === name ? " sel" : ""}" draggable="true" data-p="${esc(name)}">${n}<span>${esc(name)}</span><button type="button" data-x="${esc(name)}" title="${i == null ? "Remove from the draft" : "Back to the list"}" aria-label="Remove">×</button></div>`;
+}
+
+function render(){
+  const edit = !!staff, drafted = B.teams.reduce((a, t) => a + t.players.length, 0);
+  document.body.classList.toggle("edit", edit);
+  $("title").textContent = B.title || "Bingo draft";
+  document.title = (B.title || "Bingo Draft") + " | Kingdom";
+  $("sub").textContent = B.teams.length
+    ? `${B.teams.length} teams · ${drafted} drafted · ${B.pool.length} left`
+    : "Teams · Draft pool";
+  $("hint").hidden = !edit || !B.teams.length;
+
+  if (!B.teams.length && !B.pool.length) {
+    $("out").innerHTML = `<div class="msg">${edit ? "Set up the draft above: name it, pick how many teams, and add the draft list." : "No bingo draft is running right now. Check back when the next bingo is announced."}</div>`;
+    return;
+  }
+
+  const q = search.toLowerCase();
+  const pool = B.pool.filter(p => !q || p.toLowerCase().includes(q));
+  const target = sel ? " target" : "";
+  $("out").innerHTML = `<div class="board">
+    <section class="zone pool${target}" data-t="${POOL}">
+      <div class="zh"><b>${edit ? "Draft list" : "Still to be drafted"}</b><span class="n">${B.pool.length}</span></div>
+      ${edit && B.pool.length > 8 ? `<input class="psearch" id="psearch" placeholder="Find a player" value="${esc(search)}">` : ""}
+      <div class="chips">${pool.map(p => chip(p, null, edit)).join("") || `<div class="empty">${B.pool.length ? "No match" : "Everyone's been drafted"}</div>`}</div>
+    </section>
+    <div class="teams">${B.teams.map((t, i) => `<section class="zone${target}" data-t="${i}">
+      <div class="zh"><span class="no">${String(i + 1).padStart(2, "0")}</span>${edit
+        ? `<input value="${esc(t.name)}" data-name="${i}" maxlength="40" aria-label="Team name">`
+        : `<b>${esc(t.name)}</b>`}<span class="n">${t.players.length}</span></div>
+      <div class="chips">${t.players.map((p, j) => chip(p, j, edit)).join("") || `<div class="empty">${edit ? "Drop players here" : "No players yet"}</div>`}</div>
+    </section>`).join("")}</div></div>`;
+
+  const ps = $("psearch");
+  if (ps && document.activeElement?.id !== "psearch" && search) { ps.focus(); ps.setSelectionRange(search.length, search.length); }
+}
+
+// ---------- Editing (staff only) ----------
+function where(name){
+  if (B.pool.includes(name)) return POOL;
+  const i = B.teams.findIndex(t => t.players.includes(name));
+  return i < 0 ? undefined : i;
+}
+function take(name){
+  const from = where(name);
+  const list = from === POOL ? B.pool : B.teams[from]?.players;
+  if (list) list.splice(list.indexOf(name), 1);
+  return from;
+}
+function move(name, to){
+  if (where(name) === to) return;
+  take(name);
+  (to === POOL ? B.pool : B.teams[to].players).push(name);
+  sel = null; render(); flashName(name); save();
+}
+function flashName(name){
+  const el = [...document.querySelectorAll(".chip[data-p]")].find(c => c.dataset.p === name);
+  if (el) el.classList.add("flash");
+}
+
+function setStatus(t, bad){ const s = $("savestate"); if (s) { s.textContent = t; s.className = "save" + (bad ? " bad" : ""); } }
+
+// Saves run one at a time; moves made while a save is in flight go out in the next one
+function save(){ dirty = true; if (!saving) flush(); }
+async function flush(){
+  saving = true;
+  while (dirty) {
+    dirty = false; setStatus("Saving…");
+    try {
+      const res = await api("/api/draft", { method: "PUT", headers: { "content-type": "application/json" },
+        body: JSON.stringify({ rev: B.rev, title: B.title, teams: B.teams, pool: B.pool }) });
+      B.rev = res.rev; B.updated = res.updated; B.by = res.by;
+      if (!dirty) setStatus("Saved");
+    } catch (e) {
+      dirty = false;
+      if (e.status === 409 && e.body.board) { B = e.body.board; render(); syncSetup(); setStatus(e.message, true); }
+      else if (e.status === 401) { setStatus("Your login expired. Log in again from the Staff page.", true); }
+      else { setStatus("Couldn't save: " + e.message, true); }
+    }
+  }
+  saving = false;
+}
+
+function syncSetup(){
+  if (document.activeElement !== $("dname")) $("dname").value = B.title;
+  if (document.activeElement !== $("dteams")) $("dteams").value = B.teams.length || 4;
+}
+
+function setTeamCount(n){
+  n = Math.max(2, Math.min(16, n | 0));
+  if (n === B.teams.length) return;
+  if (n < B.teams.length) {
+    const gone = B.teams.slice(n), back = gone.flatMap(t => t.players);
+    if (back.length && !confirm(`Remove ${gone.map(t => t.name).join(", ")}? ${back.length} player${back.length === 1 ? "" : "s"} will go back to the draft list.`)) { syncSetup(); return; }
+    B.teams = B.teams.slice(0, n); B.pool.push(...back);
+  } else {
+    while (B.teams.length < n) B.teams.push({ name: "Team " + (B.teams.length + 1), players: [] });
+  }
+  render(); save();
+}
+
+function addPlayers(){
+  const all = new Set([...B.pool, ...B.teams.flatMap(t => t.players)].map(key));
+  const added = [], bad = [], dup = [];
+  $("dadd").value.split(/[\n,;\t]+/).map(s => s.replace(/\s+/g, " ").trim()).filter(Boolean).forEach(n => {
+    if (!RSN.test(n)) bad.push(n);
+    else if (all.has(key(n))) dup.push(n);
+    else { all.add(key(n)); added.push(n); }
+  });
+  if (!B.teams.length) setTeamCount(+$("dteams").value || 4);
+  B.pool.push(...added);
+  const parts = [];
+  if (added.length) parts.push(`Added ${added.length}.`);
+  if (dup.length) parts.push(`Already listed: ${dup.join(", ")}.`);
+  if (bad.length) parts.push(`Not valid names: ${bad.join(", ")}.`);
+  $("addmsg").textContent = parts.join(" ") || "Paste some names first.";
+  $("dadd").value = bad.join("\n");
+  if (added.length) { render(); save(); }
+}
+
+function wireEditing(){
+  $("setup").hidden = false;
+  if (!B.teams.length && !B.pool.length) $("setup").open = true;
+  syncSetup();
+
+  $("dname").addEventListener("change", () => { B.title = $("dname").value.trim().slice(0, 60); render(); save(); });
+  $("dteams").addEventListener("change", () => setTeamCount(+$("dteams").value));
+  $("addbtn").addEventListener("click", addPlayers);
+  $("resetbtn").addEventListener("click", () => {
+    const n = B.teams.reduce((a, t) => a + t.players.length, 0);
+    if (!n || !confirm(`Return all ${n} drafted players to the draft list?`)) return;
+    B.teams.forEach(t => { B.pool.push(...t.players); t.players = []; }); render(); save();
+  });
+  $("clearbtn").addEventListener("click", () => {
+    if (!confirm("Clear the whole draft? This removes every team and the draft list.")) return;
+    B.title = ""; B.teams = []; B.pool = []; sel = null; syncSetup(); render(); save();
+  });
+
+  const out = $("out");
+  out.addEventListener("input", e => {
+    if (e.target.id === "psearch") { search = e.target.value; render(); }
+  });
+  out.addEventListener("change", e => {
+    const i = e.target.dataset.name; if (i == null) return;
+    B.teams[i].name = e.target.value.trim().slice(0, 40) || "Team " + (+i + 1); save();
+  });
+
+  // Tap a player, then tap a team (works on phones, where drag and drop doesn't)
+  out.addEventListener("click", e => {
+    const x = e.target.closest("[data-x]");
+    if (x) {
+      const name = x.dataset.x;
+      if (where(name) === POOL) { if (confirm(`Remove ${name} from the draft?`)) { take(name); if (sel === name) sel = null; render(); save(); } }
+      else move(name, POOL);
+      return;
+    }
+    if (e.target.closest("input")) return;
+    const c = e.target.closest(".chip[data-p]");
+    if (c) { sel = sel === c.dataset.p ? null : c.dataset.p; render(); return; }
+    const z = e.target.closest(".zone");
+    if (z && sel) move(sel, +z.dataset.t);
+  });
+  document.addEventListener("keydown", e => { if (e.key === "Escape" && sel) { sel = null; render(); } });
+
+  // Drag and drop
+  out.addEventListener("dragstart", e => {
+    const c = e.target.closest?.(".chip[data-p]"); if (!c) return;
+    dragging = true; sel = null;
+    e.dataTransfer.setData("text/plain", c.dataset.p); e.dataTransfer.effectAllowed = "move";
+    requestAnimationFrame(() => c.classList.add("dragging"));
+  });
+  out.addEventListener("dragend", () => { dragging = false; document.querySelectorAll(".dragging,.over").forEach(el => el.classList.remove("dragging", "over")); });
+  out.addEventListener("dragover", e => {
+    const z = e.target.closest(".zone"); if (!z) return;
+    e.preventDefault(); e.dataTransfer.dropEffect = "move";
+    document.querySelectorAll(".zone.over").forEach(el => el !== z && el.classList.remove("over"));
+    z.classList.add("over");
+  });
+  out.addEventListener("dragleave", e => { const z = e.target.closest(".zone"); if (z && !z.contains(e.relatedTarget)) z.classList.remove("over"); });
+  out.addEventListener("drop", e => {
+    const z = e.target.closest(".zone"); if (!z) return;
+    e.preventDefault(); dragging = false;
+    const name = e.dataTransfer.getData("text/plain");
+    if (name && where(name) !== undefined) move(name, +z.dataset.t);
+  });
+}
+
+// ---------- Live updates ----------
+// Everyone watching sees picks appear without refreshing. Staff skip a poll while they have unsaved moves.
+async function poll(){
+  if (document.hidden || saving || dirty || dragging) return;
+  try {
+    const b = await api("/api/draft");
+    if (b.rev !== B.rev && !saving && !dirty && !dragging) {
+      B = b; if (staff) syncSetup();
+      if (sel && where(sel) === undefined) sel = null;
+      render();
+    }
+  } catch {}
+}
+
+async function start(){
+  try { B = await api("/api/draft"); }
+  catch { $("out").innerHTML = '<div class="msg">Couldn\'t load the draft. Try refreshing.</div>'; return; }
+  try {
+    staff = await api("/api/me");
+    $("who").innerHTML = (staff.avatar ? `<img src="https://cdn.discordapp.com/avatars/${staff.id}/${staff.avatar}.png?size=48" alt="">` : "")
+      + `Editing as <b>${esc(staff.name)}</b> · <a href="admin.html">Staff console</a> · <a href="/auth/logout">Log out</a><span class="save" id="savestate"></span>`;
+    $("who").hidden = false;
+    wireEditing();
+  } catch { staff = null; }
+  render();
+  setInterval(poll, 10000);
+  document.addEventListener("visibilitychange", () => { if (!document.hidden) poll(); });
+}
+start();
+</script>
+</body>
+</html>
