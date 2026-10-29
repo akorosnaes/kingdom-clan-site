@@ -1,8 +1,9 @@
 // /api/bingo/subs
 //   GET   staff:   every pending drop, plus the latest reviewed ones
-//         captain: their own team's drops and how each was reviewed
+//         both:    the drops they logged themselves ("mine") and how each was reviewed
 //   POST  captain: log a drop for their team { tile, item, player, proof } — it waits for staff approval.
-//         Only between the bingo's start and end times (when they're set).
+//         Only once the board is revealed and between the bingo's start and end times (when they're set).
+//         staff:   the same for any team, named in { team }, at any time (e.g. a late drop from just before the end)
 // /api/bingo/review
 //   POST  staff: { id, action: "approve" | "reject" } for a pending drop, or { id, action: "undo" } for an approved one.
 //         Approving adds one completion to the team's tile, puts the drop in the public drop log and announces it on
@@ -28,21 +29,25 @@ async function subs(req){
       out.pending = list.filter(x => x.status === "pending");
       out.recent = list.filter(x => x.status !== "pending").slice(-50).reverse();
     }
-    if (cap) out.mine = list.filter(x => x.by.id === cap.id).slice(-100).reverse();
+    const me = staff || cap;
+    out.mine = list.filter(x => x.by.id === me.id).slice(-100).reverse();
     return json(out);
   }
 
   if (req.method !== "POST") return json({ error: "Method not allowed." }, 405, { allow: "GET, POST" });
-  const cap = getCaptain(req);
-  if (!cap) return json({ error: "Only team captains can log drops." }, 401);
+  const staff = getStaff(req), cap = getCaptain(req), me = staff || cap;
+  if (!me) return json({ error: "Only team captains and staff can log drops." }, 401);
   if (!sameOrigin(req)) return json({ error: "Bad origin." }, 403);
 
   const b = await body(req), board = await readBoard(s), now = Date.now();
-  if (!board.revealed) return json({ error: "The board hasn't been revealed yet." }, 403);
-  if (board.starts && now < board.starts) return json({ error: "The bingo hasn't started yet. Drops can be logged once it starts." }, 403);
-  if (board.ends && now > board.ends) return json({ error: "The bingo has ended, so no more drops can be logged." }, 403);
-  const ti = board.teams.findIndex(t => t.captain === cap.id);
-  if (ti < 0) return json({ error: "You're not set as captain of a team yet. Ask an admin to pick you in Bingo setup." }, 403);
+  if (!staff) {
+    if (!board.revealed) return json({ error: "The board hasn't been revealed yet." }, 403);
+    if (board.starts && now < board.starts) return json({ error: "The bingo hasn't started yet. Drops can be logged once it starts." }, 403);
+    if (board.ends && now > board.ends) return json({ error: "The bingo has ended, so no more drops can be logged." }, 403);
+  }
+  // Staff pick the team; captains always log for their own
+  const ti = staff && b?.team != null ? board.teams.findIndex(t => t.name === b.team) : board.teams.findIndex(t => t.captain === cap?.id);
+  if (ti < 0) return json({ error: staff ? "Pick a team." : "You're not set as captain of a team yet. Ask an admin to pick you in Bingo setup." }, staff ? 400 : 403);
   const team = board.teams[ti], tile = Number(b?.tile), t = board.tiles[tile];
   if (!Number.isInteger(tile) || !t || (!t.boss && !t.name)) return json({ error: "Pick a tile." }, 400);
   if (team.p[tile] >= t.need) return json({ error: "Your team has already completed that tile." }, 400);
@@ -56,7 +61,7 @@ async function subs(req){
     return json({ error: "Your team has too many drops waiting for approval. Ask an admin to review them." }, 429);
   // The page sends the tile's display name (e.g. "Kree'arra") so the drop log keeps it even if the tile changes later
   const sub = { id: newId(), t: Date.now(), team: team.name, tile, tileName: text(b.tileName, 40) || tileName(t, tile), item, player, proof,
-    by: { id: cap.id, name: cap.name }, status: "pending" };
+    by: { id: me.id, name: me.name, ...(staff ? { staff: true } : {}) }, status: "pending" };
   list.push(sub);
   await writeSubs(list, s);
   return json(sub);

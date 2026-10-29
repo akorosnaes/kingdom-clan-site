@@ -254,6 +254,8 @@ textarea.inp{resize:vertical;min-height:96px;font:13px/1.5 var(--mono)}
 
 /* Collapsible tiles and the drop log */
 .sech .tog{margin-left:auto}
+.logteam{display:flex;align-items:center;gap:8px;font:500 12px/1 var(--mono);color:var(--mute);letter-spacing:.06em}
+.logteam select.inp{width:auto;min-width:170px;padding-top:7px;padding-bottom:7px;font-size:13px}
 .dl{border:1px solid var(--line);border-radius:8px;background:var(--panel);overflow:hidden}
 .lr{display:grid;grid-template-columns:120px 170px minmax(0,1fr) auto;gap:14px;align-items:center;padding:11px 16px;border-bottom:1px solid var(--line);font-size:14px}
 .lr:last-child{border-bottom:0}
@@ -371,7 +373,6 @@ let staff = null;      // logged-in staff member, or null
 let captain = null;    // logged-in team captain, or null
 let subs = { pending: [], recent: [], mine: [] };   // submitted drops (staff see pending; captains see their own)
 let captains = [];     // staff: everyone in CAPTAIN_DISCORD_IDS, for the captain pickers in setup
-let roster = null;     // captain: player names on their team in the Bingo Draft
 let selTile = null;    // tile open in the editor
 let dirty = false, saving = false, clearLog = false;
 let logShown = 25;
@@ -687,35 +688,55 @@ async function reviewDrop(id, action, btn){
   } catch (e) { alert(e.message); if (btn) btn.disabled = false; loadSubs(); }
 }
 
-// ---------- Logging a drop (captains) ----------
+// ---------- Logging a drop (captains for their own team; staff for any team) ----------
 const itemsOf = t => t.boss ? (B.items?.[t.boss] || []) : (t.items || []);
 const myTeam = () => captain ? B.teams.find(t => t.captain === captain.id) : null;
-let capSig = "";
+// The team the form logs for: staff pick one from the menu (starting on their own team if they're also a captain)
+let pickTeam = null;
+const logTeam = () => staff ? B.teams.find(t => t.name === pickTeam) || myTeam() || B.teams[0] || null : myTeam();
+// The player dropdown: the team's players in the Bingo Draft (matched by team name)
+const rosterOf = team => team ? draftTeams.find(x => x.name.trim().toLowerCase() === team.name.trim().toLowerCase())?.players || [] : [];
+const LOG_KEY = "kingdom-bingo-log-hidden";
+let logHidden = (() => { try { return localStorage.getItem(LOG_KEY) === "1"; } catch { return false; } })();
+let capSig = "", capTeam = null;
+const mineList = mine => mine.length ? `<div class="mine"><h3>Your drops</h3>${mine.slice(0, 20).map(s => `<div class="mr"><span><b>${esc(s.player)}</b> · ${esc(s.item)} · ${esc(s.tileName)}${staff ? ` · ${esc(s.team)}` : ""}</span>
+  <span class="stag ${s.status}">${s.status === "undone" ? "removed" : s.status}</span><small>${when(s.t)}</small></div>`).join("")}</div>` : "";
 function renderCaptain(){
   const el = $("cap");
-  if (!captain) { el.innerHTML = ""; return; }
-  const team = myTeam(), mine = subs.mine || [];
-  // Staff assigned or renamed this captain's team since the roster was loaded
-  if ((team ? team.name : null) !== rosterTeam) { loadRoster().then(renderCaptain); }
+  if (!captain && !staff) { el.innerHTML = ""; return; }
+  const team = logTeam(), mine = subs.mine || [];
+  // The team was assigned or renamed since the draft teams were loaded
+  if (team && team.name !== rosterTeam) { rosterTeam = team.name; loadDraft().then(renderCaptain); }
   // Only redraw when something the form shows has changed, so half-typed rows aren't wiped by live updates
-  const sig = JSON.stringify([team, B.tiles, B.items, mine.map(s => [s.id, s.status]), roster, phase(), B.hidden]);
+  const sig = JSON.stringify([team, staff && B.teams.map(t => t.name), B.tiles, B.items, mine.map(s => [s.id, s.status]), rosterOf(team), phase(), B.hidden, logHidden]);
   if (sig === capSig) return;
   capSig = sig;
+  // Keep what was typed, unless staff just switched to another team
   const keep = {};
-  el.querySelectorAll(".cr[data-ct]").forEach(r => { keep[r.dataset.ct] = Object.fromEntries([...r.querySelectorAll("[data-f]")].map(f => [f.dataset.f, f.value])); });
+  if (capTeam === team?.name) el.querySelectorAll(".cr[data-ct]").forEach(r => { keep[r.dataset.ct] = Object.fromEntries([...r.querySelectorAll("[data-f]")].map(f => [f.dataset.f, f.value])); });
+  capTeam = team?.name;
 
-  const closed = !team ? "You're logged in as a captain, but you're not set as captain of a team yet. Ask an admin to pick you in Bingo setup."
+  const tog = `<button class="ghost sm tog" id="logtog" type="button" aria-expanded="${!logHidden}">${logHidden ? "Show" : "Hide"}</button>`;
+  const head = staff ? `<div class="sech"><h2>Log a drop</h2>${B.teams.length ? `<label class="logteam"><span>For</span><select class="inp" id="logteam" aria-label="Team">
+      ${B.teams.map(t => `<option${t === team ? " selected" : ""}>${esc(t.name)}</option>`).join("")}</select></label>` : ""}<small>drops go to the pending list for approval</small>${tog}</div>`
+    : `<div class="sech"><h2>Log a drop</h2>${team ? `<small><i class="dot" style="background:${teamColor(team.name)}"></i>${esc(team.name)} · drops go to staff for approval</small>` : ""}${tog}</div>`;
+  if (logHidden) { el.innerHTML = `<section class="sec">${head}</section>`; return; }
+
+  // Captains can only log while the bingo is running; staff can log any time, so they just get a reminder
+  const closed = !team ? (staff ? "Add teams in Bingo setup first." : "You're logged in as a captain, but you're not set as captain of a team yet. Ask an admin to pick you in Bingo setup.")
+    : staff ? ""
     : B.hidden || B.revealed === false ? `You're captain of ${esc(team.name)}. The board will be revealed after the draft is completed, and you can log drops then.`
     : phase() === "before" ? `You're captain of ${esc(team.name)}. Drops can be logged once the bingo starts, ${esc(fmtDate(B.starts))}.`
     : phase() === "over" ? "The bingo has ended, so no more drops can be logged." : "";
   if (closed) {
-    el.innerHTML = `<section class="sec"><div class="sech"><h2>Log a drop</h2></div><div class="msg">${closed}</div>
-      ${team && mine.length ? `<div class="mine"><h3>Your drops</h3>${mine.slice(0, 20).map(s => `<div class="mr"><span><b>${esc(s.player)}</b> · ${esc(s.item)} · ${esc(s.tileName)}</span>
-        <span class="stag ${s.status}">${s.status === "undone" ? "removed" : s.status}</span><small>${when(s.t)}</small></div>`).join("")}</div>` : ""}</section>`;
+    el.innerHTML = `<section class="sec">${head}<div class="msg">${closed}</div>${team ? mineList(mine) : ""}</section>`;
     return;
   }
-  const waiting = i => mine.filter(s => s.status === "pending" && s.tile === i).length;
-  const players = roster || [];
+  const note = !staff ? "" : B.revealed === false ? "The board isn't revealed yet, so captains can't log drops. You can, as staff."
+    : phase() === "before" ? "The bingo hasn't started, so captains can't log drops yet. You can, as staff."
+    : phase() === "over" ? "The bingo has ended, so captains can't log drops any more. You still can, as staff (e.g. for a late drop)." : "";
+  const waiting = i => (staff ? subs.pending : mine).filter(s => s.status === "pending" && s.tile === i && s.team === team.name).length;
+  const players = rosterOf(team);
   const rows = B.tiles.map((t, i) => {
     if (isBlank(t)) return "";
     const n = need(t), v = Math.max(0, team.p[i]), done = v >= n, w = waiting(i);
@@ -733,11 +754,10 @@ function renderCaptain(){
     </div>`;
   }).join("");
 
-  el.innerHTML = `<section class="sec">
-    <div class="sech"><h2>Log a drop</h2><small><i class="dot" style="background:${teamColor(team.name)}"></i>${esc(team.name)} · drops go to staff for approval</small></div>
+  el.innerHTML = `<section class="sec">${head}
+    ${note ? `<p class="staffnote">${note}</p>` : ""}
     <div class="crl">${rows}</div>
-    ${mine.length ? `<div class="mine"><h3>Your drops</h3>${mine.slice(0, 20).map(s => `<div class="mr"><span><b>${esc(s.player)}</b> · ${esc(s.item)} · ${esc(s.tileName)}</span>
-      <span class="stag ${s.status}">${s.status === "undone" ? "removed" : s.status}</span><small>${when(s.t)}</small></div>`).join("")}</div>` : ""}
+    ${mineList(mine)}
   </section>`;
   // Put back anything the captain had typed
   Object.entries(keep).forEach(([i, f]) => {
@@ -758,7 +778,7 @@ async function submitDrop(i){
   btn.disabled = true; say("Sending…");
   try {
     await api("/api/bingo/subs", { method: "POST", headers: { "content-type": "application/json" },
-      body: JSON.stringify({ tile: i, tileName: tileName(B.tiles[i]), item, player: f("player"), proof: f("proof") }) });
+      body: JSON.stringify({ tile: i, tileName: tileName(B.tiles[i]), item, player: f("player"), proof: f("proof"), ...(staff ? { team: logTeam()?.name } : {}) }) });
     r.querySelectorAll("[data-f]").forEach(x => x.value = "");
     await loadSubs();
     const again = $("cap").querySelector(`.cr[data-ct="${i}"] .cm`);
@@ -771,21 +791,19 @@ async function submitDrop(i){
 function wireCaptain(){
   const el = $("cap");
   el.addEventListener("change", e => {
+    if (e.target.id === "logteam") { pickTeam = e.target.value; renderCaptain(); return; }
     if (e.target.dataset.f === "item") { const o = e.target.closest(".cr").querySelector('[data-f="other"]'); o.hidden = e.target.value !== "__other"; if (!o.hidden) o.focus(); }
   });
-  el.addEventListener("click", e => { const i = e.target.dataset.sub; if (i != null) submitDrop(+i); });
+  el.addEventListener("click", e => {
+    if (e.target.id === "logtog") {
+      logHidden = !logHidden;
+      try { localStorage.setItem(LOG_KEY, logHidden ? "1" : "0"); } catch {}
+      renderCaptain(); return;
+    }
+    const i = e.target.dataset.sub; if (i != null) submitDrop(+i);
+  });
 }
-
-// The captain's team in the Bingo Draft (matched by team name) gives the player dropdown
-let rosterTeam = null;
-async function loadRoster(){
-  const team = myTeam(); rosterTeam = team ? team.name : null;
-  try {
-    const d = await api("/api/draft");
-    const t = team && d.teams.find(x => x.name.trim().toLowerCase() === team.name.trim().toLowerCase());
-    roster = t ? t.players : [];
-  } catch { roster = []; }
-}
+let rosterTeam = null;   // the team whose draft players were last loaded
 
 async function loadSubs(){
   if (!staff && !captain) return;
@@ -1088,7 +1106,7 @@ async function start(){
   }
   $("who").hidden = !staff && !captain;
   $("clog").hidden = !!(staff || captain);
-  if (captain) { wireCaptain(); await loadRoster(); }
+  if (staff || captain) wireCaptain();
   await Promise.all([loadSubs(), loadDraft()]);
   render(); wireTips(); wireBoard();
   loadComp();
