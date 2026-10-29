@@ -141,6 +141,37 @@ a.chip:hover{background:var(--panel2)}
 @keyframes pulse{50%{opacity:.25}}
 .flash{animation:flash 1.2s ease}
 @keyframes flash{from{background:#fff;color:#000}to{background:transparent}}
+
+/* Live draft: setup options, on-the-clock banner, captains, team strength, pick history */
+.opts{grid-column:1/-1;display:flex;gap:18px;flex-wrap:wrap;align-items:center;padding-top:14px;border-top:1px solid var(--line)}
+.sgrid .ck{display:flex;align-items:center;gap:8px;font:14px/1.3 var(--sans);letter-spacing:0;text-transform:none;color:#fff;cursor:pointer}
+.sgrid .ck input{width:16px;height:16px;padding:0;accent-color:#fff;cursor:pointer}
+.sgrid .ck input[type=number]{width:72px;height:auto;padding:6px 8px;accent-color:auto;cursor:text}
+.opts .sp{flex:1}
+.banner{display:flex;align-items:center;gap:18px;flex-wrap:wrap;margin-top:28px;padding:18px 22px;border:1px solid #fff;border-radius:10px;background:var(--panel)}
+.banner .bn{font:500 12px/1 var(--mono);letter-spacing:.14em;text-transform:uppercase;color:var(--mute)}
+.banner b{display:block;margin-top:6px;font:600 clamp(20px,3vw,26px)/1.15 var(--sans);letter-spacing:-.02em}
+.banner .nx{display:block;margin-top:6px;font-size:13px;color:var(--mute)}
+.banner .clk{margin-left:auto;font:600 clamp(28px,5vw,40px)/1 var(--mono);letter-spacing:-.02em}
+.banner .clk.low{color:#e5484d}
+.banner .clk.up{color:#e5484d;font-size:clamp(18px,3vw,24px)}
+.banner.done{border-color:var(--line2)}
+.zone.clock{border-color:#fff;box-shadow:0 0 0 1px #fff}
+.zone.clock::before{content:"On the clock";display:block;padding:4px 16px;border-radius:7px 7px 0 0;background:#fff;color:#000;font:600 10px/1.4 var(--mono);letter-spacing:.12em;text-transform:uppercase}
+.chip .cap{flex:none;color:#f5d90a;font-size:13px}
+.chip .star{opacity:0}
+.chip:hover .star,.chip .star.on{opacity:1}
+.chip .star.on{color:#f5d90a}
+.str{padding:8px 16px;border-bottom:1px solid var(--line);font:500 11px/1.4 var(--mono);letter-spacing:.04em;color:var(--mute)}
+.str em{font-style:normal;color:#fff}
+.hist{margin-top:40px}
+.hist .sech{display:flex;align-items:flex-end;justify-content:space-between;gap:16px;flex-wrap:wrap;padding-bottom:14px;border-bottom:1px solid var(--line2)}
+.hist ol{margin:0;padding:0;list-style:none;display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:0 24px}
+.hist li{display:flex;gap:10px;padding:9px 0;border-bottom:1px solid var(--line);font-size:14px}
+.hist li .k{flex:none;min-width:58px;font:500 12px/1.6 var(--mono);color:var(--dim)}
+.hist li span{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.hist li.last{color:#fff}
+.hist li.last .k{color:#fff}
 </style>
 </head>
 <body>
@@ -160,10 +191,21 @@ a.chip:hover{background:var(--panel2)}
       <label class="wide">Add players to the draft list<textarea id="dadd" placeholder="One RuneScape name per line, or separated by commas"></textarea></label>
       <div class="srow"><button class="primary" id="addbtn" type="button">Add to draft list</button><p id="addmsg"></p><span class="sp"></span>
         <button class="ghost" id="resetbtn" type="button">Return everyone to the list</button><button class="ghost" id="clearbtn" type="button">Clear draft</button></div>
+      <div class="opts">
+        <label class="ck"><input type="checkbox" id="dsnake" checked>Snake draft order (1-2-3-3-2-1)</label>
+        <label class="ck"><input type="checkbox" id="dtimer">Pick timer</label>
+        <label class="ck"><input type="number" id="dmins" min="0.5" max="60" step="0.5" value="2" aria-label="Minutes per pick">minutes per pick</label>
+        <span class="sp"></span>
+        <button class="primary" id="startbtn" type="button">Start draft</button>
+        <button class="ghost" id="clockbtn" type="button" hidden>Restart timer</button>
+        <button class="ghost" id="endbtn" type="button" hidden>End draft</button>
+      </div>
     </div>
   </details>
-  <p class="hint" id="hint" hidden>Drag a player onto a team. On a phone, tap a player and then tap a team. Drag them back to the list to undo.</p>
+  <p class="hint" id="hint" hidden>Drag a player onto a team. On a phone, tap a player and then tap a team. Drag them back to the list to undo. Click ☆ on a team's player to make them captain (captains don't use a pick).</p>
+  <div id="banner"></div>
   <div id="out"><div class="msg">Loading the draft…</div></div>
+  <div id="hist"></div>
 </main>
 <footer><span class="fsoc"><a href="https://x.com/Kingdom_OSRS" target="_blank" rel="noopener" aria-label="Kingdom on X (Twitter)" title="X (Twitter)"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg></a><a href="https://wiseoldman.net/groups/1152" target="_blank" rel="noopener" aria-label="Kingdom on Wise Old Man" title="Wise Old Man"><img src="wom.png" alt=""></a><a href="https://templeosrs.com/groups/overview.php?id=1710" target="_blank" rel="noopener" aria-label="Kingdom on TempleOSRS" title="TempleOSRS"><img src="temple.png" alt=""></a></span>Kingdom · <a class="staff" href="admin.html">Staff</a></footer>
 
@@ -174,11 +216,27 @@ const key = n => n.toLowerCase().replace(/[ _-]/g, "");
 const RSN = /^[A-Za-z0-9 _-]{1,12}$/;
 const POOL = -1;   // "team index" for the undrafted list
 
-let B = null;          // the board: { rev, title, teams:[{name, players}], pool, updated, by }
+let B = null;          // the board: { rev, title, teams:[{name, players, captain}], pool, snake, timer, started, clock, picks:[{player, team, t}], updated, by }
 let staff = null;      // logged-in staff member, or null for visitors
 let sel = null;        // tapped player waiting for a team
 let search = "";
 let dirty = false, saving = false, dragging = false;
+let ehb = null;        // staff: Wise Old Man EHB by player (key(name) → hours), for team strength
+
+// Boards saved before the live draft features get their defaults
+function fill(b){
+  return { snake: true, timer: 0, started: 0, clock: 0, picks: [], ...b, teams: b.teams.map(t => ({ captain: "", ...t })) };
+}
+
+// Snake order: pick k (0-based) goes to team 1, 2, 3, 3, 2, 1, 1, 2… (or 1, 2, 3, 1, 2, 3… without snake)
+function teamFor(k){
+  const n = B.teams.length; if (!n) return -1;
+  const round = Math.floor(k / n), pos = k % n;
+  return B.snake && round % 2 ? n - 1 - pos : pos;
+}
+const live = () => B.started && B.teams.length && B.pool.length;   // draft running with players left
+const onClock = () => live() ? teamFor(B.picks.length) : -1;
+const pickNo = name => B.picks.findIndex(p => p.player === name);
 
 const api = async (path, opts = {}) => {
   const r = await fetch(path, { credentials: "same-origin", cache: "no-store", ...opts });
@@ -188,10 +246,53 @@ const api = async (path, opts = {}) => {
 };
 
 // ---------- Rendering ----------
-function chip(name, i, edit){
-  const n = i == null ? "" : `<span class="i">${i + 1}</span>`;
+// team: the player's team (null for the draft list). Team players show ★ for the captain, or their overall pick number.
+function chip(name, team, edit){
+  const isCap = team && team.captain === name, k = team ? pickNo(name) : -1;
+  const n = !team ? "" : isCap ? '<span class="cap" title="Captain">★</span>' : `<span class="i" title="${k < 0 ? "Placed before the draft" : "Pick " + (k + 1)}">${k < 0 ? "·" : k + 1}</span>`;
   if (!edit) return `<a class="chip" data-p="${esc(name)}" href="player.html?name=${encodeURIComponent(name)}">${n}<span>${esc(name)}</span></a>`;
-  return `<div class="chip${sel === name ? " sel" : ""}" draggable="true" data-p="${esc(name)}">${n}<span>${esc(name)}</span><button type="button" data-x="${esc(name)}" title="${i == null ? "Remove from the draft" : "Back to the list"}" aria-label="Remove">×</button></div>`;
+  const star = team ? `<button type="button" class="star${isCap ? " on" : ""}" data-cap="${esc(name)}" title="${isCap ? "Captain (click to unset)" : "Make captain"}" aria-label="Captain">${isCap ? "★" : "☆"}</button>` : "";
+  return `<div class="chip${sel === name ? " sel" : ""}" draggable="true" data-p="${esc(name)}">${n}<span>${esc(name)}</span>${star}<button type="button" data-x="${esc(name)}" title="${team ? "Back to the list" : "Remove from the draft"}" aria-label="Remove">×</button></div>`;
+}
+
+// Staff only: a team's combined Wise Old Man EHB (players WOM doesn't know are left out and counted)
+function strength(team){
+  if (!staff || !ehb) return "";
+  let sum = 0, known = 0;
+  team.players.forEach(p => { const v = ehb.get(key(p)); if (v != null) { sum += v; known++; } });
+  const miss = team.players.length - known;
+  return `<div class="str" title="Only staff can see this">EHB <em>${Math.round(sum).toLocaleString()}</em>${miss ? ` · ${miss} not on Wise Old Man` : ""}</div>`;
+}
+
+// "Pick 7 · On the clock: Team Zamorak", with the pick timer if it's on
+function banner(){
+  const el = $("banner");
+  if (!B.started || !B.teams.length) { el.innerHTML = ""; return; }
+  if (!B.pool.length) {
+    el.innerHTML = `<div class="banner done"><div><span class="bn">Draft complete</span><b>${B.picks.length} pick${B.picks.length === 1 ? "" : "s"} made</b></div></div>`;
+    return;
+  }
+  const k = B.picks.length, n = B.teams.length, t = B.teams[teamFor(k)], next = B.teams[teamFor(k + 1)];
+  el.innerHTML = `<div class="banner"><div><span class="bn">Pick ${k + 1} · Round ${Math.floor(k / n) + 1}</span>
+    <b>On the clock: ${esc(t.name)}</b>${B.pool.length > 1 && next ? `<span class="nx">Next up: ${esc(next.name)}</span>` : ""}</div>
+    ${B.timer ? '<span class="clk" id="clk"></span>' : ""}</div>`;
+  tick();
+}
+// Counts down from the moment the current pick started (B.clock)
+function tick(){
+  const c = $("clk"); if (!c || !B.timer) return;
+  const left = Math.ceil((B.timer * 60000 - (Date.now() - B.clock)) / 1000);
+  if (left <= 0) { c.textContent = "Time's up!"; c.className = "clk up"; return; }
+  c.textContent = `${Math.floor(left / 60)}:${String(left % 60).padStart(2, "0")}`;
+  c.className = "clk" + (left <= 15 ? " low" : "");
+}
+
+function history(){
+  const el = $("hist");
+  if (!B.picks.length) { el.innerHTML = ""; return; }
+  const list = B.picks.map((p, i) => ({ ...p, i })).reverse();
+  el.innerHTML = `<section class="hist"><div class="sech"><h2>Pick history</h2>${staff ? '<button class="ghost" id="undobtn" type="button">Undo last pick</button>' : `<small>${B.picks.length} picks</small>`}</div>
+    <ol>${list.map((p, j) => `<li class="${j ? "" : "last"}"><span class="k">Pick ${p.i + 1}</span><span><b>${esc(p.player)}</b> → ${esc(p.team)}</span></li>`).join("")}</ol></section>`;
 }
 
 function render(){
@@ -203,6 +304,8 @@ function render(){
     ? `${B.teams.length} teams · ${drafted} drafted · ${B.pool.length} left`
     : "Teams · Draft pool";
   $("hint").hidden = !edit || !B.teams.length;
+  banner(); history();
+  if (staff) syncLive();
 
   if (!B.teams.length && !B.pool.length) {
     $("out").innerHTML = `<div class="msg">${edit ? "Set up the draft above: name it, pick how many teams, and add the draft list." : "No bingo draft is running right now. Check back when the next bingo is announced."}</div>`;
@@ -211,18 +314,21 @@ function render(){
 
   const q = search.toLowerCase();
   const pool = B.pool.filter(p => !q || p.toLowerCase().includes(q));
-  const target = sel ? " target" : "";
+  const target = sel ? " target" : "", clock = onClock();
+  // Captain first, then players in the order they were picked
+  const order = t => [...t.players].sort((a, b) => (b === t.captain) - (a === t.captain) || (pickNo(a) < 0 ? -1 : pickNo(a)) - (pickNo(b) < 0 ? -1 : pickNo(b)));
   $("out").innerHTML = `<div class="board">
     <section class="zone pool${target}" data-t="${POOL}">
       <div class="zh"><b>${edit ? "Draft list" : "Still to be drafted"}</b><span class="n">${B.pool.length}</span></div>
       ${edit && B.pool.length > 8 ? `<input class="psearch" id="psearch" placeholder="Find a player" value="${esc(search)}">` : ""}
       <div class="chips">${pool.map(p => chip(p, null, edit)).join("") || `<div class="empty">${B.pool.length ? "No match" : "Everyone's been drafted"}</div>`}</div>
     </section>
-    <div class="teams">${B.teams.map((t, i) => `<section class="zone${target}" data-t="${i}">
+    <div class="teams">${B.teams.map((t, i) => `<section class="zone${target}${i === clock ? " clock" : ""}" data-t="${i}">
       <div class="zh"><span class="no">${String(i + 1).padStart(2, "0")}</span>${edit
         ? `<input value="${esc(t.name)}" data-name="${i}" maxlength="40" aria-label="Team name">`
         : `<b>${esc(t.name)}</b>`}<span class="n">${t.players.length}</span></div>
-      <div class="chips">${t.players.map((p, j) => chip(p, j, edit)).join("") || `<div class="empty">${edit ? "Drop players here" : "No players yet"}</div>`}</div>
+      ${strength(t)}
+      <div class="chips">${order(t).map(p => chip(p, t, edit)).join("") || `<div class="empty">${edit ? "Drop players here" : "No players yet"}</div>`}</div>
     </section>`).join("")}</div></div>`;
 
   const ps = $("psearch");
@@ -242,10 +348,44 @@ function take(name){
   return from;
 }
 function move(name, to){
-  if (where(name) === to) return;
+  const from = where(name);
+  if (from === to) return;
+  // While the draft is running, taking a player from the list is a pick: it should be the team on the clock's
+  const picking = from === POOL && to !== POOL && live();
+  if (picking && to !== onClock() && !confirm(`It's ${B.teams[onClock()].name}'s pick. Put ${name} on ${B.teams[to].name} anyway?`)) return;
   take(name);
   (to === POOL ? B.pool : B.teams[to].players).push(name);
+  if (from !== POOL && B.teams[from].captain === name) B.teams[from].captain = "";
+  if (picking) { B.picks.push({ player: name, team: B.teams[to].name, t: Date.now() }); B.clock = Date.now(); }
+  // Back on the list: no longer a pick. Moved between teams: the pick now belongs to the new team.
+  const k = pickNo(name);
+  if (k >= 0 && to === POOL) B.picks.splice(k, 1);
+  else if (k >= 0) B.picks[k].team = B.teams[to].name;
   sel = null; render(); flashName(name); save();
+}
+
+// Undo last pick: that player goes back to the top of the list and the same team is on the clock again
+function undoPick(){
+  const p = B.picks[B.picks.length - 1]; if (!p) return;
+  if (!confirm(`Undo pick ${B.picks.length}: ${p.player} → ${p.team}?`)) return;
+  B.picks.pop(); take(p.player); B.pool.unshift(p.player);
+  B.teams.forEach(t => { if (t.captain === p.player) t.captain = ""; });
+  B.clock = Date.now(); render(); save();
+}
+
+// Captains are placed on their team before the draft; making someone captain takes them out of the pick order
+function toggleCaptain(name){
+  const t = B.teams[where(name)]; if (!t) return;
+  t.captain = t.captain === name ? "" : name;
+  const k = pickNo(name); if (t.captain === name && k >= 0) B.picks.splice(k, 1);
+  render(); save();
+}
+
+function syncLive(){
+  if (document.activeElement !== $("dmins")) $("dmins").value = B.timer || 2;
+  $("dsnake").checked = B.snake; $("dtimer").checked = !!B.timer;
+  $("dmins").disabled = !B.timer;
+  $("startbtn").hidden = !!B.started; $("clockbtn").hidden = !B.started || !B.timer; $("endbtn").hidden = !B.started;
 }
 function flashName(name){
   const el = [...document.querySelectorAll(".chip[data-p]")].find(c => c.dataset.p === name);
@@ -262,12 +402,13 @@ async function flush(){
     dirty = false; setStatus("Saving…");
     try {
       const res = await api("/api/draft", { method: "PUT", headers: { "content-type": "application/json" },
-        body: JSON.stringify({ rev: B.rev, title: B.title, teams: B.teams, pool: B.pool }) });
+        body: JSON.stringify({ rev: B.rev, title: B.title, teams: B.teams, pool: B.pool, snake: B.snake, timer: B.timer,
+          started: B.started, clock: B.clock, picks: B.picks }) });
       B.rev = res.rev; B.updated = res.updated; B.by = res.by;
       if (!dirty) setStatus("Saved");
     } catch (e) {
       dirty = false;
-      if (e.status === 409 && e.body.board) { B = e.body.board; render(); syncSetup(); setStatus(e.message, true); }
+      if (e.status === 409 && e.body.board) { B = fill(e.body.board); render(); syncSetup(); setStatus(e.message, true); }
       else if (e.status === 401) { setStatus("Your login expired. Log in again from the Staff page.", true); }
       else { setStatus("Couldn't save: " + e.message, true); }
     }
@@ -287,8 +428,9 @@ function setTeamCount(n){
     const gone = B.teams.slice(n), back = gone.flatMap(t => t.players);
     if (back.length && !confirm(`Remove ${gone.map(t => t.name).join(", ")}? ${back.length} player${back.length === 1 ? "" : "s"} will go back to the draft list.`)) { syncSetup(); return; }
     B.teams = B.teams.slice(0, n); B.pool.push(...back);
+    B.picks = B.picks.filter(p => !back.includes(p.player));
   } else {
-    while (B.teams.length < n) B.teams.push({ name: "Team " + (B.teams.length + 1), players: [] });
+    while (B.teams.length < n) B.teams.push({ name: "Team " + (B.teams.length + 1), players: [], captain: "" });
   }
   render(); save();
 }
@@ -322,13 +464,32 @@ function wireEditing(){
   $("addbtn").addEventListener("click", addPlayers);
   $("resetbtn").addEventListener("click", () => {
     const n = B.teams.reduce((a, t) => a + t.players.length, 0);
-    if (!n || !confirm(`Return all ${n} drafted players to the draft list?`)) return;
-    B.teams.forEach(t => { B.pool.push(...t.players); t.players = []; }); render(); save();
+    if (!n || !confirm(`Return all ${n} drafted players to the draft list? This also clears the captains and pick history and ends the draft.`)) return;
+    B.teams.forEach(t => { B.pool.push(...t.players); t.players = []; t.captain = ""; });
+    B.picks = []; B.started = 0; B.clock = 0; render(); save();
   });
   $("clearbtn").addEventListener("click", () => {
-    if (!confirm("Clear the whole draft? This removes every team and the draft list.")) return;
-    B.title = ""; B.teams = []; B.pool = []; sel = null; syncSetup(); render(); save();
+    if (!confirm("Clear the whole draft? This removes every team, the draft list and the pick history.")) return;
+    B.title = ""; B.teams = []; B.pool = []; B.picks = []; B.started = 0; B.clock = 0; sel = null; syncSetup(); render(); save();
   });
+
+  // Live draft controls
+  $("dsnake").addEventListener("change", e => { B.snake = e.target.checked; render(); save(); });
+  $("dtimer").addEventListener("change", e => { B.timer = e.target.checked ? Math.max(0.5, +$("dmins").value || 2) : 0; B.clock = Date.now(); render(); save(); });
+  $("dmins").addEventListener("change", e => {
+    const m = Math.round(Math.max(0.5, Math.min(60, +e.target.value || 2)) * 2) / 2; e.target.value = m;
+    if (B.timer) { B.timer = m; B.clock = Date.now(); render(); save(); }
+  });
+  $("startbtn").addEventListener("click", () => {
+    if (!B.teams.length || !B.pool.length) { alert("Add teams and a draft list first."); return; }
+    B.started = B.clock = Date.now(); render(); save();
+  });
+  $("clockbtn").addEventListener("click", () => { B.clock = Date.now(); render(); save(); });
+  $("endbtn").addEventListener("click", () => {
+    if (!confirm("End the draft? Teams and the pick history stay as they are; the on-the-clock banner and timer go away.")) return;
+    B.started = 0; render(); save();
+  });
+  $("hist").addEventListener("click", e => { if (e.target.id === "undobtn") undoPick(); });
 
   const out = $("out");
   out.addEventListener("input", e => {
@@ -336,11 +497,16 @@ function wireEditing(){
   });
   out.addEventListener("change", e => {
     const i = e.target.dataset.name; if (i == null) return;
-    B.teams[i].name = e.target.value.trim().slice(0, 40) || "Team " + (+i + 1); save();
+    const t = B.teams[i];
+    t.name = e.target.value.trim().slice(0, 40) || "Team " + (+i + 1);
+    B.picks.forEach(p => { if (t.players.includes(p.player)) p.team = t.name; });
+    render(); save();
   });
 
   // Tap a player, then tap a team (works on phones, where drag and drop doesn't)
   out.addEventListener("click", e => {
+    const cap = e.target.closest("[data-cap]");
+    if (cap) { toggleCaptain(cap.dataset.cap); return; }
     const x = e.target.closest("[data-x]");
     if (x) {
       const name = x.dataset.x;
@@ -399,7 +565,7 @@ async function poll(){
     // Only move forward: an older copy (e.g. from a cache that hasn't cleared yet) is ignored
     if (b.rev > B.rev && !saving && !dirty && !dragging) {
       const before = new Map(B.teams.flatMap((t, i) => t.players.map(p => [p, i])));
-      B = b; if (staff) syncSetup();
+      B = fill(b); if (staff) syncSetup();
       if (sel && where(sel) === undefined) sel = null;
       render(); setLive(true);
       B.teams.forEach((t, i) => t.players.forEach(p => { if (before.get(p) !== i) flashName(p); }));
@@ -407,8 +573,27 @@ async function poll(){
   } catch { if (++fails >= 3) setLive(false); }
 }
 
+// Staff: everyone's EHB from the clan's Wise Old Man group (kept for 10 minutes so reloads don't hit its rate limit)
+const EHB_KEY = "kingdom-draft-ehb-v1";
+async function loadEhb(){
+  try {
+    const c = JSON.parse(sessionStorage.getItem(EHB_KEY) || "null");
+    if (c && Date.now() - c.t < 6e5) { ehb = new Map(c.d); return; }
+  } catch {}
+  for (const base of ["https://api.wiseoldman.net/v2/", "/api/wom/"]) {
+    try {
+      const r = await fetch(base + "groups/1152"); if (!r.ok) continue;
+      const g = await r.json();
+      const d = (g.memberships || []).map(m => [key(m.player.displayName), m.player.ehb || 0]);
+      ehb = new Map(d);
+      try { sessionStorage.setItem(EHB_KEY, JSON.stringify({ t: Date.now(), d })); } catch {}
+      return;
+    } catch {}
+  }
+}
+
 async function start(){
-  try { B = await api("/api/draft"); }
+  try { B = fill(await api("/api/draft")); }
   catch { $("out").innerHTML = '<div class="msg">Couldn\'t load the draft. Try refreshing.</div>'; return; }
   try {
     staff = await api("/api/me");
@@ -417,9 +602,10 @@ async function start(){
     $("who").hidden = false;
     wireEditing();
   } catch { staff = null; }
-  if (staff) { try { B = await api(url()); } catch {} }
+  if (staff) { try { B = fill(await api(url())); } catch {} loadEhb().then(() => render()); }
   render(); setLive(true);
   setInterval(poll, POLL_MS);
+  setInterval(tick, 250);
   document.addEventListener("visibilitychange", () => { if (!document.hidden) poll(); });
 }
 start();

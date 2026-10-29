@@ -4,9 +4,11 @@
 //   POST  captain: log a drop for their team { tile, item, player, proof } — it waits for staff approval
 // /api/bingo/review
 //   POST  staff: { id, action: "approve" | "reject" } for a pending drop, or { id, action: "undo" } for an approved one.
-//         Approving adds one completion to the team's tile and puts the drop in the public drop log; undo takes both back.
+//         Approving adds one completion to the team's tile, puts the drop in the public drop log and announces it on
+//         Discord (if DISCORD_BINGO_WEBHOOK is set); undo takes the progress and log entry back.
 import { getCaptain, getStaff, json, sameOrigin } from "../lib/auth.mjs";
 import { bump, LOG_MAX, newId, readBoard, readSubs, saveBoard, store, text, writeSubs } from "../lib/bingo.mjs";
+import { announceDrop, lines } from "../lib/discord.mjs";
 
 const RSN = /^[A-Za-z0-9 _-]{1,12}$/;
 const URL_RE = /^https?:\/\/[^\s<>"]{3,400}$/i;
@@ -79,13 +81,15 @@ async function review(req){
   if (b.action === "approve") {
     if (sub.status !== "pending") return json({ error: "That drop has already been reviewed." }, 409);
     if (!team) return json({ error: `Team "${sub.team}" isn't on the board any more.` }, 409);
-    const t = board.tiles[sub.tile];
+    const t = board.tiles[sub.tile], before = new Set(lines(board, team));
     if (t) bump(team, sub.tile, t.need, 1);
+    const newLines = lines(board, team).filter(l => !before.has(l));
     board.log = [{ id: sub.id, t: sub.t, team: team.name, tile: sub.tile, tileName: sub.tileName, item: sub.item,
       player: sub.player, proof: sub.proof, by: sub.by.name, ok: reviewed.at }, ...board.log].slice(0, LOG_MAX);
     Object.assign(sub, { status: "approved" }, reviewed);
     const next = await saveBoard(board, staff.name, s);
     await writeSubs(list, s);
+    await announceDrop({ board: next, team, sub, newLines });
     return json({ sub, rev: next.rev });
   }
 
