@@ -1,13 +1,15 @@
 // /api/bingo
 //   GET  anyone: the bingo board (25 tiles, each with a boss or custom image, name, description, points and how many completions it needs),
-//        the bonus points per bingo, every team's colour and progress, the drop log, and the item list for each boss on the board.
+//        the bonus points per bingo, every team's colour and progress, the drop log, the item list for each boss on the board,
+//        the start and end times, and the competition link the EHB leaderboard reads.
+//        Before the start time the tiles are blanked for everyone but staff ("hidden": true).
 //        Served from Netlify's CDN cache so viewers can check every few seconds for free;
 //        every save clears that cache. ?staff=1 skips the cache.
 //   PUT  staff:  save the whole board. Send back the "rev" you loaded; if someone else saved since, you get 409 and the latest board.
 //        The drop log isn't sent back: it only changes through drop approvals, or { clearLog: true } to empty it
 //        (used by "Reset all progress" and "Clear board"), which also clears every submitted drop.
 import { getStaff, json, sameOrigin } from "../lib/auth.mjs";
-import { BONUS, CACHE_TAG, IMAGE_ID, imageKey, itemsFor, MAX_ITEMS, readBoard, readItemEdits, saveBoard, SIZE, store, text, writeSubs } from "../lib/bingo.mjs";
+import { blankTile, BONUS, CACHE_TAG, IMAGE_ID, imageKey, itemsFor, MAX_ITEMS, readBoard, readItemEdits, saveBoard, SIZE, store, text, writeSubs } from "../lib/bingo.mjs";
 
 const CDN_CACHE = { "cache-control": "public, max-age=0, must-revalidate",
   "netlify-cdn-cache-control": "public, durable, s-maxage=60", "cache-tag": CACHE_TAG, "netlify-vary": "query" };
@@ -18,6 +20,9 @@ const COLORS = ["#e5484d", "#3e63dd", "#30a46c", "#f5d90a", "#8e4ec6", "#f76b15"
 const COLOR = /^#[0-9a-f]{6}$/i;
 const BOSS = /^[a-z_]{0,40}$/;      // a Wise Old Man boss name, or "" for a custom tile (which may have an uploaded image)
 const DISCORD_ID = /^\d{5,25}$/;
+// The EHB leaderboard reads a Wise Old Man or TempleOSRS competition
+const TRACK = /^https:\/\/(?:www\.)?(?:wiseoldman\.net\/competitions\/\d+|templeosrs\.com\/competitions\/[\w.]*\?(?:[^#\s]*&)?id=\d+)[^\s<>"]*$/i;
+const when = v => Number.isInteger(v) && v > 0 ? v : 0;
 
 // Checks and tidies a board sent by the staff page. Returns an error message or the clean board.
 function clean(body){
@@ -50,7 +55,21 @@ function clean(body){
     teams.push({ name: text(t?.name, 40) || `Team ${i + 1}`, color, captain,
       p: p.map((v, j) => v === -1 ? (tiles[j].need === 1 ? -1 : 0) : Math.min(v, tiles[j].need)) });
   }
-  return { title: text(body.title, 60), bonus, tiles, teams };
+  const starts = when(body.starts), ends = when(body.ends);
+  if (starts && ends && ends <= starts) return "The end time must be after the start time.";
+  const track = String(body.track ?? "").trim();
+  if (track && (track.length > 300 || !TRACK.test(track))) return "The EHB tracking link must be a Wise Old Man or TempleOSRS competition link.";
+  return { title: text(body.title, 60), bonus, tiles, teams, starts, ends, track };
+}
+
+// Before the start time, everyone but staff gets the board with its tiles blanked out (team names stay visible)
+function forViewer(board, staff){
+  const now = Date.now();
+  if (staff || !board.starts || board.starts <= now) return { board: { ...board, hidden: false }, maxAge: 60 };
+  return { board: { ...board, hidden: true, tiles: board.tiles.map(() => blankTile()), log: [], items: {},
+    teams: board.teams.map(t => ({ ...t, p: Array(SIZE).fill(0) })) },
+    // Don't let the CDN keep the hidden copy past the start time
+    maxAge: Math.max(1, Math.min(60, Math.ceil((board.starts - now) / 1000))) };
 }
 
 // The board plus the item list for each boss on it
@@ -63,8 +82,10 @@ async function withItems(board, s){
 export default async req => {
   const staff = getStaff(req), s = store();
   if (req.method === "GET") {
-    const body = await withItems(await readBoard(s), s);
-    return new URL(req.url).searchParams.has("staff") ? json(body) : json(body, 200, CDN_CACHE);
+    // ?staff=1 skips the CDN cache; only a staff login gets the tiles before the start time
+    const fresh = new URL(req.url).searchParams.has("staff");
+    const { board, maxAge } = forViewer(await withItems(await readBoard(s), s), fresh && staff);
+    return fresh ? json(board) : json(board, 200, { ...CDN_CACHE, "netlify-cdn-cache-control": `public, durable, s-maxage=${maxAge}` });
   }
 
   if (!staff) return json({ error: "Log in with an approved Discord account first." }, 401);

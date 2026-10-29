@@ -1,7 +1,8 @@
 // /api/bingo/subs
 //   GET   staff:   every pending drop, plus the latest reviewed ones
 //         captain: their own team's drops and how each was reviewed
-//   POST  captain: log a drop for their team { tile, item, player, proof } — it waits for staff approval
+//   POST  captain: log a drop for their team { tile, item, player, proof } — it waits for staff approval.
+//         Only between the bingo's start and end times (when they're set).
 // /api/bingo/review
 //   POST  staff: { id, action: "approve" | "reject" } for a pending drop, or { id, action: "undo" } for an approved one.
 //         Approving adds one completion to the team's tile, puts the drop in the public drop log and announces it on
@@ -36,7 +37,9 @@ async function subs(req){
   if (!cap) return json({ error: "Only team captains can log drops." }, 401);
   if (!sameOrigin(req)) return json({ error: "Bad origin." }, 403);
 
-  const b = await body(req), board = await readBoard(s);
+  const b = await body(req), board = await readBoard(s), now = Date.now();
+  if (board.starts && now < board.starts) return json({ error: "The bingo hasn't started yet. Drops can be logged once it starts." }, 403);
+  if (board.ends && now > board.ends) return json({ error: "The bingo has ended, so no more drops can be logged." }, 403);
   const ti = board.teams.findIndex(t => t.captain === cap.id);
   if (ti < 0) return json({ error: "You're not set as captain of a team yet. Ask an admin to pick you in Bingo setup." }, 403);
   const team = board.teams[ti], tile = Number(b?.tile), t = board.tiles[tile];

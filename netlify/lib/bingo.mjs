@@ -17,7 +17,8 @@ export const MAX_BYTES = 512 * 1024;
 export const SIZE = 25, BONUS = 25, MAX_ITEMS = 60, LOG_MAX = 1000, SUBS_MAX = 1000;
 export const CACHE_TAG = "bingo";
 export const blankTile = () => ({ boss: "", img: "", name: "", desc: "", points: 0, need: 1, items: [] });
-const EMPTY = () => ({ rev: 0, title: "", bonus: BONUS, tiles: Array.from({ length: SIZE }, blankTile), teams: [], log: [], updated: 0, by: "" });
+const EMPTY = () => ({ rev: 0, title: "", bonus: BONUS, tiles: Array.from({ length: SIZE }, blankTile), teams: [], log: [],
+  starts: 0, ends: 0, track: "", updated: 0, by: "" });
 
 // Team progress is one number per tile ("p"):
 //   0 not started, 1..need completions so far (need = completed), and -1 for a one-and-done tile that's in progress.
@@ -26,6 +27,7 @@ const fromLegacy = s => [...s].map(c => c === "2" ? 1 : c === "1" ? -1 : 0);
 function upgrade(b){
   b.bonus ??= BONUS;
   b.log ??= [];
+  b.starts ??= 0; b.ends ??= 0; b.track ??= "";
   b.tiles = b.tiles.map(t => ({ ...t, need: t.need || 1, items: t.items || [] }));
   b.teams = b.teams.map(({ s, ...t }) => ({ ...t, captain: t.captain || "", p: Array.isArray(t.p) ? t.p : fromLegacy(s || "") }));
   return b;
