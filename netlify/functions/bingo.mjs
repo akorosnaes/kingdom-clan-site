@@ -2,7 +2,7 @@
 //   GET  anyone: the bingo board (25 tiles, each with a boss or custom image, name, description, points and how many completions it needs),
 //        the bonus points per bingo, every team's colour and progress, the drop log, the item list for each boss on the board,
 //        the start and end times, and the competition link the EHB leaderboard reads.
-//        Before the start time the tiles are blanked for everyone but staff ("hidden": true).
+//        Until staff reveal the board ("revealed"), the tiles are blanked for everyone but staff ("hidden": true).
 //        Served from Netlify's CDN cache so viewers can check every few seconds for free;
 //        every save clears that cache. ?staff=1 skips the cache.
 //   PUT  staff:  save the whole board. Send back the "rev" you loaded; if someone else saved since, you get 409 and the latest board.
@@ -59,17 +59,14 @@ function clean(body){
   if (starts && ends && ends <= starts) return "The end time must be after the start time.";
   const track = String(body.track ?? "").trim();
   if (track && (track.length > 300 || !TRACK.test(track))) return "The EHB tracking link must be a Wise Old Man or TempleOSRS competition link.";
-  return { title: text(body.title, 60), bonus, tiles, teams, starts, ends, track };
+  return { title: text(body.title, 60), bonus, tiles, teams, starts, ends, track, revealed: typeof body.revealed === "boolean" ? body.revealed : null };
 }
 
-// Before the start time, everyone but staff gets the board with its tiles blanked out (team names stay visible)
+// Until staff press "Reveal board to all", everyone but staff gets the board with its tiles blanked out (team names stay visible)
 function forViewer(board, staff){
-  const now = Date.now();
-  if (staff || !board.starts || board.starts <= now) return { board: { ...board, hidden: false }, maxAge: 60 };
-  return { board: { ...board, hidden: true, tiles: board.tiles.map(() => blankTile()), log: [], items: {},
-    teams: board.teams.map(t => ({ ...t, p: Array(SIZE).fill(0) })) },
-    // Don't let the CDN keep the hidden copy past the start time
-    maxAge: Math.max(1, Math.min(60, Math.ceil((board.starts - now) / 1000))) };
+  if (staff || board.revealed) return { ...board, hidden: false };
+  return { ...board, hidden: true, tiles: board.tiles.map(() => blankTile()), log: [], items: {},
+    teams: board.teams.map(t => ({ ...t, p: Array(SIZE).fill(0) })) };
 }
 
 // The board plus the item list for each boss on it
@@ -82,10 +79,10 @@ async function withItems(board, s){
 export default async req => {
   const staff = getStaff(req), s = store();
   if (req.method === "GET") {
-    // ?staff=1 skips the CDN cache; only a staff login gets the tiles before the start time
+    // ?staff=1 skips the CDN cache; only a staff login gets the tiles before the board is revealed
     const fresh = new URL(req.url).searchParams.has("staff");
-    const { board, maxAge } = forViewer(await withItems(await readBoard(s), s), fresh && staff);
-    return fresh ? json(board) : json(board, 200, { ...CDN_CACHE, "netlify-cdn-cache-control": `public, durable, s-maxage=${maxAge}` });
+    const board = forViewer(await withItems(await readBoard(s), s), fresh && staff);
+    return fresh ? json(board) : json(board, 200, CDN_CACHE);
   }
 
   if (!staff) return json({ error: "Log in with an approved Discord account first." }, 401);
@@ -99,7 +96,8 @@ export default async req => {
 
   const cur = await readBoard(s);
   if (body.rev !== cur.rev) return json({ error: "Someone else changed the bingo board. Showing the latest version.", board: await withItems(cur, s) }, 409);
-  const next = await saveBoard({ ...board, rev: cur.rev, log: body.clearLog ? [] : cur.log }, staff.name, s);
+  // A page that doesn't send "revealed" (e.g. one opened before the reveal button existed) leaves it as it was
+  const next = await saveBoard({ ...board, revealed: board.revealed ?? cur.revealed, rev: cur.rev, log: body.clearLog ? [] : cur.log }, staff.name, s);
   if (body.clearLog) await writeSubs([], s);
   // Delete custom images the board no longer uses
   const kept = new Set(next.tiles.map(t => t.img));

@@ -327,6 +327,7 @@ textarea.inp{resize:vertical;min-height:96px;font:13px/1.5 var(--mono)}
       <div class="srow3"><label class="lab">Starts<input class="inp" id="bstart" type="datetime-local"></label>
         <label class="lab">Ends<input class="inp" id="bend" type="datetime-local"></label>
         <p class="hintx" id="tzhint"></p></div>
+      <div class="srow"><button class="primary" id="revealbtn" type="button">Reveal board to all</button><p id="revealmsg"></p></div>
       <label class="lab">EHB tracking link<input class="inp" id="btrack" type="url" maxlength="300" placeholder="https://wiseoldman.net/competitions/… or https://templeosrs.com/competitions/standings.php?id=…">
         <span class="hintx" id="trackmsg">A Wise Old Man or TempleOSRS competition tracking EHB. It fills the EHB leaderboard.</span></label>
       <div class="lab">Teams<div class="tlist" id="tlist"></div></div>
@@ -494,15 +495,15 @@ function render(){
   const used = B.tiles.filter(t => !isBlank(t)).length;
   $("sub").textContent = used
     ? `${B.teams.length} team${B.teams.length === 1 ? "" : "s"} · ${used} tiles · ${num(tot)} points`
-    : B.hidden && B.teams.length ? `${B.teams.length} team${B.teams.length === 1 ? "" : "s"} · tiles revealed at the start`
+    : B.hidden && B.teams.length ? `${B.teams.length} team${B.teams.length === 1 ? "" : "s"} · board revealed after the draft`
     : "Teams · Tiles";
 
   renderWhen(); renderReview(); renderCaptain();
-  // Before the start time the server sends everyone but staff a blank board: show who's playing and when it starts
+  // Until staff reveal it, the server sends everyone but staff a blank board: show who's playing and when it starts
   if (B.hidden) {
     hideTip();
-    $("out").innerHTML = `<div class="hiddenmsg"><b>The board is revealed when the bingo starts</b>
-      <p>${B.starts ? `Starts ${esc(fmtDate(B.starts))} (your time).` : ""} Tiles, standings and the drop log appear then.</p>
+    $("out").innerHTML = `<div class="hiddenmsg"><b>The board will be revealed after the draft is completed</b>
+      <p>Tiles, standings and the drop log appear then.${B.starts ? ` The bingo starts ${esc(fmtDate(B.starts))} (your time).` : ""}</p>
       ${B.teams.length ? `<div class="tn">${B.teams.map((t, i) => `<span><i class="dot" style="background:${colorOf(t, i)}"></i>${esc(t.name)}</span>`).join("")}</div>` : ""}</div>`;
     return;
   }
@@ -517,7 +518,7 @@ function render(){
   hideTip();
   $("out").innerHTML = `
     <section class="sec">
-      ${edit && phase() === "before" ? `<p class="staffnote">Only staff can see the tiles right now. Visitors and captains see them when the bingo starts, ${esc(fmtDate(B.starts))}.</p>` : ""}
+      ${edit && !B.revealed ? `<p class="staffnote">Only staff can see the tiles right now. Visitors and captains see them once you click Reveal board to all in Bingo setup.</p>` : ""}
       <div class="sech"><h2>Teams</h2><div class="legend"><span><i></i>Not started</span><span><i class="s1"></i>In progress</span><span><i class="s2"></i>Completed</span></div></div>
       ${edit && B.teams.length ? '<p class="msg" style="padding:0 0 14px">Click a team\'s tile to add progress (one and done tiles: in progress → completed; others count up 1, 2, 3…). Right-click, or long-press on a phone, to go back a step.</p>' : ""}
       ${teams}
@@ -568,7 +569,7 @@ const fmtH = v => (Math.round(v * 10) / 10).toLocaleString(undefined, { minimumF
 function leaderboards(){
   const ehbBox = B.track || staff ? ehbBoard() : "";
   return `<section class="sec">
-    <div class="sech"><h2>Leaderboards</h2><small>EHB gained during the bingo · MVPs by points from approved drops</small></div>
+    <div class="sech"><h2>Leaderboards</h2><small>EHB gained during the bingo · MVPs by points from completed tiles</small></div>
     <div class="lbs${ehbBox ? "" : " one"}">${ehbBox}${mvpBoard()}</div>
   </section>`;
 }
@@ -592,21 +593,23 @@ function ehbBoard(){
     ${rows.length > 10 ? `<button class="ghost sm more" type="button" data-lball="ehb">${lbAll.ehb ? "Top 10 only" : `Show all ${rows.length}`}</button>` : ""}</div>`;
 }
 
-// MVPs from the drop log: approved drops per player, and the tile points those drops earned (a tile needing 3 drops gives a third per drop)
+// MVPs from the drop log: the tile points each player's drops earned (a tile needing 3 drops gives a third per drop).
+// A drop only counts once its team has completed that tile, so partly done tiles earn nobody anything yet.
 function mvpBoard(){
   const by = new Map();
   (B.log || []).forEach(d => {
-    const k = d.player.toLowerCase(), t = B.tiles[d.tile];
+    const k = d.player.toLowerCase(), t = B.tiles[d.tile], team = B.teams.find(x => x.name === d.team);
+    if (!t || !team || !isDone(team, d.tile)) return;
     const r = by.get(k) || { name: d.player, team: d.team, drops: 0, pts: 0 };
     r.drops++; r.pts += t ? t.points / need(t) : 0; by.set(k, r);
   });
   // Most points first; drops break ties
   const rows = [...by.values()].sort((a, b) => b.pts - a.pts || b.drops - a.drops);
   const shown = lbAll.mvp ? rows : rows.slice(0, 10);
-  return `<div class="lb"><div class="lbh"><b>MVP</b><span>points from approved drops</span></div>
+  return `<div class="lb"><div class="lbh"><b>MVP</b><span>points from completed tiles</span></div>
     ${shown.map((r, i) => `<div class="lbr"><span class="rk">${i + 1}</span><span class="nm">${teamDot(B.teams.find(t => t.name === r.team))}${pname(r.name)}</span>
       <span class="v">${Math.round(r.pts).toLocaleString()} <small>pts · ${r.drops} drop${r.drops === 1 ? "" : "s"}</small></span></div>`).join("")
-      || '<div class="msg">Approved drops will rank players here.</div>'}
+      || '<div class="msg">Players appear here once their drops complete a tile.</div>'}
     ${rows.length > 10 ? `<button class="ghost sm more" type="button" data-lball="mvp">${lbAll.mvp ? "Top 10 only" : `Show all ${rows.length}`}</button>` : ""}</div>`;
 }
 
@@ -699,6 +702,7 @@ function renderCaptain(){
   el.querySelectorAll(".cr[data-ct]").forEach(r => { keep[r.dataset.ct] = Object.fromEntries([...r.querySelectorAll("[data-f]")].map(f => [f.dataset.f, f.value])); });
 
   const closed = !team ? "You're logged in as a captain, but you're not set as captain of a team yet. Ask an admin to pick you in Bingo setup."
+    : B.hidden || B.revealed === false ? `You're captain of ${esc(team.name)}. The board will be revealed after the draft is completed, and you can log drops then.`
     : phase() === "before" ? `You're captain of ${esc(team.name)}. Drops can be logged once the bingo starts, ${esc(fmtDate(B.starts))}.`
     : phase() === "over" ? "The bingo has ended, so no more drops can be logged." : "";
   if (closed) {
@@ -801,7 +805,7 @@ async function flush(){
     try {
       const res = await api("/api/bingo", { method: "PUT", headers: { "content-type": "application/json" },
         body: JSON.stringify({ rev: B.rev, title: B.title, bonus: bonus(), tiles: B.tiles, teams: B.teams, clearLog,
-          starts: B.starts || 0, ends: B.ends || 0, track: B.track || "" }) });
+          starts: B.starts || 0, ends: B.ends || 0, track: B.track || "", revealed: !!B.revealed }) });
       // A reset also cleared every submitted drop on the server, so refresh the pending and "your drops" lists
       if (clearLog) { clearLog = false; loadSubs(); }
       B.rev = res.rev; B.updated = res.updated; B.by = res.by; B.log = res.log;
@@ -827,6 +831,9 @@ function syncSetup(force){
   if (document.activeElement !== $("bstart")) $("bstart").value = toLocal(B.starts);
   if (document.activeElement !== $("bend")) $("bend").value = toLocal(B.ends);
   if (document.activeElement !== $("btrack")) $("btrack").value = B.track || "";
+  $("revealbtn").textContent = B.revealed ? "Hide board" : "Reveal board to all";
+  $("revealbtn").className = B.revealed ? "ghost" : "primary";
+  $("revealmsg").textContent = B.revealed ? "Everyone can see the board." : "Only staff can see the tiles. Everyone else sees the team names until you reveal it.";
   if (!force && $("tlist").contains(document.activeElement)) return;
   const capName = c => c.name || "Discord ID …" + c.id.slice(-4);
   const capPick = (t, i) => `<select class="inp" data-tcap="${i}" aria-label="Team ${i + 1} captain" title="${captains.length ? "Team captain: can log drops for this team" : "Add captain Discord IDs to CAPTAIN_DISCORD_IDS in Netlify first"}">
@@ -887,7 +894,12 @@ function wireEditing(){
 
   $("bname").addEventListener("change", () => { B.title = $("bname").value.trim().slice(0, 60); render(); save(); });
   // Start and end are typed in the staff member's own timezone and stored as exact moments, so every visitor sees them in theirs
-  $("tzhint").textContent = `Your local time (${Intl.DateTimeFormat().resolvedOptions().timeZone}). Everyone sees these in their own timezone. Before the start, only staff can see the tiles.`;
+  $("tzhint").textContent = `Your local time (${Intl.DateTimeFormat().resolvedOptions().timeZone}). Everyone sees these in their own timezone. Captains can log drops between the start and end.`;
+  $("revealbtn").addEventListener("click", () => {
+    const show = !B.revealed;
+    if (!confirm(show ? "Reveal the board to everyone? Visitors and captains will see the tiles straight away." : "Hide the board again? Only staff will see the tiles, and captains can't log drops.")) return;
+    B.revealed = show; render(); syncSetup(); save();
+  });
   const setTime = (id, k) => $(id).addEventListener("change", () => {
     const v = fromLocal($(id).value), other = k === "starts" ? B.ends : B.starts;
     if (v && other && (k === "starts" ? v >= other : v <= other)) { alert("The end time must be after the start time."); syncSetup(); return; }
@@ -938,7 +950,7 @@ function wireEditing(){
   });
   $("clearbtn").addEventListener("click", () => {
     if (!confirm("Clear the whole board? This removes every tile, team, all progress, the drop log and every submitted drop.")) return;
-    B.log = []; clearLog = true; B.starts = 0; B.ends = 0; B.track = ""; comp = null;
+    B.log = []; clearLog = true; B.starts = 0; B.ends = 0; B.track = ""; B.revealed = false; comp = null;
     B.title = ""; B.bonus = 25; B.tiles = Array.from({ length: 25 }, blank); B.teams = []; selTile = null; syncSetup(); render(); save();
   });
 

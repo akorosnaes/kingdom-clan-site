@@ -38,6 +38,7 @@ async function subs(req){
   if (!sameOrigin(req)) return json({ error: "Bad origin." }, 403);
 
   const b = await body(req), board = await readBoard(s), now = Date.now();
+  if (!board.revealed) return json({ error: "The board hasn't been revealed yet." }, 403);
   if (board.starts && now < board.starts) return json({ error: "The bingo hasn't started yet. Drops can be logged once it starts." }, 403);
   if (board.ends && now > board.ends) return json({ error: "The bingo has ended, so no more drops can be logged." }, 403);
   const ti = board.teams.findIndex(t => t.captain === cap.id);
