@@ -106,6 +106,8 @@ select.inp{appearance:none;background-image:linear-gradient(45deg,transparent 50
 .trow input[type=color]::-moz-color-swatch{border:0;border-radius:3px}
 .trow button{flex:none;width:38px;background:none;border:1px solid var(--line2);border-radius:6px;color:var(--mute);font:16px/1 var(--sans);cursor:pointer}
 .trow button:hover{border-color:#fff;color:#fff}
+.srow2{display:grid;grid-template-columns:1fr 160px;gap:16px}
+@media(max-width:600px){.srow2{grid-template-columns:1fr}}
 .srow{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
 .srow .sp{flex:1}
 .srow p{margin:0;font-size:13px;color:var(--mute)}
@@ -127,6 +129,7 @@ select.inp{appearance:none;background-image:linear-gradient(45deg,transparent 50
 .tt .ab{font:600 12px/1 var(--mono);color:var(--mute)}
 .tt.s1{border-color:var(--wip);background:rgba(232,185,35,.16)}
 .tt.s2{border-color:var(--go);background:rgba(52,168,83,.55)}
+.tt .cnt{position:absolute;right:2px;bottom:2px;padding:1px 3px;border-radius:3px;background:rgba(0,0,0,.75);font:600 9px/1.1 var(--mono);color:var(--wip)}
 .tt.s2::after{content:"✓";position:absolute;top:2px;right:4px;font:700 10px/1 var(--sans);color:#fff}
 .edit .tt{cursor:pointer}
 .edit .tt:hover{border-color:#fff}
@@ -147,6 +150,8 @@ select.inp{appearance:none;background-image:linear-gradient(45deg,transparent 50
 .tile b{font-size:13px;font-weight:600;line-height:1.25;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;overflow-wrap:anywhere}
 .tile small{font:500 11px/1 var(--mono);color:var(--mute)}
 .tile .no{position:absolute;top:6px;left:8px;font:500 10px/1 var(--mono);color:var(--dim)}
+.tile .need{position:absolute;top:5px;right:6px;padding:2px 5px;border:1px solid var(--line2);border-radius:4px;font:600 10px/1 var(--mono);color:#fff}
+.tile small.td{margin-top:-4px;color:var(--dim)}
 .tile.blank b{color:var(--dim);font-weight:500}
 .edit .tile{cursor:pointer;transition:border-color .15s}
 .edit .tile:hover{border-color:var(--line2)}
@@ -154,7 +159,7 @@ select.inp{appearance:none;background-image:linear-gradient(45deg,transparent 50
 @media(max-width:600px){.board{gap:4px}.tile{padding:10px 2px 8px;gap:5px}.tile img,.tile .ab{width:36px;height:36px}.tile b{font-size:10px}.tile small{font-size:9px}.tile .no{display:none}}
 
 /* Tile editor */
-.ted{display:grid;grid-template-columns:1.4fr 1.4fr 110px auto;gap:12px;align-items:end;margin-top:16px;padding:16px;border:1px solid #fff;border-radius:8px;background:var(--panel)}
+.ted{display:grid;grid-template-columns:1.3fr 1.3fr 100px 170px auto;gap:12px;align-items:end;margin-top:16px;padding:16px;border:1px solid #fff;border-radius:8px;background:var(--panel)}
 .ted h3{grid-column:1/-1;margin:0;font-size:15px;font-weight:600}
 .ted h3 span{margin-left:8px;font:500 12px/1 var(--mono);color:var(--mute)}
 .ted .acts{display:flex;gap:6px}
@@ -179,7 +184,8 @@ select.inp{appearance:none;background-image:linear-gradient(45deg,transparent 50
   <details class="setup" id="setup" hidden>
     <summary>Bingo setup</summary>
     <div class="sgrid">
-      <label class="lab">Bingo name<input class="inp" id="bname" maxlength="60" placeholder="e.g. Winter Bingo 2026"></label>
+      <div class="srow2"><label class="lab">Bingo name<input class="inp" id="bname" maxlength="60" placeholder="e.g. Winter Bingo 2026"></label>
+        <label class="lab">Points per bingo<input class="inp" id="bbonus" type="number" min="0" max="9999" step="1" value="25" title="Added for every completed row or column"></label></div>
       <div class="lab">Teams<div class="tlist" id="tlist"></div></div>
       <div class="srow"><button class="ghost" id="addteam" type="button">Add team</button><button class="ghost" id="drafteams" type="button">Use Bingo Draft teams</button><p id="setmsg"></p><span class="sp"></span>
         <button class="ghost" id="resetbtn" type="button">Reset all progress</button><button class="ghost" id="clearbtn" type="button">Clear board</button></div>
@@ -207,7 +213,7 @@ const esc = s => String(s).replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":
 const num = n => Math.round(n).toLocaleString();
 const STATE = ["Not started", "In progress", "Completed"];
 const LINES = [0,1,2,3,4].flatMap(i => [[0,1,2,3,4].map(c => i * 5 + c), [0,1,2,3,4].map(r => r * 5 + i)]);   // rows and columns
-const blank = () => ({ boss: "", img: "", name: "", points: 0 });
+const blank = () => ({ boss: "", img: "", name: "", points: 0, need: 1 });
 // Default team colours, handed out in order (same list as the server)
 const COLORS = ["#e5484d", "#3e63dd", "#30a46c", "#f5d90a", "#8e4ec6", "#f76b15", "#12a594", "#d6409f"];
 const colorOf = (team, i) => team.color || COLORS[i % COLORS.length];
@@ -227,11 +233,27 @@ const api = async (path, opts = {}) => {
 // ---------- Scoring ----------
 const tileName = t => t.name || (t.boss ? title(t.boss) : "");
 const isBlank = t => !t.boss && !t.name;
-const total = () => B.tiles.reduce((a, t) => a + t.points, 0);
-const score = team => B.tiles.reduce((a, t, i) => a + (team.s[i] === "2" ? t.points : 0), 0);
-const rowDone = (team, r) => [0,1,2,3,4].every(c => team.s[r * 5 + c] === "2");
-const colDone = (team, c) => [0,1,2,3,4].every(r => team.s[r * 5 + c] === "2");
-const bingos = team => LINES.filter(l => l.every(i => team.s[i] === "2")).length;
+// A completed row or column is a bingo and adds the board's bonus (25 unless staff change it)
+const bonus = () => B.bonus ?? 25;
+const tilePoints = () => B.tiles.reduce((a, t) => a + t.points, 0);
+const total = () => tilePoints() + LINES.length * bonus();
+const NEEDS = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 12, 15, 20, 25, 30, 40, 50, 75, 99];
+// Team progress is one number per tile (team.p): 0 not started, 1..need completions so far (need = completed),
+// and -1 for a one-and-done tile that's in progress.
+const need = t => t.need || 1;
+const stateOf = (team, i) => { const v = team.p[i]; return v >= need(B.tiles[i]) ? 2 : v ? 1 : 0; };   // 0 / 1 in progress / 2 completed
+const isDone = (team, i) => stateOf(team, i) === 2;
+// One click forward (dir 1) or back (dir -1): one-and-done tiles go not started → in progress → completed,
+// tiles needing more go 0 → 1 → … → need, and both wrap around
+function step(team, i, dir){
+  const n = need(B.tiles[i]), v = team.p[i];
+  if (n === 1) { const order = [0, -1, 1]; team.p[i] = order[(order.indexOf(v) + dir + 3) % 3]; }
+  else team.p[i] = (Math.max(0, v) + dir + n + 1) % (n + 1);
+}
+const rowDone = (team, r) => [0,1,2,3,4].every(c => isDone(team, r * 5 + c));
+const colDone = (team, c) => [0,1,2,3,4].every(r => isDone(team, r * 5 + c));
+const bingos = team => LINES.filter(l => l.every(i => isDone(team, i))).length;
+const score = team => B.tiles.reduce((a, t, i) => a + (isDone(team, i) ? t.points : 0), 0) + bingos(team) * bonus();
 const initials = n => n.split(/\s+/).filter(Boolean).slice(0, 2).map(w => w[0]).join("").toUpperCase() || "?";
 // A tile's picture: the boss icon, the uploaded image for a custom tile, or the tile's initials
 const imgUrl = id => "/api/bingo/images/" + id;
@@ -241,9 +263,9 @@ const face = (t, empty) => t.boss ? `<img src="${icon(t.boss)}" alt="" loading="
 
 // ---------- Rendering ----------
 function teamTile(team, ti, i){
-  const t = B.tiles[i], st = +team.s[i];
-  const tip = `${tileName(t) || "Empty tile"} · ${t.points} pts · ${STATE[st]}`;
-  return `<div class="tt s${st}" title="${esc(tip)}" data-team="${ti}" data-i="${i}">${face(t, "")}</div>`;
+  const t = B.tiles[i], st = stateOf(team, i), n = need(t), count = Math.max(0, team.p[i]);
+  const tip = `${tileName(t) || "Empty tile"} · ${t.points} pts · ${STATE[st]}${n > 1 ? ` (${count}/${n})` : ""}`;
+  return `<div class="tt s${st}" title="${esc(tip)}" data-team="${ti}" data-i="${i}">${face(t, "")}${n > 1 && st === 1 ? `<span class="cnt">${count}/${n}</span>` : ""}</div>`;
 }
 
 function teamCard(team, ti){
@@ -254,7 +276,8 @@ function teamCard(team, ti){
     cells.push(`<div class="bg${rowDone(team, r) ? " on" : ""}">BINGO</div>`);
   }
   for (let c = 0; c < 5; c++) cells.push(`<div class="bg${colDone(team, c) ? " on" : ""}">BINGO</div>`);
-  const done = [...team.s].filter(x => x === "2").length, wip = [...team.s].filter(x => x === "1").length, bn = bingos(team);
+  const st = team.p.map((_, i) => stateOf(team, i));
+  const done = st.filter(x => x === 2).length, wip = st.filter(x => x === 1).length, bn = bingos(team);
   const color = colorOf(team, ti);
   return `<section class="team">
     <div class="th"><b><i class="dot" style="background:${color}"></i>${esc(team.name)}</b><span><em>${num(pts)}</em> / ${num(tot)}</span></div>
@@ -265,10 +288,11 @@ function teamCard(team, ti){
 }
 
 function boardTile(t, i){
-  const done = B.teams.filter(team => team.s[i] === "2").length;
-  return `<div class="tile${isBlank(t) ? " blank" : ""}${selTile === i ? " sel" : ""}" data-tile="${i}"><span class="no">${i + 1}</span>${face(t, "+")}
+  const done = B.teams.filter(team => isDone(team, i)).length, n = need(t);
+  return `<div class="tile${isBlank(t) ? " blank" : ""}${selTile === i ? " sel" : ""}" data-tile="${i}"><span class="no">${i + 1}</span>${n > 1 ? `<span class="need" title="Complete ${n} times">×${n}</span>` : ""}${face(t, "+")}
     <b>${isBlank(t) ? (staff ? "Pick a boss" : "Empty") : esc(tileName(t))}</b>
-    <small>${t.points} pts${B.teams.length ? ` · ${done}/${B.teams.length}` : ""}</small></div>`;
+    <small>${t.points} pts${n > 1 ? ` · ${n}× needed` : ""}</small>
+    ${B.teams.length ? `<small class="td">${done} of ${B.teams.length} teams done</small>` : ""}</div>`;
 }
 
 function editor(){
@@ -280,6 +304,8 @@ function editor(){
       ${LIST.map(b => `<option value="${b.k}"${b.k === t.boss ? " selected" : ""}>${esc(b.name)}</option>`).join("")}</select></label>
     <label class="lab wide">Tile name<input class="inp" id="ename" maxlength="40" value="${esc(t.name)}" placeholder="${esc(t.boss ? title(t.boss) : "e.g. Any pet")}"></label>
     <label class="lab">Points<input class="inp" id="epts" type="number" min="0" max="9999" step="1" value="${t.points}"></label>
+    <label class="lab">Completions needed<select class="inp" id="eneed">${[...new Set([...NEEDS, need(t)])].sort((a, b) => a - b)
+      .map(n => `<option value="${n}"${n === need(t) ? " selected" : ""}>${n === 1 ? "1 · one and done" : n + " times"}</option>`).join("")}</select></label>
     <div class="acts"><button class="ghost" id="eclear" type="button">Clear</button><button class="primary" id="edone" type="button">Done</button></div>
     ${t.boss ? "" : `<div class="eimg">${t.img ? `<img src="${imgUrl(t.img)}" alt="">` : '<span class="ph">No image</span>'}
       <label class="ghost upl">${t.img ? "Replace image" : "Upload image"}<input type="file" id="efile" accept="image/png,image/jpeg,image/webp"></label>
@@ -309,11 +335,11 @@ function render(){
   $("out").innerHTML = `
     <section class="sec">
       <div class="sech"><h2>Teams</h2><div class="legend"><span><i></i>Not started</span><span><i class="s1"></i>In progress</span><span><i class="s2"></i>Completed</span></div></div>
-      ${edit && B.teams.length ? '<p class="msg" style="padding:0 0 14px">Click a team\'s tile to change it: not started → in progress → completed.</p>' : ""}
+      ${edit && B.teams.length ? '<p class="msg" style="padding:0 0 14px">Click a team\'s tile to add progress (one and done tiles: in progress → completed; others count up 1, 2, 3…). Right-click, or long-press on a phone, to go back a step.</p>' : ""}
       ${teams}
     </section>
     <section class="sec">
-      <div class="sech"><h2>Tiles</h2><small>${edit ? "Click a tile to set its boss, name and points" : `${num(tot)} points on the board`}</small></div>
+      <div class="sech"><h2>Tiles</h2><small>${edit ? "Click a tile to set its boss, name, points and completions" : `${num(tilePoints())} tile points + ${num(bonus())} per bingo (10 possible)`}</small></div>
       <div class="board">${B.tiles.map(boardTile).join("")}</div>
       ${edit ? editor() : ""}
     </section>`;
@@ -331,7 +357,7 @@ async function flush(){
     dirty = false; setStatus("Saving…");
     try {
       const res = await api("/api/bingo", { method: "PUT", headers: { "content-type": "application/json" },
-        body: JSON.stringify({ rev: B.rev, title: B.title, tiles: B.tiles, teams: B.teams }) });
+        body: JSON.stringify({ rev: B.rev, title: B.title, bonus: bonus(), tiles: B.tiles, teams: B.teams }) });
       B.rev = res.rev; B.updated = res.updated; B.by = res.by;
       if (!dirty) setStatus("Saved");
     } catch (e) {
@@ -346,6 +372,7 @@ async function flush(){
 
 function syncSetup(){
   if (document.activeElement !== $("bname")) $("bname").value = B.title;
+  if (document.activeElement !== $("bbonus")) $("bbonus").value = bonus();
   if ($("tlist").contains(document.activeElement)) return;
   $("tlist").innerHTML = B.teams.map((t, i) => `<div class="trow"><input type="color" data-tc="${i}" value="${colorOf(t, i)}" title="Team colour" aria-label="Team ${i + 1} colour"><input class="inp" data-tn="${i}" maxlength="40" value="${esc(t.name)}" aria-label="Team ${i + 1} name"><button type="button" data-tdel="${i}" title="Remove team" aria-label="Remove team">×</button></div>`).join("")
     || '<p class="msg" style="padding:0">No teams yet.</p>';
@@ -376,7 +403,7 @@ async function uploadImage(i, file){
 
 function addTeam(name){
   if (B.teams.length >= 16) return;
-  B.teams.push({ name: name || "Team " + (B.teams.length + 1), color: COLORS[B.teams.length % COLORS.length], s: "0".repeat(25) });
+  B.teams.push({ name: name || "Team " + (B.teams.length + 1), color: COLORS[B.teams.length % COLORS.length], p: Array(25).fill(0) });
 }
 
 function wireEditing(){
@@ -385,6 +412,7 @@ function wireEditing(){
   syncSetup();
 
   $("bname").addEventListener("change", () => { B.title = $("bname").value.trim().slice(0, 60); render(); save(); });
+  $("bbonus").addEventListener("change", () => { B.bonus = Math.max(0, Math.min(9999, Math.round(+$("bbonus").value) || 0)); $("bbonus").value = B.bonus; render(); save(); });
   $("addteam").addEventListener("click", () => { addTeam(); syncSetup(); render(); save(); });
   $("tlist").addEventListener("change", e => {
     const { tn, tc } = e.target.dataset;
@@ -395,7 +423,7 @@ function wireEditing(){
   $("tlist").addEventListener("click", e => {
     const i = e.target.dataset.tdel; if (i == null) return;
     const t = B.teams[i];
-    if (/[12]/.test(t.s) && !confirm(`Remove ${t.name}? Their progress will be lost.`)) return;
+    if (t.p.some(v => v) && !confirm(`Remove ${t.name}? Their progress will be lost.`)) return;
     B.teams.splice(i, 1); syncSetup(); render(); save();
   });
   $("drafteams").addEventListener("click", async () => {
@@ -405,34 +433,36 @@ function wireEditing(){
       if (B.teams.length && !confirm(`Replace the ${B.teams.length} teams here with the ${d.teams.length} from the Bingo Draft? Progress is kept for teams with the same name.`)) return;
       const old = new Map(B.teams.map((t, i) => [t.name.toLowerCase(), { ...t, color: colorOf(t, i) }]));
       B.teams = d.teams.map((t, i) => { const o = old.get(t.name.toLowerCase());
-        return { name: t.name, color: o ? o.color : COLORS[i % COLORS.length], s: o ? o.s : "0".repeat(25) }; });
+        return { name: t.name, color: o ? o.color : COLORS[i % COLORS.length], p: o ? o.p : Array(25).fill(0) }; });
       $("setmsg").textContent = `Using ${d.teams.length} teams from the Bingo Draft.`;
       syncSetup(); render(); save();
     } catch (e) { $("setmsg").textContent = "Couldn't load the Bingo Draft: " + e.message; }
   });
   $("resetbtn").addEventListener("click", () => {
     if (!confirm("Reset every team's tiles back to not started?")) return;
-    B.teams.forEach(t => t.s = "0".repeat(25)); render(); save();
+    B.teams.forEach(t => t.p = Array(25).fill(0)); render(); save();
   });
   $("clearbtn").addEventListener("click", () => {
     if (!confirm("Clear the whole board? This removes every tile, team and all progress.")) return;
-    B.title = ""; B.tiles = Array.from({ length: 25 }, blank); B.teams = []; selTile = null; syncSetup(); render(); save();
+    B.title = ""; B.bonus = 25; B.tiles = Array.from({ length: 25 }, blank); B.teams = []; selTile = null; syncSetup(); render(); save();
   });
 
   const out = $("out");
   out.addEventListener("click", e => {
-    // Team tile: cycle not started → in progress → completed
+    // Team tile: one step forward (see step())
     const tt = e.target.closest(".tt[data-team]");
-    if (tt) {
-      const team = B.teams[tt.dataset.team], i = +tt.dataset.i;
-      team.s = team.s.slice(0, i) + ((+team.s[i] + 1) % 3) + team.s.slice(i + 1);
-      render(); save(); return;
-    }
+    if (tt) { step(B.teams[tt.dataset.team], +tt.dataset.i, 1); render(); save(); return; }
     const tile = e.target.closest(".tile[data-tile]");
     if (tile) { const i = +tile.dataset.tile; selTile = selTile === i ? null : i; render(); if (selTile != null) $("ted").scrollIntoView({ block: "nearest", behavior: "smooth" }); return; }
     if (e.target.id === "edone") { selTile = null; render(); }
-    if (e.target.id === "eclear" && confirm(`Clear tile ${selTile + 1}?`)) { B.tiles[selTile] = blank(); render(); save(); }
+    if (e.target.id === "eclear" && confirm(`Clear tile ${selTile + 1}? Every team's progress on it is reset too.`)) {
+      B.tiles[selTile] = blank(); B.teams.forEach(t => t.p[selTile] = 0); render(); save(); }
     if (e.target.id === "eimgdel") { B.tiles[selTile].img = ""; render(); save(); }
+  });
+  // Right-click (long-press on phones) steps a team's tile back, to fix a mistake
+  out.addEventListener("contextmenu", e => {
+    const tt = e.target.closest(".tt[data-team]"); if (!tt) return;
+    e.preventDefault(); step(B.teams[tt.dataset.team], +tt.dataset.i, -1); render(); save();
   });
   out.addEventListener("change", e => {
     if (selTile == null) return;
@@ -441,6 +471,11 @@ function wireEditing(){
     if (e.target.id === "eboss") { t.boss = e.target.value; if (t.boss) t.img = ""; }
     else if (e.target.id === "ename") t.name = e.target.value.trim().slice(0, 40);
     else if (e.target.id === "epts") t.points = Math.max(0, Math.min(9999, Math.round(+e.target.value) || 0));
+    else if (e.target.id === "eneed") {
+      // Keep each team's progress within the new count; "in progress" only exists for one-and-done tiles
+      t.need = +e.target.value;
+      B.teams.forEach(team => { const v = team.p[selTile]; team.p[selTile] = v === -1 ? (t.need === 1 ? -1 : 0) : Math.min(v, t.need); });
+    }
     else return;
     render(); save();
   });
