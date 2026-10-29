@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Bingo Stats | Kingdom</title>
+<meta name="robots" content="noindex">
+<meta name="theme-color" content="#080808">
+<link rel="icon" type="image/png" href="icon.png">
+<link rel="apple-touch-icon" href="icon.png">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&family=Geist+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#080808;--panel:#121212;--panel2:#1c1c1c;--line:#232323;--line2:#333;--ink:#fff;--mute:#9a9a9a;--dim:#5f5f5f;
+--sans:Geist,Inter,system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;--mono:"Geist Mono",ui-monospace,"SF Mono",Menlo,Consolas,monospace;
+color-scheme:dark;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+html{scroll-padding-top:env(safe-area-inset-top,0px);scrollbar-gutter:stable}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.55 var(--sans);-webkit-font-smoothing:antialiased}
+
+/* Nav */
+nav{position:sticky;top:0;z-index:10;display:flex;align-items:center;justify-content:center;gap:2px;padding:12px;border-bottom:1px solid var(--line);background:rgba(8,8,8,.88);-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px)}
+nav a{color:var(--mute);text-decoration:none;padding:6px 14px;font-size:14px;font-weight:500;border-radius:6px;transition:color .15s}
+nav a:hover{color:#fff}
+nav a.on{color:#fff;background:var(--panel2)}
+nav a.navbtn{margin-left:10px;background:#5865F2;color:#fff;font-weight:600;white-space:nowrap}
+nav a.navbtn:hover{background:#4752C4}
+.navsoc{position:absolute;right:16px;top:50%;transform:translateY(-50%);display:flex;gap:2px}
+nav .navsoc a{display:grid;place-items:center;padding:7px}
+.navsoc svg,.fsoc svg{width:18px;height:18px;display:block}
+.navsoc img,.fsoc img{height:18px;width:auto;display:block;opacity:.75;transition:opacity .15s}
+.navsoc a:hover img,.fsoc a:hover img{opacity:1}
+.fsoc{display:none}
+footer a.staff{color:inherit;text-decoration:none}
+footer a.staff:hover{color:#fff}
+.fsoc a{display:grid;place-items:center;padding:8px;color:var(--mute)}
+@media(max-width:960px){.navsoc{position:static;transform:none;margin-left:8px}}
+@media(max-width:760px){nav{justify-content:safe center;overflow-x:auto;scrollbar-width:none}nav .navlogo,nav .long{display:none}nav a{white-space:nowrap;padding:6px 10px}}
+.navlogo{height:22px;width:auto;display:block;margin-right:12px}
+@media(max-width:600px){nav{gap:0;padding:10px 4px;justify-content:safe center;overflow-x:auto}nav a{padding:6px 7px;font-size:13px;white-space:nowrap}nav .navlogo,nav .long,.navsoc{display:none}.fsoc{display:flex;justify-content:center;gap:8px;margin:-12px 0 14px}nav a.navbtn{margin-left:4px}}
+
+/* Page title */
+.phero{max-width:1080px;margin:0 auto;padding:64px 20px 0}
+.phero h1{margin:0;font:600 clamp(36px,6vw,56px)/1.05 var(--sans);letter-spacing:-.04em}
+.phero p{margin:14px 0 0;font:500 12px/1.4 var(--mono);letter-spacing:.16em;text-transform:uppercase;color:var(--mute)}
+main{max-width:1080px;margin:0 auto;padding:8px 20px 72px}
+
+/* Section headers, labels, shared bits */
+.sec{margin-top:56px}
+.sech{display:flex;align-items:flex-end;justify-content:space-between;gap:16px;flex-wrap:wrap;padding-bottom:14px;border-bottom:1px solid var(--line2)}
+.sech h2{margin:0;font:600 clamp(22px,3vw,28px)/1.1 var(--sans);letter-spacing:-.03em}
+.sech small{font:500 12px/1 var(--mono);color:var(--mute);letter-spacing:.06em}
+.mlab{font:500 11px/1 var(--mono);letter-spacing:.14em;text-transform:uppercase;color:var(--mute)}
+.rk{flex:none;display:inline-grid;place-items:center;min-width:22px;font:500 13px/1 var(--mono);color:var(--dim)}
+.rk.m1{color:#fff}
+.msg{padding:28px 0;color:var(--mute);font-size:14px}
+.ghost{background:none;border:1px solid var(--line2);border-radius:6px;color:#fff;padding:8px 16px;font:500 13px/1.2 var(--sans);cursor:pointer;transition:border-color .15s}
+.ghost:hover{border-color:#fff}
+
+footer{text-align:center;padding:28px 20px;color:var(--dim);font:12px/1 var(--mono);letter-spacing:.04em;border-top:1px solid var(--line)}
+
+/* One quiet entrance for the page */
+@keyframes fade{from{opacity:0}to{opacity:1}}
+.phero,main{animation:fade .6s ease both}
+main{animation-delay:.1s}
+@media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+
+/* Bingo stats */
+:root{--go:#34a853;--wip:#e8b923}
+.who{display:flex;align-items:center;gap:10px;margin-top:18px;font-size:14px;color:var(--mute)}
+.who img{width:24px;height:24px;border-radius:50%}
+.who a{color:#fff}
+.gate{max-width:460px;padding-top:40px}
+.gate p{margin:0 0 24px;color:var(--mute)}
+.dbtn{display:inline-flex;align-items:center;gap:10px;background:#5865F2;color:#fff;text-decoration:none;border-radius:6px;padding:11px 20px;font:600 14px/1.2 var(--sans);transition:background .15s}
+.dbtn:hover{background:#4752C4}
+.note{margin:18px 0 0;color:var(--mute);font-size:13px}
+.note a{color:#fff}
+.teams{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,460px),1fr));gap:16px;margin-top:20px}
+.tm{border:1px solid var(--line);border-radius:10px;background:var(--panel);overflow:hidden}
+.tmh{display:flex;align-items:center;gap:10px;padding:14px 16px;border-bottom:1px solid var(--line);border-top:3px solid var(--c)}
+.tmh b{font-size:17px;font-weight:600;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.tmh span{margin-left:auto;font:500 12px/1 var(--mono);color:var(--mute);white-space:nowrap}
+.tmh span em{font-style:normal;color:#fff}
+.sum{display:grid;grid-template-columns:repeat(4,1fr);border-bottom:1px solid var(--line)}
+.sum div{padding:10px 16px;border-right:1px solid var(--line)}
+.sum div:last-child{border-right:0}
+.sum small{display:block;font:500 10px/1.3 var(--mono);letter-spacing:.12em;text-transform:uppercase;color:var(--mute)}
+.sum b{font:600 18px/1.3 var(--mono)}
+@media(max-width:420px){.sum{grid-template-columns:repeat(2,1fr)}.sum div:nth-child(2){border-right:0}.sum div:nth-child(-n+2){border-bottom:1px solid var(--line)}}
+table{width:100%;border-collapse:collapse;font-size:14px}
+th{padding:9px 16px;text-align:right;font:500 10px/1.3 var(--mono);letter-spacing:.12em;text-transform:uppercase;color:var(--mute);border-bottom:1px solid var(--line);cursor:pointer;user-select:none;white-space:nowrap}
+th:first-child{text-align:left}
+th.on{color:#fff}
+td{padding:9px 16px;text-align:right;border-bottom:1px solid var(--line);font:500 13px/1.2 var(--mono);white-space:nowrap}
+td:first-child{text-align:left;font:500 14px/1.2 var(--sans);max-width:0;width:50%;overflow:hidden;text-overflow:ellipsis}
+td:first-child a{color:#fff;text-decoration:none}
+td:first-child a:hover{text-decoration:underline}
+td .cap{margin-left:6px;color:var(--wip);font-size:12px}
+td.z{color:var(--dim)}
+tfoot td{border-bottom:0;color:#fff;font-weight:600}
+tfoot td:first-child{color:var(--mute);font:500 10px/1.3 var(--mono);letter-spacing:.12em;text-transform:uppercase}
+.tm .msg{padding:18px 16px}
+</style>
+</head>
+<body>
+<nav><img class="navlogo" alt="" src="data:image/png;base64,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"><a href="/">Home</a><a href="about.html">About Us</a><a href="members.html">Members</a><a href="bosses.html">Bosses</a><a href="events.html">Events</a><a href="bingo.html">Bingo</a><a href="draft.html"><span class="long">Bingo </span>Draft</a><a class="staffnav on" href="bingo-stats.html" hidden><span class="long">Bingo </span>Stats</a><a class="navbtn" href="https://discord.gg/kingdomclan">Apply<span class="long"> on Discord</span></a><span class="navsoc"><a href="https://x.com/Kingdom_OSRS" target="_blank" rel="noopener" aria-label="Kingdom on X (Twitter)" title="X (Twitter)"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg></a><a href="https://wiseoldman.net/groups/1152" target="_blank" rel="noopener" aria-label="Kingdom on Wise Old Man" title="Wise Old Man"><img src="wom.png" alt=""></a><a href="https://templeosrs.com/groups/overview.php?id=1710" target="_blank" rel="noopener" aria-label="Kingdom on TempleOSRS" title="TempleOSRS"><img src="temple.png" alt=""></a></span></nav>
+<script>if(/(^|;\s*)kd_staff=1/.test(document.cookie))document.querySelectorAll(".staffnav").forEach(a=>a.hidden=false)</script>
+<header class="phero">
+  <h1>Bingo Stats</h1>
+  <p id="sub">Staff only</p>
+  <div class="who" id="who" hidden></div>
+</header>
+<main>
+  <section class="gate" id="gate" hidden>
+    <p>Only staff can see bingo stats. Log in with your Discord account.</p>
+    <a class="dbtn" href="/auth/login">Log in with Discord</a>
+  </section>
+  <div id="out"></div>
+</main>
+<footer><span class="fsoc"><a href="https://x.com/Kingdom_OSRS" target="_blank" rel="noopener" aria-label="Kingdom on X (Twitter)" title="X (Twitter)"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg></a><a href="https://wiseoldman.net/groups/1152" target="_blank" rel="noopener" aria-label="Kingdom on Wise Old Man" title="Wise Old Man"><img src="wom.png" alt=""></a><a href="https://templeosrs.com/groups/overview.php?id=1710" target="_blank" rel="noopener" aria-label="Kingdom on TempleOSRS" title="TempleOSRS"><img src="temple.png" alt=""></a></span>Kingdom · <a class="staff" href="admin.html">Staff</a></footer>
+
+<script>
+const $ = id => document.getElementById(id);
+const esc = s => String(s).replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const COLORS = ["#e5484d", "#3e63dd", "#30a46c", "#f5d90a", "#8e4ec6", "#f76b15", "#12a594", "#d6409f"];
+const LINES = [0,1,2,3,4].flatMap(i => [[0,1,2,3,4].map(c => i * 5 + c), [0,1,2,3,4].map(r => r * 5 + i)]);   // rows and columns
+const fmtH = v => (Math.round(v * 10) / 10).toLocaleString(undefined, { minimumFractionDigits: 1, maximumFractionDigits: 1 });
+const num = v => Math.round(v).toLocaleString();
+const key = n => n.trim().toLowerCase();
+
+let B = null;          // the bingo board (staff copy, so it's there before the reveal)
+let draft = [];        // the Bingo Draft's teams [{name, captain, players}]
+let comp = null;       // the EHB competition: { src, metric, rows:[{name, team, gained}] } or { error }
+let sort = "pts";      // column the team tables are sorted by: pts, drops or ehb
+
+const api = async (path, opts = {}) => {
+  const r = await fetch(path, { credentials: "same-origin", cache: "no-store", ...opts });
+  const body = await r.json().catch(() => ({}));
+  if (!r.ok) { const e = new Error(body.error || "HTTP " + r.status); e.status = r.status; throw e; }
+  return body;
+};
+
+// Same scoring as the Bingo page
+const need = t => t.need || 1;
+const isDone = (team, i) => team.p[i] >= need(B.tiles[i]);
+const bingos = team => LINES.filter(l => l.every(i => isDone(team, i))).length;
+const score = team => B.tiles.reduce((a, t, i) => a + (isDone(team, i) ? t.points : 0), 0) + bingos(team) * (B.bonus ?? 25);
+
+function parseTrack(u){
+  let m = String(u || "").match(/^https:\/\/(?:www\.)?wiseoldman\.net\/competitions\/(\d+)/i);
+  if (m) return { src: "wom", id: m[1] };
+  m = String(u || "").match(/^https:\/\/(?:www\.)?templeosrs\.com\/competitions\/[\w.]*\?(?:[^#\s]*&)?id=(\d+)/i);
+  return m ? { src: "temple", id: m[1] } : null;
+}
+
+// Each team's members with their points and EHB.
+// Members are the team's Bingo Draft players, plus anyone the drop log or the competition puts on the team.
+// Points work like the MVP leaderboard: a drop earns its share of the tile's points once the team completes the tile
+// (split across every approved drop if the tile got more than it needed).
+const dropsOn = (team, tile) => (B.log || []).filter(d => d.team === team && d.tile === tile).length;
+function teamStats(team){
+  const tk = key(team.name), d = draft.find(x => key(x.name) === tk);
+  const rows = new Map();
+  const row = n => { const k = key(n); if (!rows.has(k)) rows.set(k, { name: n, drops: 0, pts: 0, ehb: 0, cap: false }); return rows.get(k); };
+  (d?.players || []).forEach(row);
+  if (d?.captain) row(d.captain).cap = true;
+  (B.log || []).filter(x => x.team === team.name).forEach(x => {
+    const r = row(x.player), t = B.tiles[x.tile];
+    r.drops++;
+    if (t && isDone(team, x.tile)) r.pts += t.points / Math.max(need(t), dropsOn(team.name, x.tile));
+  });
+  if (comp?.rows) comp.rows.forEach(c => {
+    // The competition's team name if it matches, otherwise whoever's already on this team
+    const ct = c.team && B.teams.find(x => key(x.name) === key(c.team));
+    if (ct ? ct === team : rows.has(key(c.name))) row(c.name).ehb = c.gained;
+  });
+  const order = { pts: (a, b) => b.pts - a.pts || b.ehb - a.ehb, drops: (a, b) => b.drops - a.drops || b.pts - a.pts, ehb: (a, b) => b.ehb - a.ehb || b.pts - a.pts };
+  return [...rows.values()].sort((a, b) => order[sort](a, b) || a.name.localeCompare(b.name));
+}
+
+function render(){
+  if (!B) return;
+  if (!B.teams.length) { $("out").innerHTML = '<div class="msg">No bingo teams yet. Add them in Bingo setup on the <a href="bingo.html">Bingo page</a>.</div>'; return; }
+  const src = parseTrack(B.track);
+  const ehbNote = !src ? 'EHB shows once an EHB tracking link is added in <a href="bingo.html">Bingo setup</a>.'
+    : comp?.error ? "Couldn't load the EHB competition right now. It'll retry in a few minutes."
+    : !comp ? "Loading EHB…" : `EHB from the <a href="${esc(B.track)}" target="_blank" rel="noopener">${src.src === "temple" ? "TempleOSRS" : "Wise Old Man"} competition ↗</a>, refreshed every 5 minutes.`;
+  const now = Date.now();
+  $("sub").textContent = "Staff only · " + (B.starts && now < B.starts ? "starts " + new Date(B.starts).toLocaleString(undefined, { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" })
+    : B.ends && now >= B.ends ? "bingo over" : "live");
+  const th = (k, label) => `<th data-sort="${k}"${sort === k ? ' class="on"' : ""}>${label}</th>`;
+  const cell = (v, s) => `<td${v ? "" : ' class="z"'}>${s}</td>`;
+  $("out").innerHTML = `<p class="note">Points count once a team completes the tile, the same as the MVP leaderboard. ${ehbNote}</p>
+    <div class="teams">${B.teams.map((t, i) => {
+      const rows = teamStats(t), c = t.color || COLORS[i % COLORS.length];
+      const sum = k => rows.reduce((a, r) => a + r[k], 0);
+      const tiles = B.tiles.filter((x, j) => isDone(t, j)).length;
+      return `<section class="tm" style="--c:${esc(c)}">
+        <div class="tmh"><b>${esc(t.name)}</b><span><em>${rows.length}</em> member${rows.length === 1 ? "" : "s"}</span></div>
+        <div class="sum"><div><small>Score</small><b>${num(score(t))}</b></div><div><small>Tiles</small><b>${tiles}</b></div>
+          <div><small>Bingos</small><b>${bingos(t)}</b></div><div><small>EHB</small><b>${fmtH(sum("ehb"))}</b></div></div>
+        ${rows.length ? `<table><thead><tr><th>Player</th>${th("drops", "Drops")}${th("pts", "Points")}${th("ehb", "EHB")}</tr></thead>
+          <tbody>${rows.map(r => `<tr><td><a href="player.html?name=${encodeURIComponent(r.name)}">${esc(r.name)}</a>${r.cap ? '<span class="cap" title="Captain">★</span>' : ""}</td>
+            ${cell(r.drops, r.drops)}${cell(r.pts, num(r.pts))}${cell(r.ehb, fmtH(r.ehb))}</tr>`).join("")}</tbody>
+          <tfoot><tr><td>Total</td><td>${sum("drops")}</td><td>${num(sum("pts"))}</td><td>${fmtH(sum("ehb"))}</td></tr></tfoot></table>`
+        : '<div class="msg">No members yet. Draft players onto this team on the <a href="draft.html">Bingo Draft</a>.</div>'}
+      </section>`; }).join("")}</div>`;
+}
+
+$("out").addEventListener("click", e => { const k = e.target.closest("[data-sort]")?.dataset.sort; if (k) { sort = k; render(); } });
+
+// The competition's gains, normalised to [{ name, team, gained }]. Kept for 5 minutes, shared with the Bingo page.
+async function loadComp(){
+  const src = parseTrack(B?.track);
+  if (!src) { comp = null; render(); return; }
+  const ck = "kingdom-bingo-comp-" + src.src + src.id;
+  try { const c = JSON.parse(sessionStorage.getItem(ck) || "null"); if (c && Date.now() - c.t < 3e5) { comp = c.d; render(); return; } } catch {}
+  try {
+    let d;
+    if (src.src === "wom") {
+      const r = await fetch(`https://api.wiseoldman.net/v2/competitions/${src.id}`).then(r => r.ok ? r : fetch(`/api/wom/competitions/${src.id}`));
+      const j = await r.json();
+      d = { src: "wom", metric: j.metric, rows: (j.participations || []).map(p => ({ name: p.player.displayName, team: p.teamName || "", gained: Math.max(0, p.progress?.gained || 0) })) };
+    } else {
+      const j = await (await fetch(`/api/temple/competition_info_v2.php?id=${src.id}`)).json();
+      d = { src: "temple", metric: j.data?.info?.skill || "ehb", rows: (j.data?.participants || []).map(p => ({ name: p.username, team: p.team_name || "", gained: Math.max(0, +p.gain || 0) })) };
+    }
+    comp = d;
+    try { sessionStorage.setItem(ck, JSON.stringify({ t: Date.now(), d })); } catch {}
+  } catch { comp = { error: true }; }
+  render();
+}
+
+async function refresh(){
+  try {
+    const [b, d] = await Promise.all([api("/api/bingo?staff=1"), api("/api/draft").catch(() => ({ teams: draft }))]);
+    const trackChanged = !B || b.track !== B.track;
+    B = b; draft = d.teams || [];
+    render();
+    if (trackChanged) loadComp();
+  } catch (e) { if (e.status === 401) location.reload(); }
+}
+
+async function start(){
+  let me;
+  try { me = await api("/api/me"); }
+  catch { $("gate").hidden = false; return; }
+  $("who").innerHTML = (me.avatar ? `<img src="https://cdn.discordapp.com/avatars/${me.id}/${me.avatar}.png?size=48" alt="">` : "")
+    + `Logged in as <b>${esc(me.name)}</b> · <a href="admin.html">Staff console</a> · <a href="/auth/logout">Log out</a>`;
+  $("who").hidden = false;
+  $("out").innerHTML = '<div class="msg">Loading bingo stats…</div>';
+  await refresh();
+  setInterval(refresh, 30000);
+  setInterval(loadComp, 300000);
+}
+start();
+</script>
+</body>
+</html>

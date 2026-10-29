@@ -33,6 +33,10 @@ export function cookies(req){
 }
 export const setCookie = (name, value, maxAge) =>
   `${name}=${encodeURIComponent(value)}; Path=/; HttpOnly; Secure; SameSite=Lax; Max-Age=${maxAge}`;
+// A readable "kd_staff=1" cookie so every page's nav can show the staff-only links. It's only a hint for the nav:
+// the pages and APIs behind those links still check the signed session.
+export const STAFF_HINT = "kd_staff";
+export const staffHint = on => `${STAFF_HINT}=${on ? 1 : ""}; Path=/; Secure; SameSite=Lax; Max-Age=${on ? SESSION_DAYS * 86400 : 0}`;
 
 // Session = base64url(JSON) + "." + HMAC signature, so it can't be edited without SESSION_SECRET
 export function makeSession(user){
