@@ -98,7 +98,8 @@ main{animation-delay:.1s}
 .inp{width:100%;background:var(--bg);border:1px solid var(--line2);border-radius:6px;color:#fff;padding:9px 12px;font:14px/1.4 var(--sans);letter-spacing:0;text-transform:none}
 .inp:focus{outline:none;border-color:#fff}
 select.inp{appearance:none;background-image:linear-gradient(45deg,transparent 50%,#9a9a9a 50%),linear-gradient(135deg,#9a9a9a 50%,transparent 50%);background-position:calc(100% - 17px) 55%,calc(100% - 12px) 55%;background-size:5px 5px;background-repeat:no-repeat;padding-right:32px}
-.tlist{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:8px}
+.tlist{display:grid;grid-template-columns:repeat(auto-fill,minmax(400px,1fr));gap:8px}
+@media(max-width:600px){.tlist{grid-template-columns:1fr}}
 .trow{display:flex;gap:6px}
 .trow input[type=color]{flex:none;width:38px;height:auto;padding:4px;background:var(--bg);border:1px solid var(--line2);border-radius:6px;cursor:pointer}
 .trow input[type=color]::-webkit-color-swatch-wrapper{padding:0}
@@ -191,6 +192,79 @@ select.inp{appearance:none;background-image:linear-gradient(45deg,transparent 50
 .upl input{position:absolute;inset:0;opacity:0;cursor:pointer}
 .eimg p{margin:0;font-size:13px;color:var(--mute)}
 @media(max-width:760px){.ted{grid-template-columns:1fr 1fr}.ted .wide{grid-column:1/-1}}
+textarea.inp{resize:vertical;min-height:96px;font:13px/1.5 var(--mono)}
+.lab .hintx{letter-spacing:0;text-transform:none;font:12px/1.3 var(--sans);color:var(--dim)}
+.trow select.inp{flex:none;width:160px;padding-top:8px;padding-bottom:8px;font-size:13px}
+@media(max-width:600px){.trow{flex-wrap:wrap}.trow select.inp{width:100%;order:3}}
+
+/* Captain login link, small buttons, status tags */
+.clog{display:inline-block;margin-top:14px;font:500 12px/1.4 var(--mono);letter-spacing:.06em;color:var(--mute)}
+.clog:hover{color:#fff}
+.clog[hidden]{display:none}
+.sm{padding:6px 12px;font-size:12px}
+.stag{display:inline-block;padding:2px 7px;border:1px solid var(--line2);border-radius:4px;font:500 10px/1.4 var(--mono);letter-spacing:.08em;text-transform:uppercase;color:var(--mute);white-space:nowrap}
+.stag.pending{border-color:var(--wip);color:var(--wip)}
+.stag.approved{border-color:var(--go);color:var(--go)}
+.stag.rejected,.stag.undone{color:var(--dim)}
+.sech .count{display:inline-grid;place-items:center;min-width:24px;height:24px;margin-left:10px;padding:0 7px;border-radius:12px;background:var(--wip);color:#000;font:600 13px/1 var(--mono);vertical-align:4px}
+
+/* Pending drops (staff) */
+.rvl{display:grid;gap:8px}
+.rvr{display:grid;grid-template-columns:auto 1fr auto;gap:14px;align-items:center;padding:12px 14px;border:1px solid var(--line);border-left:3px solid var(--wip);border-radius:8px;background:var(--panel)}
+.rvr .face img,.rvr .face .ab{width:36px;height:36px;object-fit:contain;image-rendering:pixelated}
+.rvr .face img.cust{image-rendering:auto;border-radius:4px}
+.rvr .face .ab{display:grid;place-items:center;border:1px dashed var(--line2);border-radius:6px;font:600 11px/1 var(--mono);color:var(--mute)}
+.rvr b{font-weight:600}
+.rvr small{display:block;margin-top:3px;font:500 11px/1.5 var(--mono);color:var(--mute)}
+.rvr .acts{display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end}
+.rvr .acts a{display:inline-flex;align-items:center;color:#fff;text-decoration:none}
+.ok{background:var(--go);color:#fff;border:0;border-radius:6px;padding:6px 14px;font:600 12px/1.2 var(--sans);cursor:pointer}
+.ok:hover{filter:brightness(1.1)}
+@media(max-width:600px){.rvr{grid-template-columns:auto 1fr}.rvr .acts{grid-column:1/-1;justify-content:flex-start}}
+
+/* Captain drop form */
+.crl{display:grid;gap:6px}
+.cr{display:grid;grid-template-columns:minmax(0,1.3fr) 92px minmax(0,1fr) minmax(0,1fr) 140px auto;gap:10px;align-items:center;padding:10px 12px;border:1px solid var(--line);border-radius:8px;background:var(--panel)}
+.cr.done{opacity:.55}
+.cn{display:flex;align-items:center;gap:10px;min-width:0}
+.cn img,.cn .ab{flex:none;width:32px;height:32px;object-fit:contain;image-rendering:pixelated}
+.cn img.cust{image-rendering:auto;border-radius:4px}
+.cn .ab{display:grid;place-items:center;border:1px dashed var(--line2);border-radius:6px;font:600 11px/1 var(--mono);color:var(--mute)}
+.cn div{min-width:0}
+.cn b{display:block;font-size:14px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.cn span{display:block;font-size:12px;color:var(--mute);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.cpg{font:500 12px/1.3 var(--mono);color:var(--mute)}
+.cpg .w{display:block;color:var(--wip);font-size:11px}
+.cpg .d{color:var(--go)}
+.cr .inp{padding:7px 10px;font-size:13px}
+.cr .cm{grid-column:1/-1;margin:-2px 0 0;font-size:13px;color:var(--mute)}
+.cr .cm:empty{display:none}
+.cr .cm.bad{color:#fff}
+.cr .cm.good{color:var(--go)}
+.cr .oth{margin-top:6px}
+@media(max-width:900px){.cr{grid-template-columns:1fr 1fr}.cn{grid-column:1/-1}.cpg{grid-column:1/-1}.cr .primary{grid-column:1/-1}}
+.mine{display:grid;gap:4px;margin-top:20px}
+.mine h3{margin:0 0 6px;font-size:15px;font-weight:600}
+.mr{display:flex;align-items:center;gap:12px;padding:8px 0;border-bottom:1px solid var(--line);font-size:14px}
+.mr span{flex:1;min-width:0}
+.mr small{font:500 11px/1 var(--mono);color:var(--dim);white-space:nowrap}
+
+/* Collapsible tiles and the drop log */
+.sech .tog{margin-left:auto}
+.dl{border:1px solid var(--line);border-radius:8px;background:var(--panel);overflow:hidden}
+.lr{display:grid;grid-template-columns:120px 170px minmax(0,1fr) auto;gap:14px;align-items:center;padding:11px 16px;border-bottom:1px solid var(--line);font-size:14px}
+.lr:last-child{border-bottom:0}
+.lr time{font:500 12px/1.3 var(--mono);color:var(--mute)}
+.lr .lt{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-weight:600}
+.lr .ld{min-width:0}
+.lr .ld small{display:block;margin-top:2px;font-size:12px;color:var(--dim)}
+.lr .la{display:flex;gap:6px;align-items:center}
+.lr a{font:500 12px/1 var(--mono);color:#fff}
+.lr button{background:none;border:1px solid var(--line2);border-radius:5px;color:var(--mute);padding:4px 8px;font:500 11px/1 var(--mono);cursor:pointer}
+.lr button:hover{border-color:#fff;color:#fff}
+.lr.head{padding:9px 16px;background:var(--panel2);font:500 10px/1 var(--mono);letter-spacing:.14em;text-transform:uppercase;color:var(--dim)}
+@media(max-width:700px){.lr{grid-template-columns:1fr auto;gap:4px 12px}.lr time{grid-column:1/-1}.lr .ld{grid-column:1}.lr .la{grid-row:2/4;grid-column:2}.lr.head{display:none}}
+.more{display:block;margin:12px auto 0}
 </style>
 </head>
 <body>
@@ -200,6 +274,7 @@ select.inp{appearance:none;background-image:linear-gradient(45deg,transparent 50
   <p id="sub">Teams · Tiles</p>
   <p class="live" id="live" hidden><i></i><span>Live</span></p>
   <div class="who" id="who" hidden></div>
+  <a class="clog" id="clog" href="/auth/login" hidden>Team captain? Log in to submit drops</a>
 </header>
 <main id="main">
   <details class="setup" id="setup" hidden>
@@ -212,6 +287,8 @@ select.inp{appearance:none;background-image:linear-gradient(45deg,transparent 50
         <button class="ghost" id="resetbtn" type="button">Reset all progress</button><button class="ghost" id="clearbtn" type="button">Clear board</button></div>
     </div>
   </details>
+  <div id="review"></div>
+  <div id="cap"></div>
   <div id="out"><div class="msg">Loading the bingo board…</div></div>
 </main>
 <div class="tip" id="tip" role="tooltip"></div>
@@ -235,15 +312,22 @@ const esc = s => String(s).replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":
 const num = n => Math.round(n).toLocaleString();
 const STATE = ["Not started", "In progress", "Completed"];
 const LINES = [0,1,2,3,4].flatMap(i => [[0,1,2,3,4].map(c => i * 5 + c), [0,1,2,3,4].map(r => r * 5 + i)]);   // rows and columns
-const blank = () => ({ boss: "", img: "", name: "", desc: "", points: 0, need: 1 });
+const blank = () => ({ boss: "", img: "", name: "", desc: "", points: 0, need: 1, items: [] });
 // Default team colours, handed out in order (same list as the server)
 const COLORS = ["#e5484d", "#3e63dd", "#30a46c", "#f5d90a", "#8e4ec6", "#f76b15", "#12a594", "#d6409f"];
 const colorOf = (team, i) => team.color || COLORS[i % COLORS.length];
 
-let B = null;          // the board: { rev, title, tiles:[25 × {boss, name, points}], teams:[{name, s}], updated, by }
-let staff = null;      // logged-in staff member, or null for visitors
+let B = null;          // the board: { rev, title, bonus, tiles, teams:[{name, color, captain, p}], log, items:{boss: [names]}, updated, by }
+let staff = null;      // logged-in staff member, or null
+let captain = null;    // logged-in team captain, or null
+let subs = { pending: [], recent: [], mine: [] };   // submitted drops (staff see pending; captains see their own)
+let captains = [];     // staff: everyone in CAPTAIN_DISCORD_IDS, for the captain pickers in setup
+let roster = null;     // captain: player names on their team in the Bingo Draft
 let selTile = null;    // tile open in the editor
-let dirty = false, saving = false;
+let dirty = false, saving = false, clearLog = false;
+let logShown = 25;
+const TILES_KEY = "kingdom-bingo-tiles-hidden";
+let tilesHidden = (() => { try { return localStorage.getItem(TILES_KEY) === "1"; } catch { return false; } })();
 
 const api = async (path, opts = {}) => {
   const r = await fetch(path, { credentials: "same-origin", cache: "no-store", ...opts });
@@ -330,6 +414,8 @@ function editor(){
       .map(n => `<option value="${n}"${n === need(t) ? " selected" : ""}>${n === 1 ? "1 · one and done" : n + " times"}</option>`).join("")}</select></label>
     <div class="acts"><button class="ghost" id="eclear" type="button">Clear</button><button class="primary" id="edone" type="button">Done</button></div>
     <label class="lab full">Description<input class="inp" id="edesc" maxlength="80" value="${esc(t.desc || "")}" placeholder="e.g. 2 purples"></label>
+    <label class="lab full">Items captains can pick${t.boss ? ` <span class="hintx">· the list for ${esc(title(t.boss))}, shared by every ${esc(title(t.boss))} tile. Clear it to go back to the default list.</span>` : ` <span class="hintx">· for this tile</span>`}
+      <textarea class="inp" id="eitems" placeholder="One item per line">${esc(itemsOf(t).join("\n"))}</textarea><span class="hintx" id="eitemsmsg"></span></label>
     ${t.boss ? "" : `<div class="eimg">${t.img ? `<img src="${imgUrl(t.img)}" alt="">` : '<span class="ph">No image</span>'}
       <label class="ghost upl">${t.img ? "Replace image" : "Upload image"}<input type="file" id="efile" accept="image/png,image/jpeg,image/webp"></label>
       ${t.img ? '<button class="ghost" id="eimgdel" type="button">Remove image</button>' : ""}
@@ -347,6 +433,7 @@ function render(){
     ? `${B.teams.length} team${B.teams.length === 1 ? "" : "s"} · ${used} tiles · ${num(tot)} points`
     : "Teams · Tiles";
 
+  renderReview(); renderCaptain();
   if (!used && !edit) {
     $("out").innerHTML = '<div class="msg">No bingo is running right now. Check back when the next bingo is announced.</div>';
     return;
@@ -363,11 +450,161 @@ function render(){
       ${teams}
     </section>
     <section class="sec">
-      <div class="sech"><h2>Tiles</h2><small>${edit ? "Click a tile to set its boss, name, points and completions" : `${num(tilePoints())} tile points + ${num(bonus())} per bingo (10 possible)`}</small></div>
-      <div class="board">${B.tiles.map(boardTile).join("")}</div>
-      ${edit ? editor() : ""}
-    </section>`;
+      <div class="sech"><h2>Tiles</h2><small>${edit ? "Click a tile to set its boss, name, points, completions and items" : `${num(tilePoints())} tile points + ${num(bonus())} per bingo (10 possible)`}</small>
+        <button class="ghost sm tog" id="tilestog" type="button" aria-expanded="${!tilesHidden}">${tilesHidden ? "Show tiles" : "Hide tiles"}</button></div>
+      ${tilesHidden ? "" : `<div class="board">${B.tiles.map(boardTile).join("")}</div>${edit ? editor() : ""}`}
+    </section>
+    ${dropLog()}`;
   setLive(true);
+}
+
+// ---------- Drop log (approved drops, newest first) ----------
+const when = t => new Date(t).toLocaleString(undefined, { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" });
+const teamColor = name => { const i = B.teams.findIndex(t => t.name === name); return i < 0 ? "var(--dim)" : colorOf(B.teams[i], i); };
+const proofLink = u => `<a href="${esc(u)}" target="_blank" rel="noopener noreferrer nofollow">Proof ↗</a>`;
+function dropLog(){
+  const log = B.log || [];
+  if (!log.length && !staff) return "";
+  return `<section class="sec">
+    <div class="sech"><h2>Drop log</h2><small>${log.length} approved drop${log.length === 1 ? "" : "s"}</small></div>
+    ${log.length ? `<div class="dl"><div class="lr head"><span>Logged</span><span>Team</span><span>Drop</span><span></span></div>
+      ${log.slice(0, logShown).map(d => `<div class="lr"><time datetime="${new Date(d.t).toISOString()}">${when(d.t)}</time>
+        <span class="lt"><i class="dot" style="background:${teamColor(d.team)}"></i>${esc(d.team)}</span>
+        <span class="ld"><b>${esc(d.player)}</b> received <b>${esc(d.item)}</b><small>${esc(d.tileName)}</small></span>
+        <span class="la">${d.proof ? proofLink(d.proof) : ""}${staff ? `<button type="button" data-undo="${esc(d.id)}" title="Remove from the log and take the progress back">Undo</button>` : ""}</span></div>`).join("")}</div>
+      ${log.length > logShown ? `<button class="ghost more" id="logmore" type="button">Show ${Math.min(25, log.length - logShown)} more</button>` : ""}`
+    : '<div class="msg">Approved drops will appear here.</div>'}
+  </section>`;
+}
+
+// ---------- Pending drops (staff) ----------
+function renderReview(){
+  const el = $("review");
+  if (!staff) { el.innerHTML = ""; return; }
+  const list = subs.pending || [];
+  el.innerHTML = `<section class="sec">
+    <div class="sech"><h2>Pending drops${list.length ? `<span class="count">${list.length}</span>` : ""}</h2><small>Approving adds the progress and posts it to the drop log</small></div>
+    ${list.length ? `<div class="rvl">${list.map(s => { const t = B.tiles[s.tile] || blank();
+      return `<div class="rvr"><span class="face">${face(t, "?")}</span>
+        <div><b>${esc(s.player)}</b> received <b>${esc(s.item)}</b>
+          <small><i class="dot" style="background:${teamColor(s.team)}"></i>${esc(s.team)} · ${esc(s.tileName)} · logged by ${esc(s.by.name)} · ${when(s.t)}</small></div>
+        <div class="acts">${proofLink(s.proof)}<button class="ghost sm" type="button" data-rev="reject" data-id="${esc(s.id)}">Reject</button><button class="ok" type="button" data-rev="approve" data-id="${esc(s.id)}">Approve</button></div></div>`; }).join("")}</div>`
+    : '<div class="msg" style="padding:8px 0">No drops waiting for approval.</div>'}
+  </section>`;
+}
+
+async function reviewDrop(id, action, btn){
+  if (action === "reject" && !confirm("Reject this drop? The captain will see it was rejected.")) return;
+  if (action === "undo" && !confirm("Undo this drop? It's removed from the drop log and the team loses that progress.")) return;
+  if (btn) btn.disabled = true;
+  try {
+    await api("/api/bingo/review", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ id, action }) });
+    await Promise.all([loadSubs(), refreshBoard()]);
+  } catch (e) { alert(e.message); if (btn) btn.disabled = false; loadSubs(); }
+}
+
+// ---------- Logging a drop (captains) ----------
+const itemsOf = t => t.boss ? (B.items?.[t.boss] || []) : (t.items || []);
+const myTeam = () => captain ? B.teams.find(t => t.captain === captain.id) : null;
+let capSig = "";
+function renderCaptain(){
+  const el = $("cap");
+  if (!captain) { el.innerHTML = ""; return; }
+  const team = myTeam(), mine = subs.mine || [];
+  // Staff assigned or renamed this captain's team since the roster was loaded
+  if ((team ? team.name : null) !== rosterTeam) { loadRoster().then(renderCaptain); }
+  // Only redraw when something the form shows has changed, so half-typed rows aren't wiped by live updates
+  const sig = JSON.stringify([team, B.tiles, B.items, mine.map(s => [s.id, s.status]), roster]);
+  if (sig === capSig) return;
+  capSig = sig;
+  const keep = {};
+  el.querySelectorAll(".cr[data-ct]").forEach(r => { keep[r.dataset.ct] = Object.fromEntries([...r.querySelectorAll("[data-f]")].map(f => [f.dataset.f, f.value])); });
+
+  if (!team) {
+    el.innerHTML = `<section class="sec"><div class="sech"><h2>Log a drop</h2></div>
+      <div class="msg">You're logged in as a captain, but you're not set as captain of a team yet. Ask an admin to pick you in Bingo setup.</div></section>`;
+    return;
+  }
+  const waiting = i => mine.filter(s => s.status === "pending" && s.tile === i).length;
+  const players = roster || [];
+  const rows = B.tiles.map((t, i) => {
+    if (isBlank(t)) return "";
+    const n = need(t), v = Math.max(0, team.p[i]), done = v >= n, w = waiting(i);
+    const items = itemsOf(t);
+    return `<div class="cr${done ? " done" : ""}" data-ct="${i}">
+      <div class="cn">${face(t, "?")}<div><b>${i + 1}. ${esc(tileName(t))}</b>${t.desc ? `<span>${esc(t.desc)}</span>` : ""}</div></div>
+      <div class="cpg">${done ? '<span class="d">Completed ✓</span>' : n > 1 ? `${v}/${n} done` : "Not done"}${w ? `<span class="w">${w} waiting</span>` : ""}</div>
+      ${done ? "" : `<div><select class="inp" data-f="item" aria-label="Item"><option value="">Item…</option>${items.map(x => `<option>${esc(x)}</option>`).join("")}<option value="__other">Other…</option></select>
+        <input class="inp oth" data-f="other" maxlength="60" placeholder="Item name" hidden></div>
+      <input class="inp" data-f="proof" type="url" maxlength="400" placeholder="Screenshot link (https://…)" aria-label="Screenshot link">
+      ${players.length ? `<select class="inp" data-f="player" aria-label="Player"><option value="">Player…</option>${players.map(p => `<option>${esc(p)}</option>`).join("")}</select>`
+        : `<input class="inp" data-f="player" maxlength="12" placeholder="Player name" aria-label="Player">`}
+      <button class="primary" type="button" data-sub="${i}">Submit</button>
+      <p class="cm" data-msg="${i}"></p>`}
+    </div>`;
+  }).join("");
+
+  el.innerHTML = `<section class="sec">
+    <div class="sech"><h2>Log a drop</h2><small><i class="dot" style="background:${teamColor(team.name)}"></i>${esc(team.name)} · drops go to staff for approval</small></div>
+    <div class="crl">${rows}</div>
+    ${mine.length ? `<div class="mine"><h3>Your drops</h3>${mine.slice(0, 20).map(s => `<div class="mr"><span><b>${esc(s.player)}</b> · ${esc(s.item)} · ${esc(s.tileName)}</span>
+      <span class="stag ${s.status}">${s.status === "undone" ? "removed" : s.status}</span><small>${when(s.t)}</small></div>`).join("")}</div>` : ""}
+  </section>`;
+  // Put back anything the captain had typed
+  Object.entries(keep).forEach(([i, f]) => {
+    const r = el.querySelector(`.cr[data-ct="${i}"]`); if (!r) return;
+    Object.entries(f).forEach(([k, v]) => { const x = r.querySelector(`[data-f="${k}"]`); if (x) x.value = v; });
+    const o = r.querySelector('[data-f="other"]'); if (o) o.hidden = r.querySelector('[data-f="item"]')?.value !== "__other";
+  });
+}
+
+async function submitDrop(i){
+  const r = $("cap").querySelector(`.cr[data-ct="${i}"]`), msg = r.querySelector(".cm"), btn = r.querySelector("[data-sub]");
+  const f = k => r.querySelector(`[data-f="${k}"]`)?.value.trim() || "";
+  const item = f("item") === "__other" ? f("other") : f("item");
+  const say = (t, cls) => { msg.textContent = t; msg.className = "cm" + (cls ? " " + cls : ""); };
+  if (!item) return say("Pick the item that dropped.", "bad");
+  if (!/^https?:\/\/\S+$/i.test(f("proof"))) return say("Add a link to a screenshot of the drop (starting with https://).", "bad");
+  if (!f("player")) return say("Pick who got the drop.", "bad");
+  btn.disabled = true; say("Sending…");
+  try {
+    await api("/api/bingo/subs", { method: "POST", headers: { "content-type": "application/json" },
+      body: JSON.stringify({ tile: i, tileName: tileName(B.tiles[i]), item, player: f("player"), proof: f("proof") }) });
+    r.querySelectorAll("[data-f]").forEach(x => x.value = "");
+    await loadSubs();
+    const again = $("cap").querySelector(`.cr[data-ct="${i}"] .cm`);
+    if (again) { again.textContent = "Sent! It'll show in the drop log once staff approve it."; again.className = "cm good"; }
+  } catch (e) {
+    say(e.status === 401 ? "Your login expired. Log in again." : e.message, "bad"); btn.disabled = false;
+  }
+}
+
+function wireCaptain(){
+  const el = $("cap");
+  el.addEventListener("change", e => {
+    if (e.target.dataset.f === "item") { const o = e.target.closest(".cr").querySelector('[data-f="other"]'); o.hidden = e.target.value !== "__other"; if (!o.hidden) o.focus(); }
+  });
+  el.addEventListener("click", e => { const i = e.target.dataset.sub; if (i != null) submitDrop(+i); });
+}
+
+// The captain's team in the Bingo Draft (matched by team name) gives the player dropdown
+let rosterTeam = null;
+async function loadRoster(){
+  const team = myTeam(); rosterTeam = team ? team.name : null;
+  try {
+    const d = await api("/api/draft");
+    const t = team && d.teams.find(x => x.name.trim().toLowerCase() === team.name.trim().toLowerCase());
+    roster = t ? t.players : [];
+  } catch { roster = []; }
+}
+
+async function loadSubs(){
+  if (!staff && !captain) return;
+  try {
+    const r = await api("/api/bingo/subs");
+    subs = { pending: r.pending || [], recent: r.recent || [], mine: r.mine || [] };
+    renderReview(); renderCaptain();
+  } catch {}
 }
 
 // ---------- Editing (staff only) ----------
@@ -381,8 +618,13 @@ async function flush(){
     dirty = false; setStatus("Saving…");
     try {
       const res = await api("/api/bingo", { method: "PUT", headers: { "content-type": "application/json" },
-        body: JSON.stringify({ rev: B.rev, title: B.title, bonus: bonus(), tiles: B.tiles, teams: B.teams }) });
-      B.rev = res.rev; B.updated = res.updated; B.by = res.by;
+        body: JSON.stringify({ rev: B.rev, title: B.title, bonus: bonus(), tiles: B.tiles, teams: B.teams, clearLog }) });
+      clearLog = false;
+      B.rev = res.rev; B.updated = res.updated; B.by = res.by; B.log = res.log;
+      // A newly picked boss brings its item list back with the save; show it in the open tile editor
+      const newItems = JSON.stringify(res.items) !== JSON.stringify(B.items);
+      B.items = res.items;
+      if (newItems && !dirty && !$("ted")?.contains(document.activeElement)) render();
       if (!dirty) setStatus("Saved");
     } catch (e) {
       dirty = false;
@@ -399,7 +641,11 @@ function syncSetup(force){
   if (document.activeElement !== $("bname")) $("bname").value = B.title;
   if (document.activeElement !== $("bbonus")) $("bbonus").value = bonus();
   if (!force && $("tlist").contains(document.activeElement)) return;
-  $("tlist").innerHTML = B.teams.map((t, i) => `<div class="trow"><input type="color" data-tc="${i}" value="${colorOf(t, i)}" title="Team colour" aria-label="Team ${i + 1} colour"><input class="inp" data-tn="${i}" maxlength="40" value="${esc(t.name)}" aria-label="Team ${i + 1} name"><button type="button" data-tdel="${i}" title="Remove team" aria-label="Remove team">×</button></div>`).join("")
+  const capName = c => c.name || "Discord ID …" + c.id.slice(-4);
+  const capPick = (t, i) => `<select class="inp" data-tcap="${i}" aria-label="Team ${i + 1} captain" title="${captains.length ? "Team captain: can log drops for this team" : "Add captain Discord IDs to CAPTAIN_DISCORD_IDS in Netlify first"}">
+    <option value="">No captain</option>${captains.map(c => `<option value="${c.id}"${c.id === t.captain ? " selected" : ""}>${esc(capName(c))}</option>`).join("")}
+    ${t.captain && !captains.some(c => c.id === t.captain) ? `<option value="${esc(t.captain)}" selected>Removed captain</option>` : ""}</select>`;
+  $("tlist").innerHTML = B.teams.map((t, i) => `<div class="trow"><input type="color" data-tc="${i}" value="${colorOf(t, i)}" title="Team colour" aria-label="Team ${i + 1} colour"><input class="inp" data-tn="${i}" maxlength="40" value="${esc(t.name)}" aria-label="Team ${i + 1} name">${capPick(t, i)}<button type="button" data-tdel="${i}" title="Remove team" aria-label="Remove team">×</button></div>`).join("")
     || '<p class="msg" style="padding:0">No teams yet.</p>';
 }
 
@@ -426,9 +672,25 @@ async function uploadImage(i, file){
   }
 }
 
+// A boss's item list is shared by every tile with that boss, so it's saved on its own; a custom tile's list saves with the board
+async function saveItems(i, value){
+  const t = B.tiles[i], items = [...new Set(value.split("\n").map(x => x.trim().slice(0, 60)).filter(Boolean))];
+  if (!t.boss) { t.items = items; save(); return; }
+  const msg = $("eitemsmsg");
+  if (msg) msg.textContent = "Saving…";
+  try {
+    const r = await api("/api/bingo/items", { method: "PUT", headers: { "content-type": "application/json" }, body: JSON.stringify({ boss: t.boss, items }) });
+    B.items = { ...B.items, [t.boss]: r.items };
+    const ta = $("eitems");
+    if (ta && document.activeElement !== ta) ta.value = r.items.join("\n");
+    if ($("eitemsmsg")) $("eitemsmsg").textContent = items.length ? "Saved." : "Back to the default list.";
+    renderCaptain();
+  } catch (e) { if ($("eitemsmsg")) $("eitemsmsg").textContent = "Couldn't save: " + e.message; }
+}
+
 function addTeam(name){
   if (B.teams.length >= 16) return;
-  B.teams.push({ name: name || "Team " + (B.teams.length + 1), color: COLORS[B.teams.length % COLORS.length], p: Array(25).fill(0) });
+  B.teams.push({ name: name || "Team " + (B.teams.length + 1), color: COLORS[B.teams.length % COLORS.length], captain: "", p: Array(25).fill(0) });
 }
 
 function wireEditing(){
@@ -440,8 +702,14 @@ function wireEditing(){
   $("bbonus").addEventListener("change", () => { B.bonus = Math.max(0, Math.min(9999, Math.round(+$("bbonus").value) || 0)); $("bbonus").value = B.bonus; render(); save(); });
   $("addteam").addEventListener("click", () => { addTeam(); syncSetup(); render(); save(); });
   $("tlist").addEventListener("change", e => {
-    const { tn, tc } = e.target.dataset;
+    const { tn, tc, tcap } = e.target.dataset;
     if (tc != null) { B.teams[tc].color = e.target.value; render(); save(); return; }
+    // A captain leads one team: picking them here takes them off any other team
+    if (tcap != null) {
+      const id = e.target.value;
+      B.teams.forEach((t, j) => { if (id && j !== +tcap && t.captain === id) t.captain = ""; });
+      B.teams[tcap].captain = id; syncSetup(true); render(); save(); return;
+    }
     if (tn == null) return;
     B.teams[tn].name = e.target.value.trim().slice(0, 40) || "Team " + (+tn + 1); render(); save();
   });
@@ -458,17 +726,18 @@ function wireEditing(){
       if (B.teams.length && !confirm(`Replace the ${B.teams.length} teams here with the ${d.teams.length} from the Bingo Draft? Progress is kept for teams with the same name.`)) return;
       const old = new Map(B.teams.map((t, i) => [t.name.toLowerCase(), { ...t, color: colorOf(t, i) }]));
       B.teams = d.teams.map((t, i) => { const o = old.get(t.name.toLowerCase());
-        return { name: t.name, color: o ? o.color : COLORS[i % COLORS.length], p: o ? o.p : Array(25).fill(0) }; });
+        return { name: t.name, color: o ? o.color : COLORS[i % COLORS.length], captain: o ? o.captain || "" : "", p: o ? o.p : Array(25).fill(0) }; });
       $("setmsg").textContent = `Using ${d.teams.length} teams from the Bingo Draft.`;
       syncSetup(); render(); save();
     } catch (e) { $("setmsg").textContent = "Couldn't load the Bingo Draft: " + e.message; }
   });
   $("resetbtn").addEventListener("click", () => {
-    if (!confirm("Reset every team's tiles back to not started?")) return;
-    B.teams.forEach(t => t.p = Array(25).fill(0)); render(); save();
+    if (!confirm("Reset every team's tiles back to not started? This also empties the drop log.")) return;
+    B.teams.forEach(t => t.p = Array(25).fill(0)); B.log = []; clearLog = true; render(); save();
   });
   $("clearbtn").addEventListener("click", () => {
-    if (!confirm("Clear the whole board? This removes every tile, team and all progress.")) return;
+    if (!confirm("Clear the whole board? This removes every tile, team, all progress and the drop log.")) return;
+    B.log = []; clearLog = true;
     B.title = ""; B.bonus = 25; B.tiles = Array.from({ length: 25 }, blank); B.teams = []; selTile = null; syncSetup(); render(); save();
   });
 
@@ -493,6 +762,7 @@ function wireEditing(){
     if (selTile == null) return;
     const t = B.tiles[selTile];
     if (e.target.id === "efile") { uploadImage(selTile, e.target.files[0]); return; }
+    if (e.target.id === "eitems") { saveItems(selTile, e.target.value); return; }
     if (e.target.id === "eboss") { t.boss = e.target.value; if (t.boss) t.img = ""; }
     else if (e.target.id === "ename") t.name = e.target.value.trim().slice(0, 40);
     else if (e.target.id === "edesc") t.desc = e.target.value.trim().slice(0, 80);
@@ -553,32 +823,57 @@ function setLive(ok){
   l.classList.toggle("off", !ok);
   l.lastChild.textContent = ok ? "Live" : "Reconnecting…";
 }
+async function refreshBoard(){
+  const b = await api(url());
+  // Only move forward: an older copy (e.g. from a cache that hasn't cleared yet) is ignored
+  if (b.rev > B.rev && !saving && !dirty) { B = b; if (staff) syncSetup(); render(); }
+}
 async function poll(){
   if (document.hidden || saving || dirty) return;
   // Don't redraw under a staff member who's typing in the tile editor
   if (staff && $("ted")?.contains(document.activeElement)) return;
-  try {
-    const b = await api(url());
-    fails = 0; setLive(true);
-    // Only move forward: an older copy (e.g. from a cache that hasn't cleared yet) is ignored
-    if (b.rev > B.rev && !saving && !dirty) { B = b; if (staff) syncSetup(); render(); }
-  } catch { if (++fails >= 3) setLive(false); }
+  try { await refreshBoard(); fails = 0; setLive(true); }
+  catch { if (++fails >= 3) setLive(false); }
 }
 
+// Clicks everyone can use: hiding the tiles, more of the drop log, and (staff) reviewing drops
+function wireBoard(){
+  $("out").addEventListener("click", e => {
+    if (e.target.id === "tilestog") {
+      tilesHidden = !tilesHidden;
+      try { localStorage.setItem(TILES_KEY, tilesHidden ? "1" : "0"); } catch {}
+      if (tilesHidden) selTile = null;
+      render(); return;
+    }
+    if (e.target.id === "logmore") { logShown += 25; render(); return; }
+    const u = e.target.dataset.undo; if (u && staff) reviewDrop(u, "undo", e.target);
+  });
+  $("review").addEventListener("click", e => { const { rev, id } = e.target.dataset; if (rev && id) reviewDrop(id, rev, e.target); });
+}
+
+const avatar = u => u.avatar ? `<img src="https://cdn.discordapp.com/avatars/${u.id}/${u.avatar}.png?size=48" alt="">` : "";
 async function start(){
   try { B = await api("/api/bingo"); }
   catch { $("out").innerHTML = '<div class="msg">Couldn\'t load the bingo board. Try refreshing.</div>'; return; }
-  try {
-    staff = await api("/api/me");
-    $("who").innerHTML = (staff.avatar ? `<img src="https://cdn.discordapp.com/avatars/${staff.id}/${staff.avatar}.png?size=48" alt="">` : "")
-      + `Editing as <b>${esc(staff.name)}</b> · <a href="admin.html">Staff console</a> · <a href="/auth/logout">Log out</a><span class="save" id="savestate"></span>`;
-    $("who").hidden = false;
+  try { staff = await api("/api/me"); } catch { staff = null; }
+  try { captain = await api("/api/captain"); } catch { captain = null; }
+  if (staff) {
+    $("who").innerHTML = avatar(staff) + `Editing as <b>${esc(staff.name)}</b> · <a href="admin.html">Staff console</a> · <a href="/auth/logout">Log out</a><span class="save" id="savestate"></span>`;
     try { B = await api(url()); } catch {}
+    try { captains = await api("/api/bingo/captains"); } catch { captains = []; }
     wireEditing();
-  } catch { staff = null; }
-  render(); wireTips();
+  } else if (captain) {
+    $("who").innerHTML = avatar(captain) + `Logged in as <b>${esc(captain.name)}</b>, team captain · <a href="/auth/logout?to=bingo">Log out</a>`;
+  }
+  $("who").hidden = !staff && !captain;
+  $("clog").hidden = !!(staff || captain);
+  if (captain) { wireCaptain(); await loadRoster(); }
+  await loadSubs();
+  render(); wireTips(); wireBoard();
   setInterval(poll, POLL_MS);
-  document.addEventListener("visibilitychange", () => { if (!document.hidden) poll(); });
+  // Staff watch for new drops to approve; captains watch for their drops being reviewed
+  if (staff || captain) setInterval(() => { if (!document.hidden) loadSubs(); }, staff ? 5000 : 10000);
+  document.addEventListener("visibilitychange", () => { if (!document.hidden) { poll(); loadSubs(); } });
 }
 start();
 </script>

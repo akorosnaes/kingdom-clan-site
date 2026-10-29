@@ -1,0 +1,82 @@
+// Starting item lists for each boss's drop dropdown on the Bingo page (notable uniques and pets).
+// Admins can change any boss's list from the tile editor; those edits are stored separately and win over these.
+// Bosses not listed here start with an empty list.
+const GWD_SHARDS = ["Godsword shard 1", "Godsword shard 2", "Godsword shard 3"];
+const DT2 = ["Virtus mask", "Virtus robe top", "Virtus robe bottom", "Chromium ingot", "Awakener's orb"];
+const COX = ["Dexterous prayer scroll", "Arcane prayer scroll", "Twisted buckler", "Dragon hunter crossbow", "Dinh's bulwark",
+  "Ancestral hat", "Ancestral robe top", "Ancestral robe bottom", "Dragon claws", "Elder maul", "Kodai insignia", "Twisted bow", "Olmlet"];
+const TOB = ["Avernic defender hilt", "Ghrazi rapier", "Sanguinesti staff (uncharged)", "Justiciar faceguard", "Justiciar chestguard",
+  "Justiciar legguards", "Scythe of vitur (uncharged)", "Lil' zik"];
+const TOA = ["Osmumten's fang", "Lightbearer", "Elidinis' ward", "Masori mask", "Masori body", "Masori chaps",
+  "Tumeken's shadow (uncharged)", "Thread of elidinis", "Breach of the scarab", "Eye of the corruptor", "Jewel of the sun", "Tumeken's guardian"];
+const NIGHTMARE = ["Nightmare staff", "Inquisitor's great helm", "Inquisitor's hauberk", "Inquisitor's plateskirt", "Inquisitor's mace",
+  "Eldritch orb", "Harmonised orb", "Volatile orb", "Jar of dreams", "Little nightmare"];
+const GAUNTLET = ["Crystal armour seed", "Crystal weapon seed", "Enhanced crystal weapon seed", "Youngllef"];
+const WILDY_PICK = ["Dragon pickaxe", "Dragon 2h sword"];
+
+export const DEFAULT_ITEMS = {
+  abyssal_sire: ["Unsired", "Abyssal bludgeon piece", "Abyssal dagger", "Abyssal head", "Jar of miasma", "Abyssal orphan"],
+  alchemical_hydra: ["Hydra's claw", "Hydra leather", "Hydra tail", "Hydra's eye", "Hydra's fang", "Hydra's heart", "Alchemical hydra heads", "Jar of chemicals", "Ikkle hydra"],
+  araxxor: ["Noxious point", "Noxious blade", "Noxious pommel", "Araxyte fang", "Araxyte head", "Jar of venom", "Coagulated venom", "Nid"],
+  artio: ["Claws of callisto", "Voidwaker hilt", "Tyrannical ring", ...WILDY_PICK, "Callisto cub"],
+  callisto: ["Claws of callisto", "Voidwaker hilt", "Tyrannical ring", ...WILDY_PICK, "Callisto cub"],
+  calvarion: ["Skull of vet'ion", "Voidwaker blade", "Ring of the gods", ...WILDY_PICK, "Vet'ion jr."],
+  vetion: ["Skull of vet'ion", "Voidwaker blade", "Ring of the gods", ...WILDY_PICK, "Vet'ion jr."],
+  spindel: ["Fangs of venenatis", "Voidwaker gem", "Treasonous ring", ...WILDY_PICK, "Venenatis spiderling"],
+  venenatis: ["Fangs of venenatis", "Voidwaker gem", "Treasonous ring", ...WILDY_PICK, "Venenatis spiderling"],
+  bryophyta: ["Bryophyta's essence"],
+  obor: ["Hill giant club"],
+  cerberus: ["Primordial crystal", "Pegasian crystal", "Eternal crystal", "Smouldering stone", "Jar of souls", "Hellpuppy"],
+  chambers_of_xeric: COX,
+  chambers_of_xeric_challenge_mode: [...COX, "Twisted ancestral colour kit", "Metamorphic dust"],
+  chaos_elemental: ["Dragon pickaxe", "Pet chaos elemental"],
+  chaos_fanatic: ["Odium shard 1", "Malediction shard 1", "Pet chaos elemental"],
+  crazy_archaeologist: ["Odium shard 2", "Malediction shard 2", "Fedora"],
+  scorpia: ["Odium shard 3", "Malediction shard 3", "Scorpia's offspring"],
+  commander_zilyana: ["Armadyl crossbow", "Saradomin hilt", "Saradomin sword", "Saradomin's light", ...GWD_SHARDS, "Pet zilyana"],
+  general_graardor: ["Bandos chestplate", "Bandos tassets", "Bandos boots", "Bandos hilt", ...GWD_SHARDS, "Pet general graardor"],
+  kreearra: ["Armadyl helmet", "Armadyl chestplate", "Armadyl chainskirt", "Armadyl hilt", ...GWD_SHARDS, "Pet kree'arra"],
+  kril_tsutsaroth: ["Staff of the dead", "Zamorakian spear", "Steam battlestaff", "Zamorak hilt", ...GWD_SHARDS, "Pet k'ril tsutsaroth"],
+  nex: ["Zaryte vambraces", "Nihil horn", "Torva full helm (damaged)", "Torva platebody (damaged)", "Torva platelegs (damaged)", "Ancient hilt", "Nexling"],
+  corporeal_beast: ["Spectral sigil", "Arcane sigil", "Elysian sigil", "Spirit shield", "Holy elixir", "Jar of spirits", "Pet dark core"],
+  dagannoth_prime: ["Seers ring", "Mud battlestaff", "Dragon axe", "Pet dagannoth prime"],
+  dagannoth_rex: ["Berserker ring", "Warrior ring", "Dragon axe", "Pet dagannoth rex"],
+  dagannoth_supreme: ["Archers ring", "Seercull", "Dragon axe", "Pet dagannoth supreme"],
+  doom_of_mokhaiotl: ["Avernic treads", "Mokhaiotl cloth", "Eye of ayak (uncharged)", "Dom"],
+  duke_sucellus: [...DT2, "Magus vestige", "Eye of the duke", "Ice quartz", "Baron"],
+  the_leviathan: [...DT2, "Venator vestige", "Leviathan's lure", "Smoke quartz", "Lil'viathan"],
+  the_whisperer: [...DT2, "Bellator vestige", "Siren's staff", "Shadow quartz", "Wisp"],
+  vardorvis: [...DT2, "Ultor vestige", "Executioner's axe head", "Blood quartz", "Butch"],
+  giant_mole: ["Baby mole"],
+  grotesque_guardians: ["Granite maul", "Granite gloves", "Granite ring", "Granite hammer", "Black tourmaline core", "Jar of stone", "Noon"],
+  hespori: ["Bottomless compost bucket", "Iasor seed", "Attas seed", "Kronos seed"],
+  kalphite_queen: ["Dragon chainbody", "Dragon 2h sword", "Kq head", "Jar of sand", "Kalphite princess"],
+  king_black_dragon: ["Draconic visage", "Kbd heads", "Prince black dragon"],
+  kraken: ["Kraken tentacle", "Trident of the seas (full)", "Jar of dirt", "Pet kraken"],
+  lunar_chests: ["Eclipse atlatl", "Eclipse moon helm", "Eclipse moon chestplate", "Eclipse moon tassets", "Dual macuahuitl", "Blood moon helm",
+    "Blood moon chestplate", "Blood moon tassets", "Blue moon spear", "Blue moon helm", "Blue moon chestplate", "Blue moon tassets"],
+  nightmare: NIGHTMARE,
+  phosanis_nightmare: [...NIGHTMARE, "Parasitic egg"],
+  phantom_muspah: ["Venator shard", "Ancient icon", "Frozen cache", "Muphin"],
+  sarachnis: ["Sarachnis cudgel", "Jar of eyes", "Sraracha"],
+  scurrius: ["Scurry"],
+  skotizo: ["Dark claw", "Uncut onyx", "Jar of darkness", "Skotos"],
+  sol_heredit: ["Sunfire fanatic helm", "Sunfire fanatic cuirass", "Sunfire fanatic chausses", "Echo crystal", "Tonalztics of ralos (uncharged)", "Smol heredit"],
+  tempoross: ["Tome of water (empty)", "Fish barrel", "Tackle box", "Big harpoonfish", "Dragon harpoon", "Tiny tempor"],
+  the_gauntlet: GAUNTLET,
+  the_corrupted_gauntlet: GAUNTLET,
+  the_hueycoatl: ["Hueycoatl hide", "Tome of earth (empty)", "Dragon hunter wand", "Huberte"],
+  the_royal_titans: ["Deadeye prayer scroll", "Mystic vigour prayer scroll", "Giantsoul amulet (uncharged)", "Fire element staff crown", "Ice element staff crown", "Bran"],
+  theatre_of_blood: TOB,
+  theatre_of_blood_hard_mode: [...TOB, "Holy ornament kit", "Sanguine ornament kit", "Sanguine dust"],
+  thermonuclear_smoke_devil: ["Occult necklace", "Smoke battlestaff", "Dragon chainbody", "Jar of smoke", "Pet smoke devil"],
+  tombs_of_amascut: TOA,
+  tombs_of_amascut_expert: TOA,
+  tzkal_zuk: ["Infernal cape", "Jal-nib-rek"],
+  tztok_jad: ["Fire cape", "TzRek-Jad"],
+  vorkath: ["Draconic visage", "Skeletal visage", "Dragonbone necklace", "Jar of decay", "Vorki"],
+  wintertodt: ["Tome of fire (empty)", "Dragon axe", "Pyromancer outfit piece", "Phoenix"],
+  yama: ["Oathplate helm", "Oathplate chest", "Oathplate legs", "Soulflame horn", "Yami"],
+  zalcano: ["Crystal tool seed", "Zalcano shard", "Smolcano"],
+  zulrah: ["Tanzanite fang", "Magic fang", "Serpentine visage", "Uncut onyx", "Tanzanite mutagen", "Magma mutagen", "Jar of swamp", "Pet snakeling"]
+};

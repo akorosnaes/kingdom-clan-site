@@ -147,7 +147,7 @@ const ago = t => { const m = Math.max(1, Math.round((Date.now() - t) / 6e4));
   return m < 60 ? m + "m ago" : m < 1440 ? Math.round(m / 60) + "h ago" : Math.round(m / 1440) + "d ago"; };
 const ERRORS = {
   setup: "The staff console isn't set up yet: the Discord login settings still need adding in Netlify.",
-  denied: "That Discord account isn't on the staff list. Ask an admin to add your Discord user ID.",
+  denied: "That Discord account isn't on the staff or bingo captain list. Ask an admin to add your Discord user ID.",
   cancelled: "Login cancelled.",
   expired: "That login took too long or was started elsewhere. Try again.",
   discord: "Discord didn't respond properly. Try again in a moment."

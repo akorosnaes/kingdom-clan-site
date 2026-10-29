@@ -1,5 +1,5 @@
-// /auth/callback: Discord sends the visitor back here. Look up who they are and let them in only if they're staff.
-import { configured, cookies, env, isStaff, makeSession, redirectUri, redirect, setCookie, STATE_COOKIE } from "../lib/auth.mjs";
+// /auth/callback: Discord sends the visitor back here. Look up who they are and let them in only if they're staff or a bingo captain.
+import { configured, cookies, env, isCaptain, isStaff, makeSession, redirectUri, redirect, setCookie, STATE_COOKIE } from "../lib/auth.mjs";
 
 export default async req => {
   if (!configured()) return redirect("/admin.html?error=setup");
@@ -19,8 +19,10 @@ export default async req => {
     const me = await fetch("https://discord.com/api/users/@me", { headers: { authorization: "Bearer " + access_token } });
     if (!me.ok) throw new Error("user " + me.status);
     const u = await me.json();
-    if (!isStaff(u.id)) return redirect("/admin.html?error=denied", [clearState]);
-    return redirect("/admin.html", [clearState, makeSession({ id: u.id, name: u.global_name || u.username, avatar: u.avatar })]);
+    const staff = isStaff(u.id);
+    if (!staff && !isCaptain(u.id)) return redirect("/admin.html?error=denied", [clearState]);
+    // Staff land in the console; captains land on the Bingo page, where they log drops
+    return redirect(staff ? "/admin.html" : "/bingo.html", [clearState, makeSession({ id: u.id, name: u.global_name || u.username, avatar: u.avatar })]);
   } catch (e) {
     console.error("Discord login failed:", e.message);
     return redirect("/admin.html?error=discord", [clearState]);
