@@ -6,6 +6,14 @@ import { env } from "./auth.mjs";
 
 const WEBHOOK = /^https:\/\/(?:ptb\.|canary\.)?(?:discord|discordapp)\.com\/api\/webhooks\/\d+\/[\w-]+$/;
 const IMAGE = /\.(png|jpe?g|gif|webp)(\?.*)?$/i;
+// imgur.com/abc123 is a web page, so point Discord at the picture itself (i.imgur.com/abc123.png works whatever the real format).
+// Albums and galleries (imgur.com/a/…, /gallery/…) can't be turned into one image, so they stay a link.
+const IMGUR = /^https?:\/\/(?:www\.|m\.|i\.)?imgur\.com\/([A-Za-z0-9]{5,10})(?:\.\w{3,4})?(?:[?#].*)?$/i;
+function imageOf(url){
+  if (IMAGE.test(url)) return url;   // already a direct image (keeps .gif animated)
+  const m = url.match(IMGUR);
+  return m ? `https://i.imgur.com/${m[1]}.png` : null;
+}
 const SITE = "https://kingdomosrs.com/bingo.html";
 
 // Completed rows and columns ("Row 2", "Column 5") for a team
@@ -51,7 +59,8 @@ export async function announceDrop({ board, team, sub, newLines }){
     timestamp: new Date(sub.t).toISOString(),
     footer: { text: "Kingdom Bingo" }
   };
-  if (IMAGE.test(sub.proof)) embed.image = { url: sub.proof };
+  const img = imageOf(sub.proof);
+  if (img) embed.image = { url: img };
   else fields.push({ name: "Proof", value: sub.proof.slice(0, 1000) });
   try {
     const r = await fetch(url, { method: "POST", headers: { "content-type": "application/json" }, signal: AbortSignal.timeout(5000),
