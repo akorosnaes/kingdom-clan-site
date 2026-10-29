@@ -124,7 +124,7 @@ select.inp{appearance:none;background-image:linear-gradient(45deg,transparent 50
 .bar{height:6px;margin:10px 0 14px;border-radius:3px;background:var(--line);overflow:hidden}
 .bar i{display:block;height:100%;background:#fff;border-radius:3px;transition:width .4s ease}
 .dot{display:inline-block;width:10px;height:10px;margin-right:9px;border-radius:50%;vertical-align:0}
-.g6{display:grid;grid-template-columns:repeat(5,1fr) .9fr;gap:5px}
+.g6{display:grid;grid-template-columns:repeat(5,minmax(0,1fr)) 22px;gap:5px}
 .tt{position:relative;aspect-ratio:1;display:grid;place-items:center;border:1px solid var(--line2);border-radius:6px;background:var(--panel2);transition:background .2s,border-color .2s}
 .tt img{width:62%;height:62%;object-fit:contain;image-rendering:pixelated}
 .tt img.cust,.tile img.cust{image-rendering:auto;border-radius:4px}
@@ -148,6 +148,10 @@ select.inp{appearance:none;background-image:linear-gradient(45deg,transparent 50
 .edit .tt{cursor:pointer}
 .edit .tt:hover{border-color:#fff}
 .bg{display:grid;place-items:center;border:1px solid var(--line2);border-radius:6px;font:600 9px/1 var(--mono);letter-spacing:.08em;color:var(--dim);min-height:22px;transition:all .3s}
+/* Row markers are the same strip turned on its side, with the letters stacked: B I N G O */
+.bg.v{min-height:0;display:flex;flex-direction:column;align-items:center;justify-content:center;letter-spacing:0;line-height:1}
+.bg.v span{display:block}
+@media(max-width:360px){.bg{font-size:7px}}
 .bg.on{border-color:var(--go);color:#fff;background:rgba(52,168,83,.25);box-shadow:0 0 12px rgba(52,168,83,.55),inset 0 0 8px rgba(52,168,83,.35);text-shadow:0 0 6px rgba(52,168,83,.9)}
 .tf{margin-top:12px;font:500 11px/1.4 var(--mono);letter-spacing:.06em;color:var(--dim)}
 .legend{display:flex;gap:16px;flex-wrap:wrap;font-size:13px;color:var(--mute)}
@@ -290,7 +294,7 @@ function teamCard(team, ti){
   const cells = [];
   for (let r = 0; r < 5; r++) {
     for (let c = 0; c < 5; c++) cells.push(teamTile(team, ti, r * 5 + c));
-    cells.push(`<div class="bg${rowDone(team, r) ? " on" : ""}">BINGO</div>`);
+    cells.push(`<div class="bg v${rowDone(team, r) ? " on" : ""}" aria-label="Bingo">${[..."BINGO"].map(l => `<span>${l}</span>`).join("")}</div>`);
   }
   for (let c = 0; c < 5; c++) cells.push(`<div class="bg${colDone(team, c) ? " on" : ""}">BINGO</div>`);
   const st = team.p.map((_, i) => stateOf(team, i));
