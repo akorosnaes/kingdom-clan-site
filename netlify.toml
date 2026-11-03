@@ -6,6 +6,10 @@
   directory = "netlify/functions"
   node_bundler = "esbuild"
 
+# The Bingo link preview image draws with resvg (WebAssembly) and the Geist font files
+[functions."og-bingo"]
+  included_files = ["node_modules/@resvg/resvg-wasm/index_bg.wasm", "netlify/og/*"]
+
 # Keep the staff console out of search results
 [[headers]]
   for = "/admin.html"

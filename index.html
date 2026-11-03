@@ -102,6 +102,8 @@ footer{text-align:center;padding:28px 20px;color:var(--dim);font:12px/1 var(--mo
 .hero,main{animation:fade .6s ease both}
 main{animation-delay:.1s}
 @media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+/* Faint film grain over the whole page, so the flat black has some depth. Still, never in the way of clicks. */
+body::after{content:"";position:fixed;inset:0;z-index:100;pointer-events:none;opacity:.035;background:url("data:image/svg+xml,%3Csvg%20xmlns%3D'http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg'%20width%3D'180'%20height%3D'180'%3E%3Cfilter%20id%3D'n'%3E%3CfeTurbulence%20type%3D'fractalNoise'%20baseFrequency%3D'.85'%20numOctaves%3D'3'%20stitchTiles%3D'stitch'%2F%3E%3CfeColorMatrix%20type%3D'saturate'%20values%3D'0'%2F%3E%3C%2Ffilter%3E%3Crect%20width%3D'100%25'%20height%3D'100%25'%20filter%3D'url(%23n)'%2F%3E%3C%2Fsvg%3E") 0 0/180px}
 </style>
 </head>
 <body>
