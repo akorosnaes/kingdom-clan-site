@@ -62,6 +62,25 @@ footer a.staff:hover{color:#fff}
 .stat small{display:block;margin-top:10px;font:500 11px/1 var(--mono);letter-spacing:.14em;text-transform:uppercase;color:var(--mute)}
 @media(max-width:600px){.stats{grid-template-columns:1fr 1fr}.stat:nth-child(3){border-left:0}.stat:nth-child(n+3){border-top:1px solid var(--line)}}
 
+/* New raid banner: the art on the left, the clan's kill count over the darkened right side */
+.raid{position:relative;display:block;margin-top:56px;aspect-ratio:1200/520;min-height:300px;border:1px solid var(--line);border-radius:12px;overflow:hidden;background:#0b120b;color:#fff;isolation:isolate}
+.raid img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:30% 45%;z-index:-2}
+.raid::before{content:"";position:absolute;inset:0;z-index:-1;background:linear-gradient(90deg,rgba(8,8,8,0) 30%,rgba(8,8,8,.55) 55%,rgba(8,8,8,.9) 85%)}
+.rtxt{position:absolute;top:50%;right:clamp(24px,5vw,56px);transform:translateY(-50%);display:flex;flex-direction:column;align-items:flex-end;text-align:right;max-width:min(460px,60%)}
+.raid h2{margin:0;font:600 clamp(22px,3.2vw,32px)/1.1 var(--sans);letter-spacing:-.03em}
+.raid b{display:block;margin-top:18px;font:500 clamp(48px,8vw,84px)/.9 var(--mono);letter-spacing:-.04em;font-variant-numeric:tabular-nums}
+/* Same font as the raid's name, a step smaller so the number stays the focus */
+.rsub{margin-top:12px;font:600 clamp(17px,2.2vw,22px)/1.2 var(--sans);letter-spacing:-.02em}
+.rtop{margin-top:8px;font:500 12px/1.5 var(--mono);letter-spacing:.02em;color:var(--mute)}
+.rtop:empty{display:none}
+/* Phones: the art on top fades into the text underneath */
+@media(max-width:600px){
+  .raid{aspect-ratio:auto;min-height:0}
+  .raid img{position:relative;display:block;height:auto;aspect-ratio:16/10;object-position:28% 40%}
+  .raid::before{background:linear-gradient(180deg,rgba(8,8,8,0) 25%,rgba(8,8,8,.75) 52%,#080808 64%)}
+  .rtxt{position:relative;top:auto;right:auto;transform:none;align-items:flex-start;text-align:left;max-width:none;margin-top:-56px;padding:0 20px 22px}
+}
+
 /* Sections */
 main{max-width:1080px;margin:0 auto;padding:16px 20px 72px}
 .sec{margin-top:64px}
@@ -124,6 +143,15 @@ body::after{content:"";position:fixed;inset:0;z-index:100;pointer-events:none;op
 </header>
 
 <main>
+  <section class="raid" aria-label="Kingdom's kill count in The Fractured Archive">
+    <img src="fractured-archive.jpg" alt="" width="1200" height="675" loading="lazy">
+    <div class="rtxt">
+      <h2>The Fractured Archive</h2>
+      <b id="raidKc">—</b>
+      <span class="rsub">Clan kills</span>
+      <span class="rtop" id="raidTop"></span>
+    </div>
+  </section>
   <section class="sec">
     <div class="sech"><h2>Recent activity</h2></div>
     <div class="cols">
@@ -221,7 +249,9 @@ const SHOW = {
   ehp: l => $("ehp").innerHTML = board(l, x => x.toFixed(1) + " EHP"),
   ehb: l => $("ehb").innerHTML = board(l, x => x.toFixed(1) + " EHB"),
   members: n => $("sMembers").textContent = num(n),
-  stats: s => { $("sLevel").textContent = num(s.lvl); $("sEhb").textContent = num(s.ehb); $("sXp").textContent = fmt(s.xp); }
+  stats: s => { $("sLevel").textContent = num(s.lvl); $("sEhb").textContent = num(s.ehb); $("sXp").textContent = fmt(s.xp); },
+  raid: r => { $("raidKc").textContent = num(r.kills);
+    $("raidTop").textContent = r.top ? `Most: ${r.top.p} (${num(r.top.k)})` : ""; }
 };
 
 // Last visit's data, shown instantly while fresh data loads (per-browser only)
@@ -271,7 +301,7 @@ $("period").addEventListener("click", e => { const b = e.target.closest("button"
   try { localStorage.setItem("kingdom-period", period); } catch (e) {}
   loadBoards(); });
 
-["clogs","ach","members","stats"].forEach(k => { if (cache[k]) put(k, cache[k]); else if ($(k)) loading(k); });
+["clogs","ach","members","stats","raid"].forEach(k => { if (cache[k]) put(k, cache[k]); else if ($(k)) loading(k); });
 
 function load(){
   const jobs = [
@@ -285,7 +315,13 @@ function load(){
     job("stats", "Clan stats", get("wom", `groups/${CONFIG.womGroup}/statistics`).then(j => {
       const d = j.averageStats && j.averageStats.data;
       if (!d) throw new Error("no averages");
-      return {lvl:d.skills.overall.level, xp:d.skills.overall.experience, ehb:d.computed.ehb.value}; }))
+      return {lvl:d.skills.overall.level, xp:d.skills.overall.experience, ehb:d.computed.ehb.value}; })),
+    // The new raid banner: every member's Fractured Archive kills added up (unranked players count as 0)
+    job("raid", "Fractured Archive kills", get("wom", `groups/${CONFIG.womGroup}/hiscores?metric=the_fractured_archive&limit=500`).then(j => {
+      const rows = vals(j).map(h => ({p:(h.player&&h.player.displayName)||"", k:Math.max(0, (h.data&&h.data.kills)||0)})).filter(r => r.k > 0);
+      if (!vals(j).length) throw new Error("no hiscores");
+      rows.sort((a, b) => b.k - a.k);
+      return {kills:rows.reduce((a, r) => a + r.k, 0), raiders:rows.length, top:rows[0] || null}; }))
   ];
   Promise.allSettled(jobs).then(() => {
     if (/debug/.test(location.search)) { const pre = document.createElement("pre");
