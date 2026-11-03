@@ -1,0 +1,6 @@
+# Search engines are welcome on the public pages; the staff pages, logins and data endpoints aren't for them
+User-agent: *
+Disallow: /api/
+Disallow: /auth/
+Disallow: /admin.html
+Disallow: /bingo-stats.html
