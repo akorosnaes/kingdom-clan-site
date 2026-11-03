@@ -34,7 +34,7 @@ nav .navsoc a{display:grid;place-items:center;padding:7px}
 footer a.staff{color:inherit;text-decoration:none}
 footer a.staff:hover{color:#fff}
 .fsoc a{display:grid;place-items:center;padding:8px;color:var(--mute)}
-@media(max-width:960px){.navsoc{position:static;transform:none;margin-left:8px}}
+@media(max-width:1120px){nav{justify-content:safe center;overflow-x:auto;scrollbar-width:none}.navsoc{position:static;transform:none;margin-left:8px}}
 @media(max-width:760px){nav{justify-content:safe center;overflow-x:auto;scrollbar-width:none}nav .navlogo,nav .long{display:none}nav a{white-space:nowrap;padding:6px 10px}}
 .navlogo{height:22px;width:auto;display:block;margin-right:12px}
 @media(max-width:600px){nav{gap:0;padding:10px 4px;justify-content:safe center;overflow-x:auto}nav a{padding:6px 7px;font-size:13px;white-space:nowrap}nav .navlogo,nav .long,.navsoc{display:none}.fsoc{display:flex;justify-content:center;gap:8px;margin:-12px 0 14px}nav a.navbtn{margin-left:4px}}
@@ -109,6 +109,15 @@ main{animation-delay:.1s}
 .bkrow b{font-size:15px;font-weight:600}
 .bkrow small{display:block;margin-top:4px;font:12px/1.4 var(--mono);color:var(--dim)}
 @media(max-width:600px){.bkrow{flex-wrap:wrap}}
+.arow{display:grid;grid-template-columns:150px 140px minmax(0,1fr);gap:16px;align-items:baseline;padding:11px 0;border-bottom:1px solid var(--line);font-size:14px}
+.arow time{font:12px/1.4 var(--mono);color:var(--dim)}
+.arow b{font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.arow > span{display:flex;align-items:baseline}
+.arow .k{flex:none;min-width:76px;margin-right:10px;font:500 10px/1.4 var(--mono);letter-spacing:.1em;text-transform:uppercase;color:var(--mute)}
+.arow .k.approve{color:#34a853}
+.arow .k.reject,.arow .k.undo,.arow .k.reset,.arow .k.clear,.arow .k.restore{color:#e8b923}
+@media(max-width:600px){.arow{grid-template-columns:1fr auto;gap:4px 12px}.arow span:last-child{grid-column:1/-1}}
+#actmore{display:block;margin:16px auto 0}
 </style>
 </head>
 <body>
@@ -148,11 +157,16 @@ main{animation-delay:.1s}
   </section>
 
   <section class="sec" id="backupsec" hidden>
-    <div class="sech"><h2>Bingo backups</h2><small>Taken every 6 hours · the latest 40 are kept</small></div>
+    <div class="sech"><h2>Bingo backups</h2><small>Taken every 6 hours · the latest 10 are kept</small></div>
     <div class="bkbar"><button class="primary" id="bknow" type="button">Back up now</button>
       <label class="ghost bkfile">Restore from a file<input type="file" id="bkfile" accept="application/json,.json"></label>
       <p class="upmsg" id="bkmsg">Each backup has the bingo board, teams and progress, drop log, submitted drops, item lists and tile images (not the Bingo Draft). Download one now and then and keep it somewhere safe.</p></div>
     <div id="bklist"><div class="msg">Loading backups…</div></div>
+  </section>
+
+  <section class="sec" id="actsec" hidden>
+    <div class="sech"><h2>Staff activity</h2><small>Drop reviews, resets, reveals, restores and more · newest first</small></div>
+    <div id="actlist"><div class="msg">Loading activity…</div></div>
   </section>
 </main>
 <footer><span class="fsoc"><a href="https://x.com/Kingdom_OSRS" target="_blank" rel="noopener" aria-label="Kingdom on X (Twitter)" title="X (Twitter)"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg></a><a href="https://wiseoldman.net/groups/1152" target="_blank" rel="noopener" aria-label="Kingdom on Wise Old Man" title="Wise Old Man"><img src="wom.png" alt=""></a><a href="https://templeosrs.com/groups/overview.php?id=1710" target="_blank" rel="noopener" aria-label="Kingdom on TempleOSRS" title="TempleOSRS"><img src="temple.png" alt=""></a></span>Kingdom · <a class="staff" href="admin.html">Staff</a></footer>
@@ -285,14 +299,30 @@ $("bkfile").addEventListener("change", async e => {
   restore({ data }, data.t);
 });
 
+// ---------- Staff activity ----------
+const ACT_KINDS = { approve: "Approved", reject: "Rejected", undo: "Undo", submit: "Logged", reveal: "Board", reset: "Reset", clear: "Cleared",
+  dates: "Dates", team: "Teams", items: "Items", backup: "Backup", restore: "Restore" };
+let activity = [], actShown = 25;
+function showActivity(){
+  $("actlist").innerHTML = activity.slice(0, actShown).map(a => `<div class="arow"><time datetime="${new Date(a.t).toISOString()}">${when(a.t)}</time>
+      <b>${esc(a.by)}</b><span><span class="k ${esc(a.kind)}">${ACT_KINDS[a.kind] || esc(a.kind)}</span>${esc(a.text)}</span></div>`).join("")
+    + (activity.length > actShown ? `<button class="ghost" id="actmore" type="button">Show ${Math.min(25, activity.length - actShown)} more</button>` : "")
+    || '<div class="msg">Nothing yet. Drop reviews, resets, reveals, restores and similar staff actions will show here.</div>';
+}
+async function loadActivity(){
+  try { activity = await api("/api/bingo/activity"); showActivity(); }
+  catch { $("actlist").innerHTML = '<div class="msg">Couldn\'t load the activity log. Try refreshing.</div>'; }
+}
+$("actlist").addEventListener("click", e => { if (e.target.id === "actmore") { actShown += 25; showActivity(); } });
+
 async function start(){
   const err = new URLSearchParams(location.search).get("error");
   try {
     const me = await api("/api/me");
     $("who").innerHTML = (me.avatar ? `<img src="https://cdn.discordapp.com/avatars/${me.id}/${me.avatar}.png?size=48" alt="">` : "")
       + `Logged in as <b>${esc(me.name)}</b> · <a href="/auth/logout">Log out</a>`;
-    $("who").hidden = false; $("console").hidden = false; $("draftsec").hidden = false; $("backupsec").hidden = false;
-    loadBackups();
+    $("who").hidden = false; $("console").hidden = false; $("draftsec").hidden = false; $("backupsec").hidden = false; $("actsec").hidden = false;
+    loadBackups(); loadActivity();
     calendars = await api("/api/calendars?staff=1");
     showList(); setDefaultMonth();
   } catch (e) {

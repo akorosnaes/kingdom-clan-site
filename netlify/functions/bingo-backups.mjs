@@ -8,6 +8,7 @@
 import { getStaff, json, sameOrigin } from "../lib/auth.mjs";
 import { checkBackup, listBackups, makeBackup, readBackup, restoreBackup } from "../lib/backup.mjs";
 import { store } from "../lib/bingo.mjs";
+import { logActivity } from "../lib/activity.mjs";
 
 export default async req => {
   const staff = getStaff(req);
@@ -31,6 +32,7 @@ export default async req => {
 
   if (b?.action === "create") {
     const meta = await makeBackup("manual", staff.name, s);
+    await logActivity(staff.name, "backup", "Took a backup by hand", s);
     return json({ backup: meta, list: await listBackups(s) });
   }
 
@@ -41,6 +43,7 @@ export default async req => {
     if (bad) return json({ error: bad }, 400);
     await makeBackup("restore", staff.name, s);
     const board = await restoreBackup(d, staff.name, s);
+    await logActivity(staff.name, "restore", `Restored the bingo to the backup from ${new Date(d.t).toISOString().slice(0, 16).replace("T", " ")} UTC${b.data ? " (uploaded file)" : ""}`, s);
     return json({ restored: d.t, rev: board.rev, list: await listBackups(s) });
   }
 

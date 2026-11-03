@@ -7,7 +7,7 @@
 import { IMAGE_ID, imageKey, purge, readBoard, readItemEdits, readSubs, store, TYPES, writeSubs } from "./bingo.mjs";
 
 export const KIND = "kingdom-bingo-backup";
-const KEEP = 40;   // 10 days of 6-hourly backups, plus any taken by hand
+const KEEP = 10;   // the latest 10, whatever their kind: about 2½ days of 6-hourly backups
 const BACKUP_ID = /^[a-z0-9]{6,20}$/;
 const backupKey = id => "backup/" + id;
 export const validId = id => BACKUP_ID.test(String(id || ""));

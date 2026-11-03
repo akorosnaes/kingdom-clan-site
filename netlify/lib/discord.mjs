@@ -1,4 +1,4 @@
-// Posts approved bingo drops to a Discord channel.
+// Posts to a Discord channel: approved bingo drops, and a heads-up for staff whenever a drop is waiting for approval.
 //
 // Netlify environment variable (optional; nothing is posted without it):
 //   DISCORD_BINGO_WEBHOOK  the channel's webhook URL (Discord: channel settings > Integrations > Webhooks > New Webhook > Copy Webhook URL)
@@ -36,10 +36,35 @@ function standing(board, team){
   return `${bar} **${pct}%**\n${pts.toLocaleString("en-US")} / ${total.toLocaleString("en-US")} pts · ${tiles} tile${tiles === 1 ? "" : "s"} done · ${bingos} bingo${bingos === 1 ? "" : "s"}`;
 }
 
-// Never throws: a Discord hiccup mustn't stop the approval going through
-export async function announceDrop({ board, team, sub, newLines }){
+// Never throws: a Discord hiccup mustn't stop the approval or submission going through
+async function post(embed){
   const url = env("DISCORD_BINGO_WEBHOOK");
   if (!WEBHOOK.test(url)) return;
+  try {
+    const r = await fetch(url, { method: "POST", headers: { "content-type": "application/json" }, signal: AbortSignal.timeout(5000),
+      // allowed_mentions: names and items come from captains, so they can't ping @everyone or roles
+      body: JSON.stringify({ username: "Kingdom Bingo", embeds: [embed], allowed_mentions: { parse: [] } }) });
+    if (!r.ok) console.error("Discord webhook failed:", r.status, await r.text().catch(() => ""));
+  } catch (e) { console.error("Discord webhook failed:", e.message); }
+}
+
+// A drop was just submitted: tell staff it's waiting, and how many are waiting in all.
+// No screenshot here, since the drop hasn't been checked yet; the approval post shows it.
+export async function announcePending({ board, sub, waiting }){
+  const t = board.tiles[sub.tile] || {}, need = t.need || 1;
+  await post({
+    title: `${waiting} drop${waiting === 1 ? "" : "s"} waiting for approval`,
+    url: SITE,
+    description: `New: **${sub.player}** received **${sub.item}**\n${sub.team} · ${sub.tileName}${need > 1 ? ` (needs ${need})` : ""}`.slice(0, 4000),
+    color: 0x9a9a9a,
+    fields: [{ name: "Logged by", value: sub.by.name.slice(0, 1000), inline: true }],
+    timestamp: new Date(sub.t).toISOString(),
+    footer: { text: "Kingdom Bingo · staff, review it on the Bingo page" }
+  });
+}
+
+export async function announceDrop({ board, team, sub, newLines }){
+  if (!WEBHOOK.test(env("DISCORD_BINGO_WEBHOOK"))) return;
   const t = board.tiles[sub.tile] || {}, need = t.need || 1, v = Math.max(0, team.p[sub.tile]);
   const progress = v >= need ? "Completed!" : `${v}/${need}`;
   const fields = [
@@ -62,10 +87,5 @@ export async function announceDrop({ board, team, sub, newLines }){
   const img = imageOf(sub.proof);
   if (img) embed.image = { url: img };
   else fields.push({ name: "Proof", value: sub.proof.slice(0, 1000) });
-  try {
-    const r = await fetch(url, { method: "POST", headers: { "content-type": "application/json" }, signal: AbortSignal.timeout(5000),
-      // allowed_mentions: names and items come from captains, so they can't ping @everyone or roles
-      body: JSON.stringify({ username: "Kingdom Bingo", embeds: [embed], allowed_mentions: { parse: [] } }) });
-    if (!r.ok) console.error("Discord webhook failed:", r.status, await r.text().catch(() => ""));
-  } catch (e) { console.error("Discord webhook failed:", e.message); }
+  await post(embed);
 }

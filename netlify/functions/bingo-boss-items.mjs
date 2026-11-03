@@ -3,6 +3,7 @@
 //       Body { boss, items: [names] }. An empty list goes back to the built-in defaults.
 import { getStaff, json, sameOrigin } from "../lib/auth.mjs";
 import { itemsFor, MAX_ITEMS, purge, readItemEdits, store, text } from "../lib/bingo.mjs";
+import { logActivity } from "../lib/activity.mjs";
 
 const BOSS = /^[a-z_]{1,40}$/;
 
@@ -21,6 +22,8 @@ export default async req => {
   if (items.length) edits[body.boss] = items; else delete edits[body.boss];
   await s.setJSON("items", edits);
   await purge();
+  const boss = body.boss.replace(/_/g, " ");
+  await logActivity(staff.name, "items", items.length ? `Edited the ${boss} item list (${items.length} item${items.length === 1 ? "" : "s"})` : `Put the ${boss} item list back to the default`, s);
   return json({ boss: body.boss, items: itemsFor(body.boss, edits) });
 };
 

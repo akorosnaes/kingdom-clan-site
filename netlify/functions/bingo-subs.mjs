@@ -10,7 +10,8 @@
 //         Discord (if DISCORD_BINGO_WEBHOOK is set); undo takes the progress and log entry back.
 import { getCaptain, getStaff, json, sameOrigin } from "../lib/auth.mjs";
 import { bump, LOG_MAX, newId, readBoard, readSubs, saveBoard, store, text, writeSubs } from "../lib/bingo.mjs";
-import { announceDrop, lines } from "../lib/discord.mjs";
+import { announceDrop, announcePending, lines } from "../lib/discord.mjs";
+import { logActivity } from "../lib/activity.mjs";
 
 const RSN = /^[A-Za-z0-9 _-]{1,12}$/;
 const URL_RE = /^https?:\/\/[^\s<>"]{3,400}$/i;
@@ -64,6 +65,9 @@ async function subs(req){
     by: { id: me.id, name: me.name, ...(staff ? { staff: true } : {}) }, status: "pending" };
   list.push(sub);
   await writeSubs(list, s);
+  if (staff) await logActivity(me.name, "submit", `Logged a drop for ${sub.team}: ${sub.player} received ${sub.item} (${sub.tileName})`, s);
+  // Let staff know on Discord there's something to review
+  await announcePending({ board, sub, waiting: list.filter(x => x.status === "pending").length });
   return json(sub);
 }
 
@@ -79,11 +83,13 @@ async function review(req){
   const board = await readBoard(s);
   const team = board.teams.find(t => t.name === sub.team) || board.teams.find(t => t.captain === sub.by.id);
   const reviewed = { at: Date.now(), reviewer: staff.name };
+  const what = `${sub.player}'s ${sub.item} for ${sub.team} (${sub.tileName}, logged by ${sub.by.name})`;
 
   if (b.action === "reject") {
     if (sub.status !== "pending") return json({ error: "That drop has already been reviewed." }, 409);
     Object.assign(sub, { status: "rejected" }, reviewed);
     await writeSubs(list, s);
+    await logActivity(staff.name, "reject", "Rejected " + what, s);
     return json({ sub });
   }
 
@@ -98,6 +104,7 @@ async function review(req){
     Object.assign(sub, { status: "approved" }, reviewed);
     const next = await saveBoard(board, staff.name, s);
     await writeSubs(list, s);
+    await logActivity(staff.name, "approve", "Approved " + what, s);
     await announceDrop({ board: next, team, sub, newLines });
     return json({ sub, rev: next.rev });
   }
@@ -110,6 +117,7 @@ async function review(req){
     Object.assign(sub, { status: "undone" }, reviewed);
     const next = await saveBoard(board, staff.name, s);
     await writeSubs(list, s);
+    await logActivity(staff.name, "undo", "Undid " + what + " and took the progress back", s);
     return json({ sub, rev: next.rev });
   }
 

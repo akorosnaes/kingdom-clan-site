@@ -9,6 +9,7 @@
 //        The drop log isn't sent back: it only changes through drop approvals, or { clearLog: true } to empty it
 //        (used by "Reset all progress" and "Clear board"), which also clears every submitted drop.
 import { getStaff, json, sameOrigin } from "../lib/auth.mjs";
+import { logActivity } from "../lib/activity.mjs";
 import { blankTile, BONUS, CACHE_TAG, IMAGE_ID, imageKey, itemsFor, MAX_ITEMS, readBoard, readItemEdits, saveBoard, SIZE, store, text, writeSubs } from "../lib/bingo.mjs";
 
 const CDN_CACHE = { "cache-control": "public, max-age=0, must-revalidate",
@@ -71,6 +72,23 @@ function forViewer(board, staff){
     teams: board.teams.map(t => ({ ...t, p: Array(SIZE).fill(0) })) };
 }
 
+// The staff activity log entries for a save: the changes that matter to everyone, not routine edits like tile names or points
+const utc = t => t ? new Date(t).toISOString().slice(0, 16).replace("T", " ") + " UTC" : "none";
+function changes(cur, next, cleared){
+  const out = [];
+  if (cleared) out.push(next.teams.length || next.tiles.some(t => t.boss || t.name) ? ["reset", "Reset all progress, emptied the drop log and cleared every submitted drop"]
+    : ["clear", "Cleared the whole board (tiles, teams, progress, drop log and submitted drops)"]);
+  if (next.revealed !== cur.revealed) out.push(["reveal", next.revealed ? "Revealed the board to everyone" : "Hid the board from everyone but staff"]);
+  if (next.starts !== cur.starts) out.push(["dates", `Changed the start time to ${utc(next.starts)}`]);
+  if (next.ends !== cur.ends) out.push(["dates", `Changed the end time to ${utc(next.ends)}`]);
+  if (!cleared) {
+    // A team whose name is gone was removed (losing its progress) or renamed
+    const names = new Set(next.teams.map(t => t.name)), gone = cur.teams.filter(t => !names.has(t.name)).map(t => t.name);
+    if (gone.length) out.push(["team", `Removed or renamed ${gone.length === 1 ? "team" : "teams"} ${gone.join(", ")}`]);
+  }
+  return out;
+}
+
 // The board plus the item list for each boss on it
 async function withItems(board, s){
   const edits = await readItemEdits(s), items = {};
@@ -101,6 +119,7 @@ export default async req => {
   // A page that doesn't send "revealed" (e.g. one opened before the reveal button existed) leaves it as it was
   const next = await saveBoard({ ...board, revealed: board.revealed ?? cur.revealed, rev: cur.rev, log: body.clearLog ? [] : cur.log }, staff.name, s);
   if (body.clearLog) await writeSubs([], s);
+  for (const [kind, text] of changes(cur, next, !!body.clearLog)) await logActivity(staff.name, kind, text, s);
   // Delete custom images the board no longer uses
   const kept = new Set(next.tiles.map(t => t.img));
   await Promise.all(cur.tiles.map(t => t.img).filter(id => id && !kept.has(id)).map(id => s.delete(imageKey(id)).catch(() => {})));
