@@ -1,6 +1,17 @@
-# Search engines are welcome on the public pages; the staff pages, logins and data endpoints aren't for them
+# Search engines are welcome on the public pages. They may also load the read-only data those pages draw from
+# (calendars, the bingo board and its pictures, the draft, the link preview card, and the Wise Old Man/TempleOSRS
+# proxies), so the rendered pages are indexed with their content. The rest of /api/ (staff, captain and submission
+# endpoints) and the logins aren't for them. The staff console and bingo stats stay out of results with noindex,
+# which crawlers can only see if they're allowed to load the page.
 User-agent: *
+Allow: /api/calendars
+Allow: /api/bingo$
+Allow: /api/bingo/images/
+Allow: /api/draft$
+Allow: /api/og/
+Allow: /api/wom/
+Allow: /api/temple/
 Disallow: /api/
 Disallow: /auth/
-Disallow: /admin.html
-Disallow: /bingo-stats.html
+
+Sitemap: https://kingdomosrs.com/sitemap.xml
