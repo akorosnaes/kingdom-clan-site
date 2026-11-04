@@ -148,7 +148,7 @@ body::after{content:"";position:fixed;inset:0;z-index:100;pointer-events:none;op
     <div class="rtxt">
       <h2>The Fractured Archive</h2>
       <b id="raidKc">—</b>
-      <span class="rsub">Clan kills</span>
+      <span class="rsub">Clan kill count</span>
       <span class="rtop" id="raidTop"></span>
     </div>
   </section>
@@ -251,7 +251,7 @@ const SHOW = {
   members: n => $("sMembers").textContent = num(n),
   stats: s => { $("sLevel").textContent = num(s.lvl); $("sEhb").textContent = num(s.ehb); $("sXp").textContent = fmt(s.xp); },
   raid: r => { $("raidKc").textContent = num(r.kills);
-    $("raidTop").textContent = r.top ? `Most: ${r.top.p} (${num(r.top.k)})` : ""; }
+    $("raidTop").textContent = r.top ? `Highest KC: ${r.top.p} (${num(r.top.k)})` : ""; }
 };
 
 // Last visit's data, shown instantly while fresh data loads (per-browser only)
