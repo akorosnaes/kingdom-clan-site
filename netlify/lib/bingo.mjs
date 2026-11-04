@@ -1,5 +1,5 @@
 // Bingo storage in Netlify Blobs:
-//   "board"     the board: tiles, teams (colour, captain, progress), bonus, and the drop log of approved drops
+//   "board"     the board: tiles, teams (colour, icon, captains, progress), bonus, and the drop log of approved drops
 //   "items"     admin edits to each boss's item list (on top of the defaults in bingo-items.mjs)
 //   "subs"      drops captains have submitted, with their review status
 //   "captains"  names of captains who've logged in, so staff can pick them by name
@@ -30,7 +30,9 @@ function upgrade(b){
   b.starts ??= 0; b.ends ??= 0; b.track ??= "";
   b.revealed ??= true;   // boards saved before the reveal button were already public, so they stay that way
   b.tiles = b.tiles.map(t => ({ ...t, need: t.need || 1, items: t.items || [] }));
-  b.teams = b.teams.map(({ s, ...t }) => ({ ...t, captain: t.captain || "", p: Array.isArray(t.p) ? t.p : fromLegacy(s || "") }));
+  // Teams used to have one captain ("captain"); now any number ("captains", Discord IDs)
+  b.teams = b.teams.map(({ s, captain, ...t }) => ({ ...t, captains: Array.isArray(t.captains) ? t.captains : captain ? [captain] : [],
+    p: Array.isArray(t.p) ? t.p : fromLegacy(s || "") }));
   return b;
 }
 
@@ -68,6 +70,9 @@ export function bump(team, tile, need, dir){
   const v = team.p[tile];
   team.p[tile] = dir > 0 ? (need === 1 ? 1 : Math.min(need, Math.max(0, v) + 1)) : Math.max(0, v - 1);
 }
+
+// The team a captain (Discord ID) leads, or undefined
+export const teamOfCaptain = (board, id) => id ? board.teams.find(t => (t.captains || []).includes(id)) : undefined;
 
 export const text = (v, max) => String(v ?? "").replace(/\s+/g, " ").trim().slice(0, max);
 export const newId = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 8);

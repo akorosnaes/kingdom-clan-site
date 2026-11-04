@@ -1,5 +1,5 @@
 // /api/draft
-//   GET  anyone: the bingo draft board: title, teams (players and captain), the undrafted pool, and the live draft:
+//   GET  anyone: the bingo draft board: title, teams (players, captain and optional co-captain), the undrafted pool, and the live draft:
 //        snake order on/off, pick timer (minutes, 0 = off), when the draft started, when the current pick's clock
 //        started, and the pick history [{ player, team, t }] in order
 //        Served from Netlify's CDN cache so viewers can check every couple of seconds for free;
@@ -20,7 +20,7 @@ const MAX_TEAMS = 16, MAX_PLAYERS = 500;
 async function read(s = store()){
   const b = await s.get("board", { type: "json" });
   // Boards saved before the live draft features get their defaults
-  return b && Array.isArray(b.teams) ? { ...EMPTY, ...b, teams: b.teams.map(t => ({ captain: "", ...t })) } : EMPTY;
+  return b && Array.isArray(b.teams) ? { ...EMPTY, ...b, teams: b.teams.map(t => ({ captain: "", cocaptain: "", ...t })) } : EMPTY;
 }
 
 const text = (v, max) => String(v ?? "").replace(/\s+/g, " ").trim().slice(0, max);
@@ -44,9 +44,10 @@ function clean(body){
   try {
     const teams = body.teams.map((t, i) => {
       const players = names(t && t.players);
-      // The captain has to be one of the team's players
-      const captain = players.find(p => p.toLowerCase() === text(t && t.captain, 12).toLowerCase()) || "";
-      return { name: text(t && t.name, 40) || `Team ${i + 1}`, players, captain };
+      // The captain and the optional co-captain have to be two different players on the team
+      const find = v => players.find(p => p.toLowerCase() === text(v, 12).toLowerCase()) || "";
+      const captain = find(t && t.captain), co = find(t && t.cocaptain);
+      return { name: text(t && t.name, 40) || `Team ${i + 1}`, players, captain, cocaptain: co && co !== captain ? co : "" };
     });
     const pool = names(body.pool);
     if (seen.size > MAX_PLAYERS) return `Up to ${MAX_PLAYERS} players.`;

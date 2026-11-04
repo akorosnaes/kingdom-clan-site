@@ -9,7 +9,7 @@
 //         Approving adds one completion to the team's tile, puts the drop in the public drop log and announces it on
 //         Discord (if DISCORD_BINGO_WEBHOOK is set); undo takes the progress and log entry back.
 import { getCaptain, getStaff, json, sameOrigin } from "../lib/auth.mjs";
-import { bump, LOG_MAX, newId, readBoard, readSubs, saveBoard, store, text, writeSubs } from "../lib/bingo.mjs";
+import { bump, LOG_MAX, newId, readBoard, readSubs, saveBoard, store, teamOfCaptain, text, writeSubs } from "../lib/bingo.mjs";
 import { announceDrop, announcePending, lines } from "../lib/discord.mjs";
 import { logActivity } from "../lib/activity.mjs";
 
@@ -47,7 +47,7 @@ async function subs(req){
     if (board.ends && now > board.ends) return json({ error: "The bingo has ended, so no more drops can be logged." }, 403);
   }
   // Staff pick the team; captains always log for their own
-  const ti = staff && b?.team != null ? board.teams.findIndex(t => t.name === b.team) : board.teams.findIndex(t => t.captain === cap?.id);
+  const ti = staff && b?.team != null ? board.teams.findIndex(t => t.name === b.team) : board.teams.indexOf(teamOfCaptain(board, cap?.id));
   if (ti < 0) return json({ error: staff ? "Pick a team." : "You're not set as captain of a team yet. Ask an admin to pick you in Bingo setup." }, staff ? 400 : 403);
   const team = board.teams[ti], tile = Number(b?.tile), t = board.tiles[tile];
   if (!Number.isInteger(tile) || !t || (!t.boss && !t.name)) return json({ error: "Pick a tile." }, 400);
@@ -81,7 +81,7 @@ async function review(req){
   if (!sub) return json({ error: "That drop isn't there any more. Refresh the page." }, 404);
 
   const board = await readBoard(s);
-  const team = board.teams.find(t => t.name === sub.team) || board.teams.find(t => t.captain === sub.by.id);
+  const team = board.teams.find(t => t.name === sub.team) || teamOfCaptain(board, sub.by.id);
   const reviewed = { at: Date.now(), reviewer: staff.name };
   const what = `${sub.player}'s ${sub.item} for ${sub.team} (${sub.tileName}, logged by ${sub.by.name})`;
 

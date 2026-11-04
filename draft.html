@@ -159,6 +159,17 @@ a.chip:hover{background:var(--panel2)}
 .zone.clock{border-color:#fff;box-shadow:0 0 0 1px #fff}
 .zone.clock::before{content:"On the clock";display:block;padding:4px 16px;border-radius:7px 7px 0 0;background:#fff;color:#000;font:600 10px/1.4 var(--mono);letter-spacing:.12em;text-transform:uppercase}
 .chip .cap{flex:none;color:#f5d90a;font-size:13px}
+.chip .cap.co{color:#c9c9c9}
+/* Captains and co-captains, chosen in setup before the draft */
+.caps{grid-column:1/-1;display:grid;gap:8px;padding-top:14px;border-top:1px solid var(--line)}
+.caps[hidden]{display:none}
+.caps .ch{display:flex;align-items:baseline;justify-content:space-between;gap:12px;flex-wrap:wrap;font:500 11px/1 var(--mono);letter-spacing:.14em;text-transform:uppercase;color:var(--mute)}
+.caps .ch small{font:12px/1.4 var(--sans);letter-spacing:0;text-transform:none;color:var(--dim)}
+.caprow{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr) minmax(0,1fr);gap:8px;align-items:center}
+.caprow b{font-size:14px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.caprow select{width:100%;appearance:none;background:var(--bg) linear-gradient(45deg,transparent 50%,#9a9a9a 50%) calc(100% - 17px) 55%/5px 5px no-repeat;border:1px solid var(--line2);border-radius:6px;color:#fff;padding:8px 30px 8px 10px;font:13px/1.3 var(--sans)}
+.caprow select:focus{outline:none;border-color:#fff}
+@media(max-width:600px){.caprow{grid-template-columns:1fr 1fr}.caprow b{grid-column:1/-1}}
 .chip .star{opacity:0}
 .chip:hover .star,.chip .star.on{opacity:1}
 .chip .star.on{color:#f5d90a}
@@ -194,6 +205,7 @@ body::after{content:"";position:fixed;inset:0;z-index:100;pointer-events:none;op
       <label class="wide">Add players to the draft list<textarea id="dadd" placeholder="One RuneScape name per line, or separated by commas"></textarea></label>
       <div class="srow"><button class="primary" id="addbtn" type="button">Add to draft list</button><p id="addmsg"></p><span class="sp"></span>
         <button class="ghost" id="resetbtn" type="button">Return everyone to the list</button><button class="ghost" id="clearbtn" type="button">Clear draft</button></div>
+      <div class="caps" id="dcaps" hidden></div>
       <div class="opts">
         <label class="ck"><input type="checkbox" id="dsnake" checked>Snake draft order (1-2-3-3-2-1)</label>
         <label class="ck"><input type="checkbox" id="dtimer">Pick timer</label>
@@ -205,7 +217,7 @@ body::after{content:"";position:fixed;inset:0;z-index:100;pointer-events:none;op
       </div>
     </div>
   </details>
-  <p class="hint" id="hint" hidden>Drag a player onto a team. On a phone, tap a player and then tap a team. Drag them back to the list to undo. Click ☆ on a team's player to make them captain (captains don't use a pick).</p>
+  <p class="hint" id="hint" hidden>Drag a player onto a team. On a phone, tap a player and then tap a team. Drag them back to the list to undo. Pick each team's captain and co-captain in Draft setup, or click ☆ on a team's player to make them captain (captains don't use a pick).</p>
   <div id="banner"></div>
   <div id="out"><div class="msg">Loading the draft…</div></div>
   <div id="hist"></div>
@@ -219,7 +231,7 @@ const key = n => n.toLowerCase().replace(/[ _-]/g, "");
 const RSN = /^[A-Za-z0-9 _-]{1,12}$/;
 const POOL = -1;   // "team index" for the undrafted list
 
-let B = null;          // the board: { rev, title, teams:[{name, players, captain}], pool, snake, timer, started, clock, picks:[{player, team, t}], updated, by }
+let B = null;          // the board: { rev, title, teams:[{name, players, captain, cocaptain}], pool, snake, timer, started, clock, picks:[{player, team, t}], updated, by }
 let staff = null;      // logged-in staff member, or null for visitors
 let sel = null;        // tapped player waiting for a team
 let search = "";
@@ -228,7 +240,7 @@ let ehb = null;        // staff: Wise Old Man EHB by player (key(name) → hours
 
 // Boards saved before the live draft features get their defaults
 function fill(b){
-  return { snake: true, timer: 0, started: 0, clock: 0, picks: [], ...b, teams: b.teams.map(t => ({ captain: "", ...t })) };
+  return { snake: true, timer: 0, started: 0, clock: 0, picks: [], ...b, teams: b.teams.map(t => ({ captain: "", cocaptain: "", ...t })) };
 }
 
 // Snake order: pick k (0-based) goes to team 1, 2, 3, 3, 2, 1, 1, 2… (or 1, 2, 3, 1, 2, 3… without snake)
@@ -249,12 +261,15 @@ const api = async (path, opts = {}) => {
 };
 
 // ---------- Rendering ----------
-// team: the player's team (null for the draft list). Team players show ★ for the captain, or their overall pick number.
+// team: the player's team (null for the draft list). Team players show ★ for the captain (silver for the co-captain),
+// or their overall pick number.
 function chip(name, team, edit){
-  const isCap = team && team.captain === name, k = team ? pickNo(name) : -1;
-  const n = !team ? "" : isCap ? '<span class="cap" title="Captain">★</span>' : `<span class="i" title="${k < 0 ? "Placed before the draft" : "Pick " + (k + 1)}">${k < 0 ? "·" : k + 1}</span>`;
+  const isCap = team && team.captain === name, isCo = team && team.cocaptain === name, k = team ? pickNo(name) : -1;
+  const n = !team ? "" : isCap ? '<span class="cap" title="Captain">★</span>' : isCo ? '<span class="cap co" title="Co-captain">★</span>'
+    : `<span class="i" title="${k < 0 ? "Placed before the draft" : "Pick " + (k + 1)}">${k < 0 ? "·" : k + 1}</span>`;
   if (!edit) return `<a class="chip" data-p="${esc(name)}" href="player.html?name=${encodeURIComponent(name)}">${n}<span>${esc(name)}</span></a>`;
-  const star = team ? `<button type="button" class="star${isCap ? " on" : ""}" data-cap="${esc(name)}" title="${isCap ? "Captain (click to unset)" : "Make captain"}" aria-label="Captain">${isCap ? "★" : "☆"}</button>` : "";
+  const lead = isCap || isCo;
+  const star = team ? `<button type="button" class="star${lead ? " on" : ""}" data-cap="${esc(name)}" title="${isCap ? "Captain (click to unset)" : isCo ? "Co-captain (click to unset)" : "Make captain"}" aria-label="Captain">${lead ? "★" : "☆"}</button>` : "";
   return `<div class="chip${sel === name ? " sel" : ""}" draggable="true" data-p="${esc(name)}">${n}<span>${esc(name)}</span>${star}<button type="button" data-x="${esc(name)}" title="${team ? "Back to the list" : "Remove from the draft"}" aria-label="Remove">×</button></div>`;
 }
 
@@ -308,7 +323,7 @@ function render(){
     : "Teams · Draft pool";
   $("hint").hidden = !edit || !B.teams.length;
   banner(); history();
-  if (staff) syncLive();
+  if (staff) { syncLive(); renderCaps(); }
 
   if (!B.teams.length && !B.pool.length) {
     $("out").innerHTML = `<div class="msg">${edit ? "Set up the draft above: name it, pick how many teams, and add the draft list." : "No bingo draft is running right now. Check back when the next bingo is announced."}</div>`;
@@ -318,8 +333,9 @@ function render(){
   const q = search.toLowerCase();
   const pool = B.pool.filter(p => !q || p.toLowerCase().includes(q));
   const target = sel ? " target" : "", clock = onClock();
-  // Captain first, then players in the order they were picked
-  const order = t => [...t.players].sort((a, b) => (b === t.captain) - (a === t.captain) || (pickNo(a) < 0 ? -1 : pickNo(a)) - (pickNo(b) < 0 ? -1 : pickNo(b)));
+  // Captain, then co-captain, then players in the order they were picked
+  const rank = (t, p) => p === t.captain ? 2 : p === t.cocaptain ? 1 : 0;
+  const order = t => [...t.players].sort((a, b) => rank(t, b) - rank(t, a) || (pickNo(a) < 0 ? -1 : pickNo(a)) - (pickNo(b) < 0 ? -1 : pickNo(b)));
   $("out").innerHTML = `<div class="board">
     <section class="zone pool${target}" data-t="${POOL}">
       <div class="zh"><b>${edit ? "Draft list" : "Still to be drafted"}</b><span class="n">${B.pool.length}</span></div>
@@ -358,7 +374,7 @@ function move(name, to){
   if (picking && to !== onClock() && !confirm(`It's ${B.teams[onClock()].name}'s pick. Put ${name} on ${B.teams[to].name} anyway?`)) return;
   take(name);
   (to === POOL ? B.pool : B.teams[to].players).push(name);
-  if (from !== POOL && B.teams[from].captain === name) B.teams[from].captain = "";
+  if (from !== POOL) unlead(B.teams[from], name);
   if (picking) { B.picks.push({ player: name, team: B.teams[to].name, t: Date.now() }); B.clock = Date.now(); }
   // Back on the list: no longer a pick. Moved between teams: the pick now belongs to the new team.
   const k = pickNo(name);
@@ -372,16 +388,49 @@ function undoPick(){
   const p = B.picks[B.picks.length - 1]; if (!p) return;
   if (!confirm(`Undo pick ${B.picks.length}: ${p.player} → ${p.team}?`)) return;
   B.picks.pop(); take(p.player); B.pool.unshift(p.player);
-  B.teams.forEach(t => { if (t.captain === p.player) t.captain = ""; });
+  B.teams.forEach(t => unlead(t, p.player));
   B.clock = Date.now(); render(); save();
 }
 
-// Captains are placed on their team before the draft; making someone captain takes them out of the pick order
+const unlead = (t, name) => { if (t.captain === name) t.captain = ""; if (t.cocaptain === name) t.cocaptain = ""; };
+
+// Captains are placed on their team before the draft; making someone captain takes them out of the pick order.
+// ☆ on a team's player makes them captain; ★ on the captain or co-captain unsets them.
 function toggleCaptain(name){
   const t = B.teams[where(name)]; if (!t) return;
-  t.captain = t.captain === name ? "" : name;
-  const k = pickNo(name); if (t.captain === name && k >= 0) B.picks.splice(k, 1);
+  if (t.captain === name || t.cocaptain === name) unlead(t, name);
+  else { t.captain = name; const k = pickNo(name); if (k >= 0) B.picks.splice(k, 1); }
   render(); save();
+}
+
+// Draft setup: pick a team's captain or co-captain from anyone on the draft. They join that team straight away
+// without using a pick. Replacing (or clearing) one sends the old one back to the draft list.
+function setLeader(i, role, name){
+  const t = B.teams[i], old = t[role];
+  if (old === name) return;
+  if (old) { t[role] = ""; take(old); B.pool.unshift(old); const k = pickNo(old); if (k >= 0) B.picks.splice(k, 1); }
+  if (name) {
+    const from = where(name);
+    if (from !== undefined && from !== POOL) unlead(B.teams[from], name);
+    if (from !== i) { take(name); t.players.push(name); }
+    const k = pickNo(name); if (k >= 0) B.picks.splice(k, 1);
+    t[role] = name;
+  }
+  render(); save();
+}
+
+// The captain and co-captain menus for each team, in Draft setup
+function renderCaps(){
+  const el = $("dcaps");
+  el.hidden = !B.teams.length;
+  if (!B.teams.length || el.contains(document.activeElement)) return;
+  const everyone = [...B.pool, ...B.teams.flatMap(t => t.players)].sort((a, b) => a.localeCompare(b, undefined, { sensitivity: "base" }));
+  const teamOf = p => B.teams.find(t => t.players.includes(p));
+  const pick = (t, i, role) => `<select data-lead="${i}" data-role="${role}" aria-label="${esc(t.name)} ${role === "captain" ? "captain" : "co-captain"}">
+    <option value="">${role === "captain" ? "No captain" : "No co-captain (optional)"}</option>
+    ${everyone.map(p => { const on = teamOf(p); return `<option value="${esc(p)}"${t[role] === p ? " selected" : ""}>${esc(p)}${on && on !== t ? ` (${esc(on.name)})` : ""}</option>`; }).join("")}</select>`;
+  el.innerHTML = `<div class="ch">Captains<small>They join their team before the draft and don't use a pick.</small></div>
+    ${B.teams.map((t, i) => `<div class="caprow"><b>${esc(t.name)}</b>${pick(t, i, "captain")}${pick(t, i, "cocaptain")}</div>`).join("")}`;
 }
 
 function syncLive(){
@@ -433,7 +482,7 @@ function setTeamCount(n){
     B.teams = B.teams.slice(0, n); B.pool.push(...back);
     B.picks = B.picks.filter(p => !back.includes(p.player));
   } else {
-    while (B.teams.length < n) B.teams.push({ name: "Team " + (B.teams.length + 1), players: [], captain: "" });
+    while (B.teams.length < n) B.teams.push({ name: "Team " + (B.teams.length + 1), players: [], captain: "", cocaptain: "" });
   }
   render(); save();
 }
@@ -468,7 +517,7 @@ function wireEditing(){
   $("resetbtn").addEventListener("click", () => {
     const n = B.teams.reduce((a, t) => a + t.players.length, 0);
     if (!n || !confirm(`Return all ${n} drafted players to the draft list? This also clears the captains and pick history and ends the draft.`)) return;
-    B.teams.forEach(t => { B.pool.push(...t.players); t.players = []; t.captain = ""; });
+    B.teams.forEach(t => { B.pool.push(...t.players); t.players = []; t.captain = ""; t.cocaptain = ""; });
     B.picks = []; B.started = 0; B.clock = 0; render(); save();
   });
   $("clearbtn").addEventListener("click", () => {
@@ -493,6 +542,11 @@ function wireEditing(){
     B.started = 0; render(); save();
   });
   $("hist").addEventListener("click", e => { if (e.target.id === "undobtn") undoPick(); });
+  $("dcaps").addEventListener("change", e => {
+    const { lead, role } = e.target.dataset; if (lead == null) return;
+    e.target.blur();   // let the menus redraw with the new line-up
+    setLeader(+lead, role, e.target.value);
+  });
 
   const out = $("out");
   out.addEventListener("input", e => {

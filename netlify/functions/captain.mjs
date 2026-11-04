@@ -1,12 +1,12 @@
 // /api/captain          captain: who's logged in and which bingo team they captain (401 if not a captain)
 // /api/bingo/captains   staff:   every captain in CAPTAIN_DISCORD_IDS, named if they've logged in before, and the team each captains
 import { captainIds, configured, getCaptain, getStaff, json } from "../lib/auth.mjs";
-import { readBoard, store } from "../lib/bingo.mjs";
+import { readBoard, store, teamOfCaptain } from "../lib/bingo.mjs";
 
 export default async req => {
   if (!configured()) return json({ error: "setup" }, 503);
   const s = store(), board = await readBoard(s);
-  const teamOf = id => { const i = board.teams.findIndex(t => t.captain === id); return i < 0 ? null : { index: i, name: board.teams[i].name }; };
+  const teamOf = id => { const i = board.teams.indexOf(teamOfCaptain(board, id)); return i < 0 ? null : { index: i, name: board.teams[i].name }; };
 
   if (new URL(req.url).pathname.endsWith("/captains")) {
     if (!getStaff(req)) return json({ error: "Log in with an approved Discord account first." }, 401);

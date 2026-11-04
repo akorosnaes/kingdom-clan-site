@@ -98,6 +98,7 @@ td:first-child{text-align:left;font:500 14px/1.2 var(--sans);max-width:0;width:5
 td:first-child a{color:#fff;text-decoration:none}
 td:first-child a:hover{text-decoration:underline}
 td .cap{margin-left:6px;color:var(--wip);font-size:12px}
+td .cap.co{color:#c9c9c9}
 td.z{color:var(--dim)}
 tfoot td{border-bottom:0;color:#fff;font-weight:600}
 tfoot td:first-child{color:var(--mute);font:500 10px/1.3 var(--mono);letter-spacing:.12em;text-transform:uppercase}
@@ -170,6 +171,7 @@ function teamStats(team){
   const row = n => { const k = key(n); if (!rows.has(k)) rows.set(k, { name: n, drops: 0, pts: 0, ehb: 0, cap: false }); return rows.get(k); };
   (d?.players || []).forEach(row);
   if (d?.captain) row(d.captain).cap = true;
+  if (d?.cocaptain) row(d.cocaptain).co = true;
   (B.log || []).filter(x => x.team === team.name).forEach(x => {
     const r = row(x.player), t = B.tiles[x.tile];
     r.drops++;
@@ -206,7 +208,7 @@ function render(){
         <div class="sum"><div><small>Score</small><b>${num(score(t))}</b></div><div><small>Tiles</small><b>${tiles}</b></div>
           <div><small>Bingos</small><b>${bingos(t)}</b></div><div><small>EHB</small><b>${fmtH(sum("ehb"))}</b></div></div>
         ${rows.length ? `<table><thead><tr><th>Player</th>${th("drops", "Drops")}${th("pts", "Points")}${th("ehb", "EHB")}</tr></thead>
-          <tbody>${rows.map(r => `<tr><td><a href="player.html?name=${encodeURIComponent(r.name)}">${esc(r.name)}</a>${r.cap ? '<span class="cap" title="Captain">★</span>' : ""}</td>
+          <tbody>${rows.map(r => `<tr><td><a href="player.html?name=${encodeURIComponent(r.name)}">${esc(r.name)}</a>${r.cap ? '<span class="cap" title="Captain">★</span>' : r.co ? '<span class="cap co" title="Co-captain">★</span>' : ""}</td>
             ${cell(r.drops, r.drops)}${cell(r.pts, num(r.pts))}${cell(r.ehb, fmtH(r.ehb))}</tr>`).join("")}</tbody>
           <tfoot><tr><td>Total</td><td>${sum("drops")}</td><td>${num(sum("pts"))}</td><td>${fmtH(sum("ehb"))}</td></tr></tfoot></table>`
         : '<div class="msg">No members yet. Draft players onto this team on the <a href="draft.html">Bingo Draft</a>.</div>'}

@@ -15,7 +15,7 @@ import { blankTile, BONUS, CACHE_TAG, IMAGE_ID, imageKey, itemsFor, MAX_ITEMS, r
 const CDN_CACHE = { "cache-control": "public, max-age=0, must-revalidate",
   "netlify-cdn-cache-control": "public, durable, s-maxage=60", "cache-tag": CACHE_TAG, "netlify-vary": "query" };
 
-const MAX_TEAMS = 16, MAX_NEED = 99;
+const MAX_TEAMS = 16, MAX_NEED = 99, MAX_CAPTAINS = 6;
 // Default team colours, handed out in order
 const COLORS = ["#e5484d", "#3e63dd", "#30a46c", "#f5d90a", "#8e4ec6", "#f76b15", "#12a594", "#d6409f"];
 const COLOR = /^#[0-9a-f]{6}$/i;
@@ -47,15 +47,17 @@ function clean(body){
     const items = boss || !Array.isArray(t?.items) ? [] : [...new Set(t.items.map(i => text(i, 60)).filter(Boolean))].slice(0, MAX_ITEMS);
     tiles.push({ boss, img, name: text(t?.name, 40), desc: text(t?.desc, 80), points, need, items });
   }
-  const teams = [];
+  const teams = [], led = new Set();   // a captain leads one team: the first team that lists them keeps them
   for (const [i, t] of body.teams.entries()) {
     const p = t?.p;
     if (!Array.isArray(p) || p.length !== SIZE || !p.every(v => Number.isInteger(v) && v >= -1 && v <= MAX_NEED)) return "Bad tile progress.";
     const color = COLOR.test(t?.color) ? t.color.toLowerCase() : COLORS[i % COLORS.length];
-    const captain = DISCORD_ID.test(t?.captain) ? t.captain : "";
-    // A count can't go past what the tile needs; "in progress" (-1) only applies to one-and-done tiles
+    // Any number of captains (Discord IDs); a page from before multiple captains sends one as "captain"
+    const asked = Array.isArray(t?.captains) ? t.captains : t?.captain ? [t.captain] : [];
+    const captains = asked.map(String).filter(id => DISCORD_ID.test(id) && !led.has(id) && led.add(id)).slice(0, MAX_CAPTAINS);
     const icon = ICON.test(t?.icon) ? t.icon : "";
-    teams.push({ name: text(t?.name, 40) || `Team ${i + 1}`, color, icon, captain,
+    // A count can't go past what the tile needs; "in progress" (-1) only applies to one-and-done tiles
+    teams.push({ name: text(t?.name, 40) || `Team ${i + 1}`, color, icon, captains,
       p: p.map((v, j) => v === -1 ? (tiles[j].need === 1 ? -1 : 0) : Math.min(v, tiles[j].need)) });
   }
   const starts = when(body.starts), ends = when(body.ends);

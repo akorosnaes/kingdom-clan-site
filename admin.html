@@ -117,7 +117,15 @@ main{animation-delay:.1s}
 .arow .k.approve{color:#34a853}
 .arow .k.reject,.arow .k.undo,.arow .k.reset,.arow .k.clear,.arow .k.restore{color:#e8b923}
 @media(max-width:600px){.arow{grid-template-columns:1fr auto;gap:4px 12px}.arow span:last-child{grid-column:1/-1}}
-#actmore{display:block;margin:16px auto 0}
+/* The log scrolls inside its own box, so a long history doesn't stretch the page */
+.actbox{max-height:520px;overflow-y:auto;overscroll-behavior:contain;padding-right:8px;border-bottom:1px solid var(--line);scrollbar-width:thin;scrollbar-color:var(--line2) transparent}
+.actbox::-webkit-scrollbar{width:8px}
+.actbox::-webkit-scrollbar-thumb{background:var(--line2);border-radius:4px}
+.actbox .arow:last-child{border-bottom:0}
+.actfoot{display:flex;justify-content:space-between;align-items:center;margin-top:10px;font:12px/1 var(--mono);color:var(--dim)}
+/* Clearing is for after testing, so it's tucked away: small, dim text that only lights up on hover */
+#actclear{background:none;border:0;padding:4px 0;color:var(--dim);font:12px/1 var(--mono);opacity:.55;cursor:pointer;transition:opacity .15s,color .15s}
+#actclear:hover,#actclear:focus-visible{opacity:1;color:#e5484d}
 /* Faint film grain over the whole page, so the flat black has some depth. Still, never in the way of clicks. */
 body::after{content:"";position:fixed;inset:0;z-index:100;pointer-events:none;opacity:.035;background:url("data:image/svg+xml,%3Csvg%20xmlns%3D'http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg'%20width%3D'180'%20height%3D'180'%3E%3Cfilter%20id%3D'n'%3E%3CfeTurbulence%20type%3D'fractalNoise'%20baseFrequency%3D'.85'%20numOctaves%3D'3'%20stitchTiles%3D'stitch'%2F%3E%3CfeColorMatrix%20type%3D'saturate'%20values%3D'0'%2F%3E%3C%2Ffilter%3E%3Crect%20width%3D'100%25'%20height%3D'100%25'%20filter%3D'url(%23n)'%2F%3E%3C%2Fsvg%3E") 0 0/180px}
 </style>
@@ -168,7 +176,8 @@ body::after{content:"";position:fixed;inset:0;z-index:100;pointer-events:none;op
 
   <section class="sec" id="actsec" hidden>
     <div class="sech"><h2>Staff activity</h2><small>Drop reviews, resets, reveals, restores and more · newest first</small></div>
-    <div id="actlist"><div class="msg">Loading activity…</div></div>
+    <div class="actbox" id="actlist"><div class="msg">Loading activity…</div></div>
+    <div class="actfoot"><span id="actcount"></span><button type="button" id="actclear" hidden>Clear log</button></div>
   </section>
 </main>
 <footer><span class="fsoc"><a href="https://x.com/Kingdom_OSRS" target="_blank" rel="noopener" aria-label="Kingdom on X (Twitter)" title="X (Twitter)"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg></a><a href="https://wiseoldman.net/groups/1152" target="_blank" rel="noopener" aria-label="Kingdom on Wise Old Man" title="Wise Old Man"><img src="wom.png" alt=""></a><a href="https://templeosrs.com/groups/overview.php?id=1710" target="_blank" rel="noopener" aria-label="Kingdom on TempleOSRS" title="TempleOSRS"><img src="temple.png" alt=""></a></span>Kingdom · <a class="staff" href="admin.html">Staff</a></footer>
@@ -304,18 +313,25 @@ $("bkfile").addEventListener("change", async e => {
 // ---------- Staff activity ----------
 const ACT_KINDS = { approve: "Approved", reject: "Rejected", undo: "Undo", submit: "Logged", reveal: "Board", reset: "Reset", clear: "Cleared",
   dates: "Dates", team: "Teams", items: "Items", backup: "Backup", restore: "Restore" };
-let activity = [], actShown = 25;
+let activity = [];
 function showActivity(){
-  $("actlist").innerHTML = activity.slice(0, actShown).map(a => `<div class="arow"><time datetime="${new Date(a.t).toISOString()}">${when(a.t)}</time>
+  $("actlist").innerHTML = activity.map(a => `<div class="arow"><time datetime="${new Date(a.t).toISOString()}">${when(a.t)}</time>
       <b>${esc(a.by)}</b><span><span class="k ${esc(a.kind)}">${ACT_KINDS[a.kind] || esc(a.kind)}</span>${esc(a.text)}</span></div>`).join("")
-    + (activity.length > actShown ? `<button class="ghost" id="actmore" type="button">Show ${Math.min(25, activity.length - actShown)} more</button>` : "")
     || '<div class="msg">Nothing yet. Drop reviews, resets, reveals, restores and similar staff actions will show here.</div>';
+  $("actcount").textContent = activity.length ? `${activity.length} entr${activity.length === 1 ? "y" : "ies"}${activity.length >= 500 ? " (the latest 500)" : ""}` : "";
+  $("actclear").hidden = !activity.length;
 }
 async function loadActivity(){
   try { activity = await api("/api/bingo/activity"); showActivity(); }
   catch { $("actlist").innerHTML = '<div class="msg">Couldn\'t load the activity log. Try refreshing.</div>'; }
 }
-$("actlist").addEventListener("click", e => { if (e.target.id === "actmore") { actShown += 25; showActivity(); } });
+$("actclear").addEventListener("click", async e => {
+  if (!confirm(`Delete all ${activity.length} entries from the staff activity log? This can't be undone. One entry will stay, saying you cleared it.`)) return;
+  e.target.disabled = true;
+  try { activity = await api("/api/bingo/activity", { method: "DELETE" }); showActivity(); }
+  catch (err) { alert(err.message); }
+  e.target.disabled = false;
+});
 
 async function start(){
   const err = new URLSearchParams(location.search).get("error");

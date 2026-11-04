@@ -11,6 +11,11 @@ export async function readActivity(s = store()){
   return Array.isArray(list) ? list : [];
 }
 
+// Empties the log (e.g. after testing), leaving one entry saying who cleared it
+export async function clearActivity(by, s = store()){
+  await s.setJSON("activity", [{ t: Date.now(), by: String(by || "Unknown").slice(0, 60), kind: "clear", text: "Cleared the staff activity log" }]);
+}
+
 // Never throws: a failed log write mustn't undo the action it describes
 export async function logActivity(by, kind, text, s = store()){
   try {
