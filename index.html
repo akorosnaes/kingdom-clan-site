@@ -241,6 +241,35 @@ const none = '<div class="row">Nothing yet.</div>';
 const plink = n => `<a class="pl" href="player.html?name=${encodeURIComponent(n)}">${esc(n)}</a>`;
 const board = (l, val) => l.map((e,i) => `<div class="row"><span class="rank">${i+1}</span><div><b>${plink(e.p)}</b></div><span class="xp">${val(e.x)}</span></div>`).join("") || none;
 const num = n => Math.round(n).toLocaleString();
+
+// Big numbers roll up from zero the first time they scroll into view, then glide to new values when fresh data arrives.
+// Anyone who has asked their device for less motion just gets the number.
+const calm = matchMedia("(prefers-reduced-motion: reduce)").matches || !("IntersectionObserver" in window);
+const target = new WeakMap(), waiting = new Map();
+function roll(el, from, to, format, ms){
+  target.set(el, to);
+  if (from === to) { el.textContent = format(to); return; }
+  const t0 = performance.now();
+  const tick = now => {
+    if (target.get(el) !== to) return;   // a newer value took over
+    const p = Math.min(1, (now - t0) / ms), eased = 1 - Math.pow(1 - p, 3);
+    el.textContent = format(from + (to - from) * eased);
+    if (p < 1) requestAnimationFrame(tick);
+  };
+  requestAnimationFrame(tick);
+}
+const seen = calm ? null : new IntersectionObserver(entries => entries.forEach(e => {
+  if (!e.isIntersecting) return;
+  seen.unobserve(e.target);
+  const w = waiting.get(e.target); waiting.delete(e.target);
+  if (w) roll(e.target, 0, w.to, w.format, 1400);
+}), { threshold: .5 });
+function countTo(el, to, format){
+  if (calm) { el.textContent = format(to); return; }
+  if (target.has(el)) { roll(el, target.get(el), to, format, 700); return; }
+  waiting.set(el, { to, format }); seen.observe(el);   // not shown yet: wait until it's on screen
+}
+
 // One renderer per section, so each can fill in as soon as its own data arrives
 const SHOW = {
   clogs: l => $("clogs").innerHTML = l.map(c => `<div class="row">${icon(wikiFile(c.i), c.id ? "https://static.runelite.net/cache/item/icon/" + c.id + ".png" : "")}<div><b>${plink(c.p)}</b> received ${esc(c.i)}<small>${ago(c.t)}</small></div></div>`).join("") || none,
@@ -248,9 +277,9 @@ const SHOW = {
   top: l => $("top").innerHTML = board(l, x => fmt(x) + " xp"),
   ehp: l => $("ehp").innerHTML = board(l, x => x.toFixed(1) + " EHP"),
   ehb: l => $("ehb").innerHTML = board(l, x => x.toFixed(1) + " EHB"),
-  members: n => $("sMembers").textContent = num(n),
-  stats: s => { $("sLevel").textContent = num(s.lvl); $("sEhb").textContent = num(s.ehb); $("sXp").textContent = fmt(s.xp); },
-  raid: r => { $("raidKc").textContent = num(r.kills);
+  members: n => countTo($("sMembers"), n, num),
+  stats: s => { countTo($("sLevel"), s.lvl, num); countTo($("sEhb"), s.ehb, num); countTo($("sXp"), s.xp, x => fmt(Math.round(x))); },
+  raid: r => { countTo($("raidKc"), r.kills, num);
     $("raidTop").textContent = r.top ? `Highest KC: ${r.top.p} (${num(r.top.k)})` : ""; }
 };
 
