@@ -1,0 +1,611 @@
+{
+ "viewBox": "156 16 326 329",
+ "aspect": 0.9924,
+ "belly": {
+  "x": 0.2021,
+  "y": 0.6763
+ },
+ "facing": "left",
+ "turkeys": [
+  {
+   "id": 1,
+   "file": "turkeys/turkey-001.svg",
+   "color": "#d9552f",
+   "palette": {
+    "dark": "#531f12",
+    "red": "#d9552f",
+    "brown": "#8c361d",
+    "orange": "#f48823",
+    "tan": "#e5ba8f"
+   }
+  },
+  {
+   "id": 2,
+   "file": "turkeys/turkey-002.svg",
+   "color": "#206aed",
+   "palette": {
+    "dark": "#002542",
+    "red": "#206aed",
+    "brown": "#004584",
+    "orange": "#ad71fc",
+    "tan": "#d39ccc"
+   }
+  },
+  {
+   "id": 3,
+   "file": "turkeys/turkey-003.svg",
+   "color": "#1ad535",
+   "palette": {
+    "dark": "#436311",
+    "red": "#1ad535",
+    "brown": "#499310",
+    "orange": "#17f5e0",
+    "tan": "#bff2fe"
+   }
+  },
+  {
+   "id": 4,
+   "file": "turkeys/turkey-004.svg",
+   "color": "#dc53e9",
+   "palette": {
+    "dark": "#532d6e",
+    "red": "#dc53e9",
+    "brown": "#8b3fa6",
+    "orange": "#fe98b2",
+    "tan": "#fec9bc"
+   }
+  },
+  {
+   "id": 5,
+   "file": "turkeys/turkey-005.svg",
+   "color": "#49780b",
+   "palette": {
+    "dark": "#191d00",
+    "red": "#49780b",
+    "brown": "#324200",
+    "orange": "#00a181",
+    "tan": "#76b0b4"
+   }
+  },
+  {
+   "id": 6,
+   "file": "turkeys/turkey-006.svg",
+   "color": "#8c4e8d",
+   "palette": {
+    "dark": "#23122d",
+    "red": "#8c4e8d",
+    "brown": "#4d2b57",
+    "orange": "#c46b7f",
+    "tan": "#c29a8e"
+   }
+  },
+  {
+   "id": 7,
+   "file": "turkeys/turkey-007.svg",
+   "color": "#c4a102",
+   "palette": {
+    "dark": "#61471c",
+    "red": "#c4a102",
+    "brown": "#8e6c19",
+    "orange": "#a3dc7a",
+    "tan": "#bef2d8"
+   }
+  },
+  {
+   "id": 8,
+   "file": "turkeys/turkey-008.svg",
+   "color": "#959cef",
+   "palette": {
+    "dark": "#3d4c6b",
+    "red": "#959cef",
+    "brown": "#606fa5",
+    "orange": "#e9b0f8",
+    "tan": "#ffd8e9"
+   }
+  },
+  {
+   "id": 9,
+   "file": "turkeys/turkey-009.svg",
+   "color": "#08b09b",
+   "palette": {
+    "dark": "#204b3a",
+    "red": "#08b09b",
+    "brown": "#227661",
+    "orange": "#54ccef",
+    "tan": "#bddaf9"
+   }
+  },
+  {
+   "id": 10,
+   "file": "turkeys/turkey-010.svg",
+   "color": "#e30f82",
+   "palette": {
+    "dark": "#4f0b3c",
+    "red": "#e30f82",
+    "brown": "#8d105f",
+    "orange": "#fd7249",
+    "tan": "#eab072"
+   }
+  },
+  {
+   "id": 11,
+   "file": "turkeys/turkey-011.svg",
+   "color": "#8e3de8",
+   "palette": {
+    "dark": "#211355",
+    "red": "#8e3de8",
+    "brown": "#4c2696",
+    "orange": "#eb4bc1",
+    "tan": "#ea95a1"
+   }
+  },
+  {
+   "id": 12,
+   "file": "turkeys/turkey-012.svg",
+   "color": "#d1779d",
+   "palette": {
+    "dark": "#55354b",
+    "red": "#d1779d",
+    "brown": "#895171",
+    "orange": "#fc9f8a",
+    "tan": "#f0d0b4"
+   }
+  },
+  {
+   "id": 13,
+   "file": "turkeys/turkey-013.svg",
+   "color": "#55a304",
+   "palette": {
+    "dark": "#323d00",
+    "red": "#55a304",
+    "brown": "#496701",
+    "orange": "#17cbaa",
+    "tan": "#88dae3"
+   }
+  },
+  {
+   "id": 14,
+   "file": "turkeys/turkey-014.svg",
+   "color": "#0c8cba",
+   "palette": {
+    "dark": "#00343e",
+    "red": "#0c8cba",
+    "brown": "#005a71",
+    "orange": "#889eea",
+    "tan": "#c3b7da"
+   }
+  },
+  {
+   "id": 15,
+   "file": "turkeys/turkey-015.svg",
+   "color": "#9a5500",
+   "palette": {
+    "dark": "#2f1002",
+    "red": "#9a5500",
+    "brown": "#5d2c04",
+    "orange": "#9a8b29",
+    "tan": "#99ac89"
+   }
+  },
+  {
+   "id": 16,
+   "file": "turkeys/turkey-016.svg",
+   "color": "#c20b39",
+   "palette": {
+    "dark": "#390016",
+    "red": "#c20b39",
+    "brown": "#71022a",
+    "orange": "#c96f12",
+    "tan": "#bba161"
+   }
+  },
+  {
+   "id": 17,
+   "file": "turkeys/turkey-017.svg",
+   "color": "#aa01ae",
+   "palette": {
+    "dark": "#2b003f",
+    "red": "#aa01ae",
+    "brown": "#5e0071",
+    "orange": "#f22d72",
+    "tan": "#dd8d75"
+   }
+  },
+  {
+   "id": 18,
+   "file": "turkeys/turkey-018.svg",
+   "color": "#f87f02",
+   "palette": {
+    "dark": "#733b28",
+    "red": "#f87f02",
+    "brown": "#ad5729",
+    "orange": "#ecc51f",
+    "tan": "#d9eeb5"
+   }
+  },
+  {
+   "id": 19,
+   "file": "turkeys/turkey-019.svg",
+   "color": "#938008",
+   "palette": {
+    "dark": "#3a2a04",
+    "red": "#938008",
+    "brown": "#624d04",
+    "orange": "#7cb46b",
+    "tan": "#9dc9b7"
+   }
+  },
+  {
+   "id": 20,
+   "file": "turkeys/turkey-020.svg",
+   "color": "#a770d0",
+   "palette": {
+    "dark": "#3a2f58",
+    "red": "#a770d0",
+    "brown": "#664c8d",
+    "orange": "#f187bd",
+    "tan": "#f2baba"
+   }
+  },
+  {
+   "id": 21,
+   "file": "turkeys/turkey-021.svg",
+   "color": "#4638e0",
+   "palette": {
+    "dark": "#001449",
+    "red": "#4638e0",
+    "brown": "#121b85",
+    "orange": "#b141d7",
+    "tan": "#c77da6"
+   }
+  },
+  {
+   "id": 22,
+   "file": "turkeys/turkey-022.svg",
+   "color": "#666bb9",
+   "palette": {
+    "dark": "#15223e",
+    "red": "#666bb9",
+    "brown": "#354273",
+    "orange": "#b47ec3",
+    "tan": "#cba4b6"
+   }
+  },
+  {
+   "id": 23,
+   "file": "turkeys/turkey-023.svg",
+   "color": "#fe4f6d",
+   "palette": {
+    "dark": "#69273f",
+    "red": "#fe4f6d",
+    "brown": "#a83858",
+    "orange": "#ffa15e",
+    "tan": "#f3d391"
+   }
+  },
+  {
+   "id": 24,
+   "file": "turkeys/turkey-024.svg",
+   "color": "#7778ff",
+   "palette": {
+    "dark": "#1e3566",
+    "red": "#7778ff",
+    "brown": "#4053a8",
+    "orange": "#e183f9",
+    "tan": "#f5b4d3"
+   }
+  },
+  {
+   "id": 25,
+   "file": "turkeys/turkey-025.svg",
+   "color": "#4fcd88",
+   "palette": {
+    "dark": "#41613c",
+    "red": "#4fcd88",
+    "brown": "#4e8f59",
+    "orange": "#29f2f4",
+    "tan": "#caeffe"
+   }
+  },
+  {
+   "id": 26,
+   "file": "turkeys/turkey-026.svg",
+   "color": "#9cc21b",
+   "palette": {
+    "dark": "#5c5a1a",
+    "red": "#9cc21b",
+    "brown": "#7c8615",
+    "orange": "#43f7b4",
+    "tan": "#a9f9f6"
+   }
+  },
+  {
+   "id": 27,
+   "file": "turkeys/turkey-027.svg",
+   "color": "#af5362",
+   "palette": {
+    "dark": "#381624",
+    "red": "#af5362",
+    "brown": "#6a3041",
+    "orange": "#ce8050",
+    "tan": "#c2ae8c"
+   }
+  },
+  {
+   "id": 28,
+   "file": "turkeys/turkey-028.svg",
+   "color": "#bf4da8",
+   "palette": {
+    "dark": "#401c46",
+    "red": "#bf4da8",
+    "brown": "#743273",
+    "orange": "#fb6e7d",
+    "tan": "#e9af93"
+   }
+  },
+  {
+   "id": 29,
+   "file": "turkeys/turkey-029.svg",
+   "color": "#2e9665",
+   "palette": {
+    "dark": "#1b351a",
+    "red": "#2e9665",
+    "brown": "#285e37",
+    "orange": "#23b8bd",
+    "tan": "#9bc5d9"
+   }
+  },
+  {
+   "id": 30,
+   "file": "turkeys/turkey-030.svg",
+   "color": "#1d8ef5",
+   "palette": {
+    "dark": "#003c59",
+    "red": "#1d8ef5",
+    "brown": "#096196",
+    "orange": "#b19efd",
+    "tan": "#e3bae9"
+   }
+  },
+  {
+   "id": 31,
+   "file": "turkeys/turkey-031.svg",
+   "color": "#b90978",
+   "palette": {
+    "dark": "#34002c",
+    "red": "#b90978",
+    "brown": "#6a014f",
+    "orange": "#eb4833",
+    "tan": "#cf9768"
+   }
+  },
+  {
+   "id": 32,
+   "file": "turkeys/turkey-032.svg",
+   "color": "#ee043b",
+   "palette": {
+    "dark": "#570625",
+    "red": "#ee043b",
+    "brown": "#970535",
+    "orange": "#eb8600",
+    "tan": "#d7bb6c"
+   }
+  },
+  {
+   "id": 33,
+   "file": "turkeys/turkey-033.svg",
+   "color": "#c57807",
+   "palette": {
+    "dark": "#522c15",
+    "red": "#c57807",
+    "brown": "#854b18",
+    "orange": "#bbb441",
+    "tan": "#b9d4ad"
+   }
+  },
+  {
+   "id": 34,
+   "file": "turkeys/turkey-034.svg",
+   "color": "#c182fd",
+   "palette": {
+    "dark": "#4d4377",
+    "red": "#c182fd",
+    "brown": "#7c5fb3",
+    "orange": "#ffaad8",
+    "tan": "#ffdadb"
+   }
+  },
+  {
+   "id": 35,
+   "file": "turkeys/turkey-035.svg",
+   "color": "#036faa",
+   "palette": {
+    "dark": "#001e2a",
+    "red": "#036faa",
+    "brown": "#00405c",
+    "orange": "#8080d0",
+    "tan": "#b09bbd"
+   }
+  },
+  {
+   "id": 36,
+   "file": "turkeys/turkey-036.svg",
+   "color": "#e68677",
+   "palette": {
+    "dark": "#673f42",
+    "red": "#e68677",
+    "brown": "#9e5d5b",
+    "orange": "#f8bb71",
+    "tan": "#ece6be"
+   }
+  },
+  {
+   "id": 37,
+   "file": "turkeys/turkey-037.svg",
+   "color": "#b155fc",
+   "palette": {
+    "dark": "#39286b",
+    "red": "#b155fc",
+    "brown": "#693dac",
+    "orange": "#fc7ac7",
+    "tan": "#ffb3b7"
+   }
+  },
+  {
+   "id": 38,
+   "file": "turkeys/turkey-038.svg",
+   "color": "#81a753",
+   "palette": {
+    "dark": "#414521",
+    "red": "#81a753",
+    "brown": "#5f6e33",
+    "orange": "#66d4af",
+    "tan": "#b0e3e5"
+   }
+  },
+  {
+   "id": 39,
+   "file": "turkeys/turkey-039.svg",
+   "color": "#6d4dc6",
+   "palette": {
+    "dark": "#121340",
+    "red": "#6d4dc6",
+    "brown": "#352c7a",
+    "orange": "#c25db9",
+    "tan": "#ce90a1"
+   }
+  },
+  {
+   "id": 40,
+   "file": "turkeys/turkey-040.svg",
+   "color": "#9b4bbb",
+   "palette": {
+    "dark": "#2a1745",
+    "red": "#9b4bbb",
+    "brown": "#582d7a",
+    "orange": "#e4629b",
+    "tan": "#de9e98"
+   }
+  },
+  {
+   "id": 41,
+   "file": "turkeys/turkey-041.svg",
+   "color": "#7985d4",
+   "palette": {
+    "dark": "#273754",
+    "red": "#7985d4",
+    "brown": "#47598b",
+    "orange": "#cb98e0",
+    "tan": "#e5bed2"
+   }
+  },
+  {
+   "id": 42,
+   "file": "turkeys/turkey-042.svg",
+   "color": "#6052fb",
+   "palette": {
+    "dark": "#051c58",
+    "red": "#6052fb",
+    "brown": "#28349e",
+    "orange": "#cf5aed",
+    "tan": "#e395bb"
+   }
+  },
+  {
+   "id": 43,
+   "file": "turkeys/turkey-043.svg",
+   "color": "#e536b4",
+   "palette": {
+    "dark": "#541d55",
+    "red": "#e536b4",
+    "brown": "#902982",
+    "orange": "#fe8684",
+    "tan": "#fdb990"
+   }
+  },
+  {
+   "id": 44,
+   "file": "turkeys/turkey-044.svg",
+   "color": "#bc39d4",
+   "palette": {
+    "dark": "#3b1858",
+    "red": "#bc39d4",
+    "brown": "#6f2790",
+    "orange": "#fe639b",
+    "tan": "#f9a495"
+   }
+  },
+  {
+   "id": 45,
+   "file": "turkeys/turkey-045.svg",
+   "color": "#03b56b",
+   "palette": {
+    "dark": "#294b23",
+    "red": "#03b56b",
+    "brown": "#2e783e",
+    "orange": "#0ed5d7",
+    "tan": "#a4e2fb"
+   }
+  },
+  {
+   "id": 46,
+   "file": "turkeys/turkey-046.svg",
+   "color": "#fe5911",
+   "palette": {
+    "dark": "#6d2726",
+    "red": "#fe5911",
+    "brown": "#ac3b2b",
+    "orange": "#f1ad1d",
+    "tan": "#dbdc95"
+   }
+  },
+  {
+   "id": 47,
+   "file": "turkeys/turkey-047.svg",
+   "color": "#d44569",
+   "palette": {
+    "dark": "#4c1730",
+    "red": "#d44569",
+    "brown": "#852a4c",
+    "orange": "#f57c2c",
+    "tan": "#d9b884"
+   }
+  },
+  {
+   "id": 48,
+   "file": "turkeys/turkey-048.svg",
+   "color": "#ee9e12",
+   "palette": {
+    "dark": "#774c2b",
+    "red": "#ee9e12",
+    "brown": "#ac6e2b",
+    "orange": "#d7df5d",
+    "tan": "#cef4ca"
+   }
+  },
+  {
+   "id": 49,
+   "file": "turkeys/turkey-049.svg",
+   "color": "#ae3f29",
+   "palette": {
+    "dark": "#34080e",
+    "red": "#ae3f29",
+    "brown": "#671d1c",
+    "orange": "#b97b0c",
+    "tan": "#aba777"
+   }
+  },
+  {
+   "id": 50,
+   "file": "turkeys/turkey-050.svg",
+   "color": "#cb6c6c",
+   "palette": {
+    "dark": "#502a33",
+    "red": "#cb6c6c",
+    "brown": "#84464e",
+    "orange": "#e49d5f",
+    "tan": "#d7caa4"
+   }
+  }
+ ]
+}
