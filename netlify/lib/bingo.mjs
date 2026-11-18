@@ -4,6 +4,7 @@
 //   "subs"      drops captains have submitted, with their review status
 //   "captains"  names of captains who've logged in, so staff can pick them by name
 //   "img/<id>"  custom tile images
+//   "shot/<id>" drop screenshots captains upload as proof (bingo-shots.mjs)
 import { getStore } from "@netlify/blobs";
 import { purgeCache } from "@netlify/functions";
 import { DEFAULT_ITEMS } from "./bingo-items.mjs";

@@ -87,12 +87,21 @@ main{animation-delay:.1s}
 .save{margin-left:auto;font:500 12px/1 var(--mono);letter-spacing:.06em;color:var(--dim)}
 .save.bad{color:#fff}
 
+/* Tabs for anyone logged in: Board (what visitors see), Review, Submit and Setup, one at a time */
+.tabs{display:flex;gap:4px;width:max-content;max-width:100%;margin-top:36px;padding:4px;border:1px solid var(--line);border-radius:10px;background:var(--panel);overflow-x:auto;scrollbar-width:none}
+.tabs[hidden]{display:none}
+.tabs button{display:inline-flex;align-items:center;gap:8px;padding:8px 18px;border:0;border-radius:7px;background:none;color:var(--mute);font:500 14px/1.2 var(--sans);cursor:pointer;white-space:nowrap;transition:color .15s,background .15s}
+.tabs button:hover{color:#fff}
+.tabs button.on{background:var(--panel2);color:#fff}
+.tabs .n{display:inline-grid;place-items:center;min-width:20px;height:20px;padding:0 6px;border-radius:10px;background:var(--wip);color:#000;font:600 11px/1 var(--mono)}
+@media(max-width:600px){.tabs{width:100%}.tabs button{flex:1;justify-content:center;padding:8px 10px}}
+.tabs:not([hidden]) ~ div > .sec:first-child{margin-top:36px}
+[hidden]#review,[hidden]#cap,[hidden]#out{display:none}
+
 /* Staff setup */
-.setup{margin-top:40px;border:1px solid var(--line);border-radius:8px;background:var(--panel)}
-.setup summary{display:flex;align-items:center;justify-content:space-between;padding:16px 20px;cursor:pointer;list-style:none;font-weight:600}
-.setup summary::-webkit-details-marker{display:none}
-.setup summary::after{content:"+";font:400 20px/1 var(--mono);color:var(--mute)}
-.setup[open] summary::after{content:"−"}
+.setup{margin-top:36px;border:1px solid var(--line);border-radius:8px;background:var(--panel)}
+.setup[hidden]{display:none}
+.setup h2{margin:0;padding:18px 20px 10px;font:600 17px/1.2 var(--sans)}
 .sgrid{display:grid;gap:18px;padding:4px 20px 20px}
 .lab{display:grid;gap:8px;font:500 11px/1 var(--mono);letter-spacing:.14em;text-transform:uppercase;color:var(--mute)}
 .inp{width:100%;background:var(--bg);border:1px solid var(--line2);border-radius:6px;color:#fff;padding:9px 12px;font:14px/1.4 var(--sans);letter-spacing:0;text-transform:none}
@@ -185,6 +194,7 @@ select.inp{appearance:none;background-image:linear-gradient(45deg,transparent 50
 .tip small .k1{color:var(--wip)}
 .tip small .k2{color:var(--go)}
 .tip small .kp{display:block;color:var(--wip)}
+.tip small .kh{display:block;margin-top:4px;color:#fff}
 .tt.s2::after{content:"✓";position:absolute;top:2px;right:4px;font:700 10px/1 var(--sans);color:#fff}
 .bg{display:grid;place-items:center;border:1px solid var(--line2);border-radius:6px;font:600 9px/1 var(--mono);letter-spacing:.08em;color:var(--dim);min-height:22px;transition:all .3s}
 /* Row markers are the same strip turned on its side, with the letters stacked: B I N G O */
@@ -249,6 +259,7 @@ textarea.inp{resize:vertical;min-height:96px;font:13px/1.5 var(--mono)}
 
 /* Pending drops (staff) */
 .rvl{display:grid;gap:8px}
+.rvr .lead{display:flex;align-items:center;gap:10px}
 .rvr{display:grid;grid-template-columns:auto 1fr auto;gap:14px;align-items:center;padding:12px 14px;border:1px solid var(--line);border-left:3px solid var(--wip);border-radius:8px;background:var(--panel)}
 .rvr .face img,.rvr .face .ab{width:36px;height:36px;object-fit:contain;image-rendering:pixelated}
 .rvr .face img.cust{image-rendering:auto;border-radius:4px}
@@ -261,35 +272,51 @@ textarea.inp{resize:vertical;min-height:96px;font:13px/1.5 var(--mono)}
 .ok:hover{filter:brightness(1.1)}
 @media(max-width:600px){.rvr{grid-template-columns:auto 1fr}.rvr .acts{grid-column:1/-1;justify-content:flex-start}}
 
-/* Captain drop form */
-.crl{display:grid;gap:6px}
-.cr{display:grid;grid-template-columns:minmax(0,1.3fr) 92px minmax(0,1fr) minmax(0,1fr) 140px auto;gap:10px;align-items:center;padding:10px 12px;border:1px solid var(--line);border-radius:8px;background:var(--panel)}
-.cr.done{opacity:.55}
-.cn{display:flex;align-items:center;gap:10px;min-width:0}
-.cn img,.cn .ab{flex:none;width:32px;height:32px;object-fit:contain;image-rendering:pixelated}
-.cn img.cust{image-rendering:auto;border-radius:4px}
-.cn .ab{display:grid;place-items:center;border:1px dashed var(--line2);border-radius:6px;font:600 11px/1 var(--mono);color:var(--mute)}
-.cn div{min-width:0}
-.cn b{display:block;font-size:14px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.cn span{display:block;font-size:12px;color:var(--mute);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.cpg{font:500 12px/1.3 var(--mono);color:var(--mute)}
-.cpg .w{display:block;color:var(--wip);font-size:11px}
-.cpg .d{color:var(--go)}
-.cr .inp{padding:7px 10px;font-size:13px}
-.cr .cm{grid-column:1/-1;margin:-2px 0 0;font-size:13px;color:var(--mute)}
-.cr .cm:empty{display:none}
-.cr .cm.bad{color:#fff}
-.cr .cm.good{color:var(--go)}
-.cr .oth{margin-top:6px}
-@media(max-width:900px){.cr{grid-template-columns:1fr 1fr}.cn{grid-column:1/-1}.cpg{grid-column:1/-1}.cr .primary{grid-column:1/-1}}
-.mine{display:grid;gap:4px;margin-top:20px}
-.mine h3{margin:0 0 6px;font-size:15px;font-weight:600}
-.mr{display:flex;align-items:center;gap:12px;padding:8px 0;border-bottom:1px solid var(--line);font-size:14px}
+/* Screenshot thumbnails in the review list, and the enlarged view */
+.thumb{flex:none;width:72px;height:54px;padding:0;border:1px solid var(--line2);border-radius:6px;background:var(--bg);overflow:hidden;cursor:zoom-in}
+.thumb img{width:100%;height:100%;object-fit:cover;display:block}
+.thumb:hover{border-color:#fff}
+.zoom{position:fixed;inset:0;z-index:200;display:grid;place-items:center;padding:24px;background:rgba(0,0,0,.88);cursor:zoom-out}
+.zoom[hidden]{display:none}
+.zoom img{max-width:100%;max-height:100%;border-radius:6px;box-shadow:0 18px 60px rgba(0,0,0,.7)}
+
+/* Drop form: one tile at a time */
+.df{display:grid;grid-template-columns:minmax(0,1.2fr) minmax(0,1fr) minmax(0,1fr);gap:16px;padding:20px;border:1px solid var(--line);border-radius:10px;background:var(--panel)}
+.df .full{grid-column:1/-1}
+.dtile{display:flex;align-items:flex-end;gap:12px}
+.dtile .lab{flex:1;min-width:0}
+.dface{flex:none;display:grid;place-items:center;width:42px;height:42px}
+.dface img{width:42px;height:42px;object-fit:contain;image-rendering:pixelated}
+.dface img.cust{image-rendering:auto;border-radius:4px}
+.dface .ab{width:42px;height:42px;display:grid;place-items:center;border:1px dashed var(--line2);border-radius:6px;font:600 12px/1 var(--mono);color:var(--mute)}
+.df .oth{margin-top:6px}
+.drop{display:flex;align-items:center;gap:14px;min-height:84px;padding:14px 16px;border:1px dashed var(--line2);border-radius:8px;background:var(--bg);font:14px/1.45 var(--sans);letter-spacing:0;text-transform:none;color:var(--mute);transition:border-color .15s,background .15s}
+.drop.over{border-color:#fff;background:var(--panel2)}
+.drop.has{border-style:solid}
+.drop img{flex:none;width:96px;height:64px;object-fit:cover;border-radius:5px;cursor:zoom-in}
+.drop .pick{position:relative;color:#fff;text-decoration:underline;cursor:pointer}
+.drop .pick input{position:absolute;width:1px;height:1px;opacity:0}
+.drop kbd{padding:1px 5px;border:1px solid var(--line2);border-radius:4px;font:500 12px/1.2 var(--mono);color:#fff}
+.dfact{display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+.dfact .cm{margin:0;font-size:13px;color:var(--mute)}
+.dfact .cm.bad{color:#fff}
+.dfact .cm.good{color:var(--go)}
+@media(max-width:760px){.df{grid-template-columns:1fr}}
+.mine{margin-top:16px;border:1px solid var(--line);border-radius:8px;background:var(--panel)}
+.mine summary{padding:12px 16px;cursor:pointer;font-size:14px;color:var(--mute);list-style:none}
+.mine summary::-webkit-details-marker{display:none}
+.mine summary::before{content:"▸";display:inline-block;width:16px;color:var(--dim);transition:transform .15s}
+.mine[open] summary::before{transform:rotate(90deg)}
+.mine summary b{color:#fff;font-weight:600}
+.mine summary .wt{color:var(--wip)}
+.mine .mrs{padding:0 16px 8px}
+.mr{display:flex;align-items:center;gap:12px;padding:8px 0;border-top:1px solid var(--line);font-size:14px}
 .mr > span:first-child{flex:1;min-width:0}
 .mr small{font:500 11px/1 var(--mono);color:var(--dim);white-space:nowrap}
 
 /* Collapsible tiles and the drop log */
 .sech .tog{margin-left:auto}
+.tt.can{cursor:pointer}
 .logteam{display:flex;align-items:center;gap:8px;font:500 12px/1 var(--mono);color:var(--mute);letter-spacing:.06em}
 .logteam select.inp{width:auto;min-width:170px;padding-top:7px;padding-bottom:7px;font-size:13px}
 .dl{border:1px solid var(--line);border-radius:8px;background:var(--panel);overflow:hidden}
@@ -364,8 +391,9 @@ body::after{content:"";position:fixed;inset:0;z-index:100;pointer-events:none;op
   <a class="clog" id="clog" href="/auth/login" hidden>Team captain or referee? Log in to submit or approve drops</a>
 </header>
 <main id="main">
-  <details class="setup" id="setup" hidden>
-    <summary>Bingo setup</summary>
+  <div class="tabs" id="tabs" role="tablist" aria-label="Bingo page sections" hidden></div>
+  <section class="setup" id="setup" hidden>
+    <h2>Bingo setup</h2>
     <div class="sgrid">
       <div class="srow2"><label class="lab">Bingo name<input class="inp" id="bname" maxlength="60" placeholder="e.g. Winter Bingo 2026"></label>
         <label class="lab">Points per bingo<input class="inp" id="bbonus" type="number" min="0" max="9999" step="1" value="25" title="Added for every completed row or column"></label></div>
@@ -379,12 +407,13 @@ body::after{content:"";position:fixed;inset:0;z-index:100;pointer-events:none;op
       <div class="srow"><button class="ghost" id="addteam" type="button">Add team</button><button class="ghost" id="drafteams" type="button">Use Bingo Draft teams</button><p id="setmsg"></p><span class="sp"></span>
         <button class="ghost" id="resetbtn" type="button">Reset all progress</button><button class="ghost" id="clearbtn" type="button">Clear board</button></div>
     </div>
-  </details>
+  </section>
   <div id="review"></div>
   <div id="cap"></div>
   <div id="out"><div class="msg">Loading the bingo board…</div></div>
 </main>
 <div class="tip" id="tip" role="tooltip"></div>
+<div class="zoom" id="zoom" hidden><img alt="Drop screenshot"></div>
 <div class="icopop" id="icopop" role="dialog" aria-label="Pick a team icon" hidden></div>
 <footer><span class="fsoc"><a href="https://x.com/Kingdom_OSRS" target="_blank" rel="noopener" aria-label="Kingdom on X (Twitter)" title="X (Twitter)"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg></a><a href="https://wiseoldman.net/groups/1152" target="_blank" rel="noopener" aria-label="Kingdom on Wise Old Man" title="Wise Old Man"><img src="wom.png" alt=""></a><a href="https://templeosrs.com/groups/overview.php?id=1710" target="_blank" rel="noopener" aria-label="Kingdom on TempleOSRS" title="TempleOSRS"><img src="temple.png" alt=""></a></span>Kingdom · <a class="staff" href="admin.html">Staff</a></footer>
 
@@ -443,6 +472,36 @@ let comp = null;       // the EHB competition: { src, metric, rows:[{name, team,
 let draftTeams = [];   // the Bingo Draft's teams [{name, players}], for matching players to bingo teams
 let lbAll = { ehb: false, mvp: false };   // leaderboards showing everyone instead of the top 10
 
+// ---------- Tabs (anyone logged in) ----------
+// Board is the page visitors see; Review (staff, referees) holds pending drops; Submit (staff, captains) the drop form;
+// Setup (staff) the bingo settings and tile editing. One shows at a time, and the page remembers the last one.
+const VIEW_KEY = "kingdom-bingo-view";
+let view = (() => { try { return localStorage.getItem(VIEW_KEY) || "board"; } catch { return "board"; } })();
+const views = () => [["board", "Board"], ...(staff || referee ? [["review", "Review"]] : []),
+  ...(staff || captain ? [["submit", "Submit"]] : []), ...(staff ? [["setup", "Setup"]] : [])];
+const editing = () => !!staff && view === "setup";
+function renderTabs(){
+  const vs = views(), tabs = $("tabs");
+  if (!vs.some(([k]) => k === view)) view = "board";
+  tabs.hidden = vs.length < 2;
+  const n = (subs.pending || []).length;
+  tabs.innerHTML = vs.map(([k, label]) => `<button type="button" role="tab" data-view="${k}" aria-selected="${k === view}"${k === view ? ' class="on"' : ""}>${label}${k === "review" && n ? `<span class="n">${n}</span>` : ""}</button>`).join("");
+  $("review").hidden = view !== "review";
+  $("cap").hidden = view !== "submit";
+  $("setup").hidden = view !== "setup";
+  $("out").hidden = view === "review" || view === "submit";
+}
+function setView(v){
+  if (v === view) return;
+  view = v;
+  try { localStorage.setItem(VIEW_KEY, v); } catch {}
+  if (v !== "setup") selTile = null;
+  hideTip(); renderTabs(); render();
+  // Keep the tabs in sight when switching from far down the page
+  const top = $("tabs").getBoundingClientRect().top;
+  if (top < 60) scrollTo({ top: top + scrollY - 80 });
+}
+
 // Start/end times are exact moments; <input type="datetime-local"> shows and reads them in the viewer's own timezone
 const toLocal = ts => ts ? new Date(ts - new Date(ts).getTimezoneOffset() * 60000).toISOString().slice(0, 16) : "";
 const fromLocal = v => v ? new Date(v).getTime() || 0 : 0;
@@ -497,9 +556,16 @@ const face = (t, empty) => t.boss ? `<img src="${icon(t.boss)}" alt="" loading="
   : `<span class="ab">${isBlank(t) ? empty : esc(initials(t.name))}</span>`;
 
 // ---------- Rendering ----------
+// Whether the person logged in can log a drop for this team's tile from the board (clicking it opens the drop form)
+function canLog(team, i){
+  const t = B.tiles[i];
+  if (!t || isBlank(t) || isDone(team, i)) return false;
+  if (staff) return true;
+  return !!captain && myTeam()?.name === team.name && !B.hidden && B.revealed !== false && phase() === "live";
+}
 function teamTile(team, ti, i){
   const t = B.tiles[i], st = stateOf(team, i), n = need(t), count = Math.max(0, team.p[i]), pd = st < 2 && pendingOn(team, i);
-  return `<div class="tt s${st}${pd ? " pd" : ""}" data-team="${ti}" data-i="${i}" aria-label="${esc(`${tileName(t) || "Empty tile"}, ${t.points} points, ${STATE[st]}${pd ? ", drop pending approval" : ""}`)}">${face(t, "")}${n > 1 && st === 1 ? `<span class="cnt">${count}/${n}</span>` : ""}</div>`;
+  return `<div class="tt s${st}${pd ? " pd" : ""}${canLog(team, i) ? " can" : ""}" data-team="${ti}" data-i="${i}" aria-label="${esc(`${tileName(t) || "Empty tile"}, ${t.points} points, ${STATE[st]}${pd ? ", drop pending approval" : ""}`)}">${face(t, "")}${n > 1 && st === 1 ? `<span class="cnt">${count}/${n}</span>` : ""}</div>`;
 }
 
 function teamCard(team, ti){
@@ -524,7 +590,7 @@ function teamCard(team, ti){
 function boardTile(t, i){
   const done = B.teams.filter(team => isDone(team, i)).length, n = need(t);
   return `<div class="tile${isBlank(t) ? " blank" : ""}${selTile === i ? " sel" : ""}" data-tile="${i}"><span class="no">${i + 1}</span>${n > 1 ? `<span class="need" title="Complete ${n} times">×${n}</span>` : ""}${face(t, "+")}
-    <b>${isBlank(t) ? (staff ? "Pick a boss" : "Empty") : esc(tileName(t))}</b>
+    <b>${isBlank(t) ? (editing() ? "Pick a boss" : "Empty") : esc(tileName(t))}</b>
     ${t.desc ? `<span class="ds">${esc(t.desc)}</span>` : ""}
     <small>${t.points} pts${n > 1 ? ` · ${n}× needed` : ""}</small>
     ${B.teams.length ? `<small class="td">${done} of ${B.teams.length} teams done</small>` : ""}</div>`;
@@ -553,7 +619,7 @@ function editor(){
 }
 
 function render(){
-  const edit = !!staff, tot = total();
+  const edit = editing(), tot = total();
   document.body.classList.toggle("edit", edit);
   $("title").textContent = B.title || "Bingo";
   document.title = (B.title || "Bingo") + " | Kingdom";
@@ -572,25 +638,33 @@ function render(){
       ${B.teams.length ? `<div class="tn">${B.teams.map((t, i) => `<span>${teamMark(t, colorOf(t, i))}${esc(t.name)}</span>`).join("")}</div>` : ""}</div>`;
     return;
   }
-  if (!used && !edit) {
-    $("out").innerHTML = '<div class="msg">No bingo is running right now. Check back when the next bingo is announced.</div>';
+  hideTip();
+  // Setup tab: just the tiles, each clickable to edit
+  if (edit) {
+    $("out").innerHTML = `<section class="sec">
+      <div class="sech"><h2>Tiles</h2><small>Click a tile to set its boss, name, points, completions and items</small></div>
+      <div class="board">${B.tiles.map(boardTile).join("")}</div>${editor()}
+    </section>`;
+    return;
+  }
+  if (!used) {
+    $("out").innerHTML = `<div class="msg">${staff ? "No tiles yet. Set up the board in the Setup tab." : "No bingo is running right now. Check back when the next bingo is announced."}</div>`;
     return;
   }
   const teams = B.teams.length
     ? `<div class="teams">${B.teams.map(teamCard).join("")}</div>`
-    : `<div class="msg">${edit ? "Add teams in Bingo setup above." : "Teams haven't been picked yet."}</div>`;
+    : `<div class="msg">${staff ? "Add teams in the Setup tab." : "Teams haven't been picked yet."}</div>`;
 
-  hideTip();
   $("out").innerHTML = `
     <section class="sec">
-      ${edit && !B.revealed ? `<p class="staffnote">Only staff can see the tiles right now. Visitors and captains see them once you click Reveal board to all in Bingo setup.</p>` : ""}
+      ${staff && !B.revealed ? `<p class="staffnote">Only staff can see the tiles right now. Visitors and captains see them once you click Reveal board to all in the Setup tab.</p>` : ""}
       <div class="sech"><h2>Teams</h2><div class="legend"><span><i></i>Not started</span><span><i class="s1"></i>In progress</span><span><i class="s2"></i>Completed</span><span><i class="pd"></i>Pending approval</span></div></div>
       ${teams}
     </section>
     <section class="sec">
-      <div class="sech"><h2>Tiles</h2><small>${edit ? "Click a tile to set its boss, name, points, completions and items" : `${num(tilePoints())} tile points + ${num(bonus())} per bingo (10 possible)`}</small>
+      <div class="sech"><h2>Tiles</h2><small>${num(tilePoints())} tile points + ${num(bonus())} per bingo (10 possible)</small>
         <button class="ghost sm tog" id="tilestog" type="button" aria-expanded="${!tilesHidden}">${tilesHidden ? "Show tiles" : "Hide tiles"}</button></div>
-      ${tilesHidden ? "" : `<div class="board">${B.tiles.map(boardTile).join("")}</div>${edit ? editor() : ""}`}
+      ${tilesHidden ? "" : `<div class="board">${B.tiles.map(boardTile).join("")}</div>`}
     </section>
     ${leaderboards()}
     ${dropLog()}`;
@@ -716,7 +790,7 @@ function dropLog(){
   const row = (d, p) => `<div class="lr${p ? " pend" : ""}"><time datetime="${new Date(d.t).toISOString()}">${when(d.t)}</time>
         <span class="lt">${markOf(d.team)}${esc(d.team)}</span>
         <span class="ld"><b>${esc(d.player)}</b> received <b>${esc(d.item)}</b>${p ? '<span class="stag pending">Pending</span>' : ""}<small>${esc(d.tileName)}</small></span>
-        <span class="la">${d.proof ? proofLink(d.proof) : ""}${!p && (staff || referee) ? `<button type="button" data-undo="${esc(d.id)}" title="Remove from the log and take the progress back">Undo</button>` : ""}</span></div>`;
+        <span class="la">${d.proof ? proofLink(d.proof) : ""}</span></div>`;
   return `<section class="sec">
     <div class="sech"><h2>Drop log</h2><small>${log.length} approved drop${log.length === 1 ? "" : "s"}${pend.length ? ` · ${pend.length} pending` : ""}</small></div>
     ${log.length || pend.length ? `<div class="dl"><div class="lr head"><span>Logged</span><span>Team</span><span>Drop</span><span></span></div>
@@ -726,19 +800,35 @@ function dropLog(){
   </section>`;
 }
 
-// ---------- Pending drops (staff and referees) ----------
+// ---------- Review tab (staff and referees): pending drops, and recently approved ones with Undo ----------
+// A proof link that is a picture (an uploaded screenshot, or a link ending in .png/.jpg/…) gets a thumbnail
+const isImage = u => /^https?:\/\/[^\s]+\.(png|jpe?g|webp|gif)(?:[?#]\S*)?$/i.test(u || "");
+const thumb = u => isImage(u) ? `<button type="button" class="thumb" data-zoom="${esc(u)}" title="Enlarge the screenshot"><img src="${esc(u)}" alt="Drop screenshot" loading="lazy"></button>` : "";
+let reviewSig = "";
 function renderReview(){
   const el = $("review");
   if (!staff && !referee) { el.innerHTML = ""; return; }
-  const list = subs.pending || [];
+  const list = subs.pending || [], recent = (B.log || []).slice(0, 15);
+  // Only redraw when something shown changed, so a button isn't swapped out under the pointer every few seconds
+  const sig = JSON.stringify([list.map(s => s.id), recent.map(d => d.id), B.tiles.map(t => [t.boss, t.img, t.name]), B.teams.map(t => [t.name, t.icon, t.color])]);
+  if (sig === reviewSig) return;
+  reviewSig = sig;
   el.innerHTML = `<section class="sec">
-    <div class="sech"><h2>Pending drops${list.length ? `<span class="count">${list.length}</span>` : ""}</h2></div>
+    <div class="sech"><h2>Pending drops${list.length ? `<span class="count">${list.length}</span>` : ""}</h2><small>oldest first</small></div>
     ${list.length ? `<div class="rvl">${list.map(s => { const t = B.tiles[s.tile] || blank();
-      return `<div class="rvr"><span class="face">${face(t, "?")}</span>
+      return `<div class="rvr"><span class="lead">${thumb(s.proof)}<span class="face">${face(t, "?")}</span></span>
         <div><b>${esc(s.player)}</b> received <b>${esc(s.item)}</b>
           <small>${markOf(s.team)}${esc(s.team)} · ${esc(s.tileName)} · logged by ${esc(s.by.name)} · ${when(s.t)}</small></div>
         <div class="acts">${proofLink(s.proof)}<button class="ghost sm" type="button" data-rev="reject" data-id="${esc(s.id)}">Reject</button><button class="ok" type="button" data-rev="approve" data-id="${esc(s.id)}">Approve</button></div></div>`; }).join("")}</div>`
     : '<div class="msg" style="padding:8px 0">No drops waiting for approval.</div>'}
+  </section>
+  <section class="sec">
+    <div class="sech"><h2>Recently approved</h2><small>Undo takes a drop off the log and the progress back</small></div>
+    ${recent.length ? `<div class="dl">${recent.map(d => `<div class="lr"><time datetime="${new Date(d.t).toISOString()}">${when(d.t)}</time>
+      <span class="lt">${markOf(d.team)}${esc(d.team)}</span>
+      <span class="ld"><b>${esc(d.player)}</b> received <b>${esc(d.item)}</b><small>${esc(d.tileName)}${d.by ? ` · logged by ${esc(d.by)}` : ""}</small></span>
+      <span class="la">${d.proof ? proofLink(d.proof) : ""}<button type="button" data-undo="${esc(d.id)}" title="Remove from the log and take the progress back">Undo</button></span></div>`).join("")}</div>`
+    : '<div class="msg" style="padding:8px 0">Approved drops will appear here.</div>'}
   </section>`;
 }
 
@@ -760,11 +850,32 @@ let pickTeam = null;
 const logTeam = () => staff ? B.teams.find(t => t.name === pickTeam) || myTeam() || B.teams[0] || null : myTeam();
 // The player dropdown: the team's players in the Bingo Draft (matched by team name)
 const rosterOf = team => team ? draftTeams.find(x => x.name.trim().toLowerCase() === team.name.trim().toLowerCase())?.players || [] : [];
-const LOG_KEY = "kingdom-bingo-log-hidden";
-let logHidden = (() => { try { return localStorage.getItem(LOG_KEY) === "1"; } catch { return false; } })();
 let capSig = "", capTeam = null;
-const mineList = mine => mine.length ? `<div class="mine"><h3>Your drops</h3>${mine.slice(0, 20).map(s => `<div class="mr"><span><b>${esc(s.player)}</b> · ${esc(s.item)} · ${esc(s.tileName)}${staff ? ` · ${esc(s.team)}` : ""}</span>
-  <span class="stag ${s.status}">${s.status === "undone" ? "removed" : s.status}</span><small>${when(s.t)}</small></div>`).join("")}</div>` : "";
+let preTile = null;    // a tile clicked on the board, for the form to open on
+let shot = null;       // the screenshot waiting to be sent: { blob, url } (url is a local preview)
+let mineOpen = false;  // "Recent submissions" expanded
+// What this person has submitted, folded into one line until it's opened
+const mineList = mine => {
+  if (!mine.length) return "";
+  const w = mine.filter(s => s.status === "pending").length;
+  return `<details class="mine"${mineOpen ? " open" : ""}><summary><b>Recent submissions</b> · ${mine.length}${w ? ` · <span class="wt">${w} waiting</span>` : ""}</summary>
+    <div class="mrs">${mine.slice(0, 20).map(s => `<div class="mr"><span><b>${esc(s.player)}</b> · ${esc(s.item)} · ${esc(s.tileName)}${staff ? ` · ${esc(s.team)}` : ""}</span>
+    <span class="stag ${s.status}">${s.status === "undone" ? "removed" : s.status}</span><small>${when(s.t)}</small></div>`).join("")}</div></details>`;
+};
+const itemOpts = t => `<option value="">${t ? "Item…" : "Pick a tile first"}</option>${t ? itemsOf(t).map(x => `<option>${esc(x)}</option>`).join("") + '<option value="__other">Other…</option>' : ""}`;
+const shotBox = () => shot
+  ? `<img src="${shot.url}" alt="Screenshot preview" data-zoom="${shot.url}"><span>Screenshot ready · <button type="button" class="ghost sm" id="shotdel">Remove</button></span>`
+  : matchMedia("(hover: hover)").matches
+    ? `<span>Paste a screenshot (<kbd>Ctrl</kbd>+<kbd>V</kbd>), drag one here, or <label class="pick">choose a file<input type="file" id="shotfile" accept="image/png,image/jpeg,image/webp"></label></span>`
+    : `<label class="pick">Choose a screenshot<input type="file" id="shotfile" accept="image/png,image/jpeg,image/webp"></label>`;
+function renderShot(){ const z = $("dropzone"); if (z) { z.innerHTML = shotBox(); z.classList.toggle("has", !!shot); } }
+function setShot(file){
+  if (!file || !/^image\/(png|jpeg|webp)$/.test(file.type)) { const m = $("dmsg"); if (m) { m.textContent = "The screenshot must be a PNG, JPG or WebP image."; m.className = "cm bad"; } return; }
+  if (shot) URL.revokeObjectURL(shot.url);
+  shot = { blob: file, url: URL.createObjectURL(file) };
+  renderShot();
+}
+function clearShot(){ if (shot) URL.revokeObjectURL(shot.url); shot = null; renderShot(); }
 function renderCaptain(){
   const el = $("cap");
   if (!captain && !staff) { el.innerHTML = ""; return; }
@@ -772,19 +883,20 @@ function renderCaptain(){
   // The team was assigned or renamed since the draft teams were loaded
   if (team && team.name !== rosterTeam) { rosterTeam = team.name; loadDraft().then(renderCaptain); }
   // Only redraw when something the form shows has changed, so half-typed rows aren't wiped by live updates
-  const sig = JSON.stringify([team, staff && B.teams.map(t => t.name), B.tiles, B.items, mine.map(s => [s.id, s.status]), rosterOf(team), phase(), B.hidden, logHidden]);
+  const waiting = i => (staff ? subs.pending : mine).filter(s => s.status === "pending" && s.tile === i && s.team === team?.name).length;
+  const sig = JSON.stringify([team, staff && B.teams.map(t => t.name), B.tiles, B.items, mine.map(s => [s.id, s.status]), rosterOf(team), phase(), B.hidden, preTile,
+    B.tiles.map((_, i) => waiting(i))]);
   if (sig === capSig) return;
   capSig = sig;
   // Keep what was typed, unless staff just switched to another team
-  const keep = {};
-  if (capTeam === team?.name) el.querySelectorAll(".cr[data-ct]").forEach(r => { keep[r.dataset.ct] = Object.fromEntries([...r.querySelectorAll("[data-f]")].map(f => [f.dataset.f, f.value])); });
+  const keep = capTeam === team?.name ? Object.fromEntries([...el.querySelectorAll("[data-f]")].map(f => [f.dataset.f, f.value])) : {};
   capTeam = team?.name;
+  // A tile clicked on the board: start the form on it
+  if (preTile != null) { Object.assign(keep, { tile: String(preTile), item: "", other: "" }); preTile = null; }
 
-  const tog = `<button class="ghost sm tog" id="logtog" type="button" aria-expanded="${!logHidden}">${logHidden ? "Show" : "Hide"}</button>`;
   const head = staff ? `<div class="sech"><h2>Drop submission</h2>${B.teams.length ? `<label class="logteam"><span>For</span><select class="inp" id="logteam" aria-label="Team">
-      ${B.teams.map(t => `<option${t === team ? " selected" : ""}>${esc(t.name)}</option>`).join("")}</select></label>` : ""}<small>drops go to the pending list for approval</small>${tog}</div>`
-    : `<div class="sech"><h2>Drop submission</h2>${team ? `<small>${markOf(team.name)}${esc(team.name)} · drops show on the board as pending until approved</small>` : ""}${tog}</div>`;
-  if (logHidden) { el.innerHTML = `<section class="sec">${head}</section>`; return; }
+      ${B.teams.map(t => `<option${t === team ? " selected" : ""}>${esc(t.name)}</option>`).join("")}</select></label>` : ""}<small>drops show on the board as pending until approved</small></div>`
+    : `<div class="sech"><h2>Drop submission</h2>${team ? `<small>${markOf(team.name)}${esc(team.name)} · drops show on the board as pending until approved</small>` : ""}</div>`;
 
   // Captains can only log while the bingo is running; staff can log any time, so they just get a reminder
   const closed = !team ? (staff ? "Add teams in Bingo setup first." : "You're logged in as a captain, but you're not set as captain of a team yet. Ask an admin to pick you in Bingo setup.")
@@ -799,74 +911,116 @@ function renderCaptain(){
   const note = !staff ? "" : B.revealed === false ? "The board isn't revealed yet, so captains can't log drops. You can, as staff."
     : phase() === "before" ? "The bingo hasn't started, so captains can't log drops yet. You can, as staff."
     : phase() === "over" ? "The bingo has ended, so captains can't log drops any more. You still can, as staff (e.g. for a late drop)." : "";
-  const waiting = i => (staff ? subs.pending : mine).filter(s => s.status === "pending" && s.tile === i && s.team === team.name).length;
   const players = rosterOf(team);
-  const rows = B.tiles.map((t, i) => {
+  // One form: the tile (completed ones greyed out), the item, who got it and the screenshot
+  const tiles = B.tiles.map((t, i) => {
     if (isBlank(t)) return "";
     const n = need(t), v = Math.max(0, team.p[i]), done = v >= n, w = waiting(i);
-    const items = itemsOf(t);
-    return `<div class="cr${done ? " done" : ""}" data-ct="${i}">
-      <div class="cn">${face(t, "?")}<div><b>${i + 1}. ${esc(tileName(t))}</b>${t.desc ? `<span>${esc(t.desc)}</span>` : ""}</div></div>
-      <div class="cpg">${done ? '<span class="d">Completed ✓</span>' : n > 1 ? `${v}/${n} done` : "Not done"}${w ? `<span class="w">${w} waiting</span>` : ""}</div>
-      ${done ? "" : `<div><select class="inp" data-f="item" aria-label="Item"><option value="">Item…</option>${items.map(x => `<option>${esc(x)}</option>`).join("")}<option value="__other">Other…</option></select>
-        <input class="inp oth" data-f="other" maxlength="60" placeholder="Item name" hidden></div>
-      <input class="inp" data-f="proof" type="url" maxlength="400" placeholder="Screenshot link (https://…)" aria-label="Screenshot link">
-      ${players.length ? `<select class="inp" data-f="player" aria-label="Player"><option value="">Player…</option>${players.map(p => `<option>${esc(p)}</option>`).join("")}</select>`
-        : `<input class="inp" data-f="player" maxlength="12" placeholder="Player name" aria-label="Player">`}
-      <button class="primary" type="button" data-sub="${i}">Submit</button>
-      <p class="cm" data-msg="${i}"></p>`}
-    </div>`;
+    return `<option value="${i}"${done ? " disabled" : ""}>${i + 1}. ${esc(tileName(t))}${done ? " · completed" : n > 1 ? ` · ${v}/${n}` : ""}${w ? ` · ${w} waiting` : ""}</option>`;
   }).join("");
+  const sel = keep.tile !== "" && keep.tile != null && B.tiles[+keep.tile] && !isDone(team, +keep.tile) ? B.tiles[+keep.tile] : null;
 
   el.innerHTML = `<section class="sec">${head}
     ${note ? `<p class="staffnote">${note}</p>` : ""}
-    <div class="crl">${rows}</div>
+    <div class="df">
+      <div class="dtile"><span class="dface" id="dface">${sel ? face(sel, "?") : '<span class="ab">?</span>'}</span>
+        <label class="lab">Tile<select class="inp" data-f="tile"><option value="">Pick a tile…</option>${tiles}</select></label></div>
+      <label class="lab">Item<select class="inp" data-f="item">${itemOpts(sel)}</select>
+        <input class="inp oth" data-f="other" maxlength="60" placeholder="Item name" hidden></label>
+      <label class="lab">Player${players.length ? `<select class="inp" data-f="player"><option value="">Who got it…</option>${players.map(p => `<option>${esc(p)}</option>`).join("")}</select>`
+        : `<input class="inp" data-f="player" maxlength="12" placeholder="Player name">`}</label>
+      <div class="lab full">Screenshot<div class="drop${shot ? " has" : ""}" id="dropzone">${shotBox()}</div>
+        <input class="inp" data-f="proof" type="url" maxlength="400" placeholder="…or paste a link to it (https://…)" aria-label="Screenshot link"></div>
+      <div class="dfact full"><button class="primary" type="button" id="dsub">Submit drop</button><p class="cm" id="dmsg"></p></div>
+    </div>
     ${mineList(mine)}
   </section>`;
-  // Put back anything the captain had typed
-  Object.entries(keep).forEach(([i, f]) => {
-    const r = el.querySelector(`.cr[data-ct="${i}"]`); if (!r) return;
-    Object.entries(f).forEach(([k, v]) => { const x = r.querySelector(`[data-f="${k}"]`); if (x) x.value = v; });
-    const o = r.querySelector('[data-f="other"]'); if (o) o.hidden = r.querySelector('[data-f="item"]')?.value !== "__other";
-  });
+  // Put back anything that was typed
+  Object.entries(keep).forEach(([k, v]) => { const x = el.querySelector(`[data-f="${k}"]`); if (x && [...(x.options || [])].every(o => o.value !== v || !o.disabled)) x.value = v; });
+  const o = el.querySelector('[data-f="other"]'); if (o) o.hidden = el.querySelector('[data-f="item"]').value !== "__other";
+}
+// The tile menu changed: show its picture and its items
+function pickedTile(){
+  const el = $("cap"), v = el.querySelector('[data-f="tile"]')?.value, t = v ? B.tiles[+v] : null;
+  $("dface").innerHTML = t ? face(t, "?") : '<span class="ab">?</span>';
+  el.querySelector('[data-f="item"]').innerHTML = itemOpts(t);
+  el.querySelector('[data-f="other"]').hidden = true;
 }
 
-async function submitDrop(i){
-  const r = $("cap").querySelector(`.cr[data-ct="${i}"]`), msg = r.querySelector(".cm"), btn = r.querySelector("[data-sub]");
-  const f = k => r.querySelector(`[data-f="${k}"]`)?.value.trim() || "";
+// Screenshots are shrunk in the browser before upload (at most 1920 pixels across, WebP or JPEG), so they send quickly
+async function shrinkShot(file){
+  const img = await createImageBitmap(file), MAX = 1920;
+  const s = Math.min(1, MAX / Math.max(img.width, img.height)), c = document.createElement("canvas");
+  c.width = Math.max(1, Math.round(img.width * s)); c.height = Math.max(1, Math.round(img.height * s));
+  c.getContext("2d").drawImage(img, 0, 0, c.width, c.height);
+  const webp = await new Promise(res => c.toBlob(res, "image/webp", 0.85));
+  return webp && webp.type === "image/webp" ? webp : await new Promise(res => c.toBlob(res, "image/jpeg", 0.85));
+}
+
+async function submitDrop(){
+  const el = $("cap"), msg = $("dmsg"), btn = $("dsub");
+  const f = k => el.querySelector(`[data-f="${k}"]`)?.value.trim() || "";
   const item = f("item") === "__other" ? f("other") : f("item");
-  const say = (t, cls) => { msg.textContent = t; msg.className = "cm" + (cls ? " " + cls : ""); };
+  const say = (t, cls) => { const m = $("dmsg") || msg; m.textContent = t; m.className = "cm" + (cls ? " " + cls : ""); };
+  if (f("tile") === "") return say("Pick a tile.", "bad");
   if (!item) return say("Pick the item that dropped.", "bad");
-  if (!/^https?:\/\/\S+$/i.test(f("proof"))) return say("Add a link to a screenshot of the drop (starting with https://).", "bad");
   if (!f("player")) return say("Pick who got the drop.", "bad");
-  btn.disabled = true; say("Sending…");
+  let proof = f("proof");
+  if (!shot && !/^https?:\/\/\S+$/i.test(proof)) return say("Add a screenshot of the drop: paste it, drag it in or choose a file (or paste a link starting with https://).", "bad");
+  const i = +f("tile");
+  btn.disabled = true;
   try {
+    if (shot) {
+      say("Uploading the screenshot…");
+      const fd = new FormData(); fd.append("file", await shrinkShot(shot.blob), "shot");
+      proof = location.origin + (await api("/api/bingo/shots", { method: "POST", body: fd })).url;
+    }
+    say("Sending…");
     await api("/api/bingo/subs", { method: "POST", headers: { "content-type": "application/json" },
-      body: JSON.stringify({ tile: i, tileName: tileName(B.tiles[i]), item, player: f("player"), proof: f("proof"), ...(staff ? { team: logTeam()?.name } : {}) }) });
-    r.querySelectorAll("[data-f]").forEach(x => x.value = "");
+      body: JSON.stringify({ tile: i, tileName: tileName(B.tiles[i]), item, player: f("player"), proof, ...(staff ? { team: logTeam()?.name } : {}) }) });
+    el.querySelectorAll("[data-f]").forEach(x => x.value = "");
+    clearShot(); pickedTile();
     await loadSubs();
-    const again = $("cap").querySelector(`.cr[data-ct="${i}"] .cm`);
-    if (again) { again.textContent = "Sent! It shows on the board as pending until staff or a referee approve it."; again.className = "cm good"; }
+    say("Sent! It shows on the board as pending until staff or a referee approve it.", "good");
     refreshBoard().catch(() => {});
   } catch (e) {
-    say(e.status === 401 ? "Your login expired. Log in again." : e.message, "bad"); btn.disabled = false;
+    say(e.status === 401 ? "Your login expired. Log in again." : e.message, "bad");
   }
+  const b = $("dsub"); if (b) b.disabled = false;
 }
 
 function wireCaptain(){
   const el = $("cap");
   el.addEventListener("change", e => {
     if (e.target.id === "logteam") { pickTeam = e.target.value; renderCaptain(); return; }
-    if (e.target.dataset.f === "item") { const o = e.target.closest(".cr").querySelector('[data-f="other"]'); o.hidden = e.target.value !== "__other"; if (!o.hidden) o.focus(); }
+    if (e.target.id === "shotfile") { setShot(e.target.files[0]); return; }
+    if (e.target.dataset.f === "tile") { pickedTile(); return; }
+    if (e.target.dataset.f === "item") { const o = el.querySelector('[data-f="other"]'); o.hidden = e.target.value !== "__other"; if (!o.hidden) o.focus(); }
   });
   el.addEventListener("click", e => {
-    if (e.target.id === "logtog") {
-      logHidden = !logHidden;
-      try { localStorage.setItem(LOG_KEY, logHidden ? "1" : "0"); } catch {}
-      renderCaptain(); return;
-    }
-    const i = e.target.dataset.sub; if (i != null) submitDrop(+i);
+    if (e.target.id === "dsub") submitDrop();
+    if (e.target.id === "shotdel") clearShot();
   });
+  el.addEventListener("toggle", e => { if (e.target.matches?.("details.mine")) mineOpen = e.target.open; }, true);
+  // Drag a screenshot onto the box, or paste one anywhere on the Submit tab
+  el.addEventListener("dragover", e => { const z = e.target.closest("#dropzone"); if (z) { e.preventDefault(); z.classList.add("over"); } });
+  el.addEventListener("dragleave", e => { const z = e.target.closest("#dropzone"); if (z && !z.contains(e.relatedTarget)) z.classList.remove("over"); });
+  el.addEventListener("drop", e => {
+    const z = e.target.closest("#dropzone"); if (!z) return;
+    e.preventDefault(); z.classList.remove("over"); setShot(e.dataTransfer.files[0]);
+  });
+  document.addEventListener("paste", e => {
+    if (view !== "submit") return;
+    const file = [...(e.clipboardData?.files || [])].find(x => x.type.startsWith("image/"));
+    if (file) { e.preventDefault(); setShot(file); }
+  });
+}
+// Clicking a team's tile on the board (your own team, or any team as staff) opens the drop form on that tile
+function openSubmit(ti, i){
+  if (staff) pickTeam = B.teams[ti].name;
+  preTile = i; capSig = "";
+  setView("submit"); renderCaptain();
+  $("cap").querySelector('[data-f="item"]')?.focus();
 }
 let rosterTeam = null;   // the team whose draft players were last loaded
 
@@ -875,7 +1029,7 @@ async function loadSubs(){
   try {
     const r = await api("/api/bingo/subs");
     subs = { pending: r.pending || [], recent: r.recent || [], mine: r.mine || [] };
-    renderReview(); renderCaptain();
+    renderTabs(); renderReview(); renderCaptain();
   } catch {}
 }
 
@@ -1032,8 +1186,6 @@ function addTeam(name){
 }
 
 function wireEditing(){
-  $("setup").hidden = false;
-  if (!B.teams.length) $("setup").open = true;
   syncSetup(); wireIcons();
 
   $("bname").addEventListener("change", () => { B.title = $("bname").value.trim().slice(0, 60); render(); save(); });
@@ -1105,6 +1257,7 @@ function wireEditing(){
   const out = $("out");
   // Team progress only changes through approved drops (and Undo in the drop log), so team tiles aren't clickable
   out.addEventListener("click", e => {
+    if (!editing()) return;
     const tile = e.target.closest(".tile[data-tile]");
     if (tile) { const i = +tile.dataset.tile; selTile = selTile === i ? null : i; render(); if (selTile != null) $("ted").scrollIntoView({ block: "nearest", behavior: "smooth" }); return; }
     if (e.target.id === "edone") { selTile = null; render(); }
@@ -1141,7 +1294,7 @@ function showTip(el){
   const st = stateOf(team, i), n = need(t), count = Math.max(0, team.p[i]), pd = st < 2 ? pendingOn(team, i) : 0;
   const tip = $("tip");
   tip.innerHTML = `${face(t, "?")}<div><b>${esc(tileName(t) || "Empty tile")}</b>${t.desc ? `<span class="d">${esc(t.desc)}</span>` : ""}
-    <small><em>${num(t.points)} pts</em> · <span class="k${st}">${STATE[st]}${n > 1 ? ` ${count}/${n}` : ""}</span>${pd ? `<span class="kp">${pd} drop${pd === 1 ? "" : "s"} pending approval</span>` : ""}</small></div>`;
+    <small><em>${num(t.points)} pts</em> · <span class="k${st}">${STATE[st]}${n > 1 ? ` ${count}/${n}` : ""}</span>${pd ? `<span class="kp">${pd} drop${pd === 1 ? "" : "s"} pending approval</span>` : ""}${canLog(team, i) ? `<span class="kh">${matchMedia("(hover: hover)").matches ? "Click" : "Tap again"} to log a drop</span>` : ""}</small></div>`;
   // Above the tile if there's room, otherwise below; kept inside the screen
   const r = el.getBoundingClientRect(), w = tip.offsetWidth, h = tip.offsetHeight;
   const x = Math.max(8, Math.min(innerWidth - w - 8, r.left + r.width / 2 - w / 2));
@@ -1155,10 +1308,13 @@ function wireTips(){
   const out = $("out");
   out.addEventListener("mouseover", e => { const tt = e.target.closest(".tt[data-team]"); if (tt && tt !== tipFor) showTip(tt); });
   out.addEventListener("mouseout", e => { const tt = e.target.closest(".tt[data-team]"); if (tt && !tt.contains(e.relatedTarget)) hideTip(); });
-  // Tapping a tile (on phones) shows or hides its card
+  // Tapping a tile (on phones) shows or hides its card. A tile you can log a drop for opens the drop form instead
+  // once its card is showing (straight away with a mouse, since hovering already shows it).
   out.addEventListener("click", e => {
     const tt = e.target.closest(".tt[data-team]");
     if (!tt) { hideTip(); return; }
+    const ti = +tt.dataset.team, i = +tt.dataset.i;
+    if (tipFor === tt && canLog(B.teams[ti], i)) { hideTip(); openSubmit(ti, i); return; }
     if (tipFor === tt) hideTip(); else showTip(tt);
   });
   addEventListener("scroll", hideTip, { passive: true });
@@ -1206,9 +1362,21 @@ function wireBoard(){
     }
     if (e.target.id === "logmore") { logShown += 25; render(); return; }
     const lb = e.target.dataset.lball; if (lb) { lbAll[lb] = !lbAll[lb]; render(); return; }
-    const u = e.target.dataset.undo; if (u && (staff || referee)) reviewDrop(u, "undo", e.target);
   });
-  $("review").addEventListener("click", e => { const { rev, id } = e.target.dataset; if (rev && id) reviewDrop(id, rev, e.target); });
+  $("review").addEventListener("click", e => {
+    const { rev, id, undo } = e.target.dataset;
+    if (rev && id) reviewDrop(id, rev, e.target);
+    if (undo) reviewDrop(undo, "undo", e.target);
+  });
+  $("tabs").addEventListener("click", e => { const b = e.target.closest("[data-view]"); if (b) setView(b.dataset.view); });
+  // Screenshots: click a thumbnail to see it full size; click anywhere or press Escape to close
+  const zoom = $("zoom");
+  document.addEventListener("click", e => {
+    const z = e.target.closest("[data-zoom]");
+    if (z) { zoom.querySelector("img").src = z.dataset.zoom; zoom.hidden = false; return; }
+    if (!zoom.hidden && zoom.contains(e.target)) zoom.hidden = true;
+  });
+  document.addEventListener("keydown", e => { if (e.key === "Escape") zoom.hidden = true; });
 }
 
 const avatar = u => u.avatar ? `<img src="https://cdn.discordapp.com/avatars/${u.id}/${u.avatar}.png?size=48" alt="">` : "";
@@ -1230,6 +1398,9 @@ async function start(){
   $("who").hidden = !staff && !captain && !referee;
   $("clog").hidden = !!(staff || captain || referee);
   if (staff || captain) wireCaptain();
+  // Someone with nothing set up yet (no teams) starts on Setup
+  if (staff && !B.teams.length) view = "setup";
+  renderTabs();
   await Promise.all([loadSubs(), loadDraft()]);
   render(); wireTips(); wireBoard();
   loadComp();
