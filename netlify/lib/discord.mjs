@@ -1,4 +1,4 @@
-// Posts to a Discord channel: approved bingo drops, and a heads-up for staff whenever a drop is waiting for approval.
+// Posts to a Discord channel: approved bingo drops, and a heads-up for staff and referees whenever a drop is waiting for approval.
 //
 // Netlify environment variable (optional; nothing is posted without it):
 //   DISCORD_BINGO_WEBHOOK  the channel's webhook URL (Discord: channel settings > Integrations > Webhooks > New Webhook > Copy Webhook URL)
@@ -59,7 +59,7 @@ export async function announcePending({ board, sub, waiting }){
     color: 0x9a9a9a,
     fields: [{ name: "Logged by", value: sub.by.name.slice(0, 1000), inline: true }],
     timestamp: new Date(sub.t).toISOString(),
-    footer: { text: "Kingdom Bingo · staff, review it on the Bingo page" }
+    footer: { text: "Kingdom Bingo · staff and referees, review it on the Bingo page" }
   });
 }
 

@@ -1,6 +1,7 @@
-// /api/captain          captain: who's logged in and which bingo team they captain (401 if not a captain)
+// /api/captain          captain or referee: who's logged in, which bingo team they captain (if any), and whether they're
+//                       a captain and/or a referee (401 if neither)
 // /api/bingo/captains   staff:   every captain in CAPTAIN_DISCORD_IDS, named if they've logged in before, and the team each captains
-import { captainIds, configured, getCaptain, getStaff, json } from "../lib/auth.mjs";
+import { captainIds, configured, getCaptain, getReferee, getStaff, json } from "../lib/auth.mjs";
 import { readBoard, store, teamOfCaptain } from "../lib/bingo.mjs";
 
 export default async req => {
@@ -14,12 +15,14 @@ export default async req => {
     return json(captainIds().map(id => ({ id, name: names[id]?.name || "", team: teamOf(id)?.name || "" })));
   }
 
-  const c = getCaptain(req);
-  if (!c) return json({ error: "login" }, 401);
+  const c = getCaptain(req), r = getReferee(req), me = c || r;
+  if (!me) return json({ error: "login" }, 401);
   // Remember the captain's Discord name so staff can pick them by name in Bingo setup
-  const names = (await s.get("captains", { type: "json" })) || {};
-  if (names[c.id]?.name !== c.name) { names[c.id] = { name: c.name, seen: Date.now() }; await s.setJSON("captains", names); }
-  return json({ id: c.id, name: c.name, avatar: c.avatar, team: teamOf(c.id) });
+  if (c) {
+    const names = (await s.get("captains", { type: "json" })) || {};
+    if (names[c.id]?.name !== c.name) { names[c.id] = { name: c.name, seen: Date.now() }; await s.setJSON("captains", names); }
+  }
+  return json({ id: me.id, name: me.name, avatar: me.avatar, captain: !!c, referee: !!r, team: c ? teamOf(c.id) : null });
 };
 
 export const config = { path: ["/api/captain", "/api/bingo/captains"] };

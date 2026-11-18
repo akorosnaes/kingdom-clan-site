@@ -1,7 +1,8 @@
 // /api/bingo
 //   GET  anyone: the bingo board (25 tiles, each with a boss or custom image, name, description, points and how many completions it needs),
 //        the bonus points per bingo, every team's colour, icon and progress, the drop log, the item list for each boss on the board,
-//        the start and end times, and the competition link the EHB leaderboard reads.
+//        the start and end times, the competition link the EHB leaderboard reads, and the drops waiting for approval
+//        ("pending": team, tile, item, player, proof and when it was logged; they don't count towards anything yet).
 //        Until staff reveal the board ("revealed"), the tiles are blanked for everyone but staff ("hidden": true).
 //        Served from Netlify's CDN cache so viewers can check every few seconds for free;
 //        every save clears that cache. ?staff=1 skips the cache.
@@ -10,7 +11,7 @@
 //        (used by "Reset all progress" and "Clear board"), which also clears every submitted drop.
 import { getStaff, json, sameOrigin } from "../lib/auth.mjs";
 import { logActivity } from "../lib/activity.mjs";
-import { blankTile, BONUS, CACHE_TAG, IMAGE_ID, imageKey, itemsFor, MAX_ITEMS, readBoard, readItemEdits, saveBoard, SIZE, store, text, writeSubs } from "../lib/bingo.mjs";
+import { blankTile, BONUS, CACHE_TAG, IMAGE_ID, imageKey, itemsFor, MAX_ITEMS, readBoard, readItemEdits, readSubs, saveBoard, SIZE, store, text, writeSubs } from "../lib/bingo.mjs";
 
 const CDN_CACHE = { "cache-control": "public, max-age=0, must-revalidate",
   "netlify-cdn-cache-control": "public, durable, s-maxage=60", "cache-tag": CACHE_TAG, "netlify-vary": "query" };
@@ -70,7 +71,7 @@ function clean(body){
 // Until staff press "Reveal board to all", everyone but staff gets the board with its tiles blanked out (team names stay visible)
 function forViewer(board, staff){
   if (staff || board.revealed) return { ...board, hidden: false };
-  return { ...board, hidden: true, tiles: board.tiles.map(() => blankTile()), log: [], items: {},
+  return { ...board, hidden: true, tiles: board.tiles.map(() => blankTile()), log: [], pending: [], items: {},
     teams: board.teams.map(t => ({ ...t, p: Array(SIZE).fill(0) })) };
 }
 
@@ -91,11 +92,13 @@ function changes(cur, next, cleared){
   return out;
 }
 
-// The board plus the item list for each boss on it
+// The board plus the item list for each boss on it, and the drops waiting for approval (without who logged them)
 async function withItems(board, s){
-  const edits = await readItemEdits(s), items = {};
+  const [edits, subs] = await Promise.all([readItemEdits(s), readSubs(s)]), items = {};
   board.tiles.forEach(t => { if (t.boss) items[t.boss] = itemsFor(t.boss, edits); });
-  return { ...board, items };
+  const pending = subs.filter(x => x.status === "pending")
+    .map(({ id, t, team, tile, tileName, item, player, proof }) => ({ id, t, team, tile, tileName, item, player, proof }));
+  return { ...board, items, pending };
 }
 
 export default async req => {

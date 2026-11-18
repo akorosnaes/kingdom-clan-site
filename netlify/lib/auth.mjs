@@ -7,6 +7,9 @@
 //   ADMIN_DISCORD_IDS      comma-separated Discord user IDs allowed into the console
 //   CAPTAIN_DISCORD_IDS    optional: comma-separated Discord user IDs of bingo team captains. Captains can only
 //                          submit drops for their own team on the Bingo page; they get none of the staff tools.
+//   REFEREE_DISCORD_IDS    optional: comma-separated Discord user IDs of bingo referees. Referees can approve, reject
+//                          and undo any team's drops on the Bingo page (on a team or not); they get none of the other
+//                          staff tools. Someone can be both a captain and a referee.
 import { createHmac, randomBytes, timingSafeEqual } from "node:crypto";
 
 export const SESSION_COOKIE = "kd_session";
@@ -20,6 +23,8 @@ export const staffIds = () => env("ADMIN_DISCORD_IDS").split(/[\s,]+/).filter(Bo
 export const isStaff = id => staffIds().includes(String(id));
 export const captainIds = () => env("CAPTAIN_DISCORD_IDS").split(/[\s,]+/).filter(Boolean);
 export const isCaptain = id => captainIds().includes(String(id));
+export const refereeIds = () => env("REFEREE_DISCORD_IDS").split(/[\s,]+/).filter(Boolean);
+export const isReferee = id => refereeIds().includes(String(id));
 export const redirectUri = req => new URL("/auth/callback", req.url).toString();
 export const randomToken = () => randomBytes(24).toString("base64url");
 
@@ -58,7 +63,7 @@ function session(req){
 }
 
 // Returns the logged-in staff member, or null. Roles are re-checked on every request,
-// so removing someone from ADMIN_DISCORD_IDS (or CAPTAIN_DISCORD_IDS) locks them out straight away.
+// so removing someone from ADMIN_DISCORD_IDS (or CAPTAIN_DISCORD_IDS, REFEREE_DISCORD_IDS) locks them out straight away.
 export function getStaff(req){
   const s = session(req);
   return s && isStaff(s.id) ? s : null;
@@ -67,6 +72,12 @@ export function getCaptain(req){
   const s = session(req);
   return s && isCaptain(s.id) ? s : null;
 }
+export function getReferee(req){
+  const s = session(req);
+  return s && isReferee(s.id) ? s : null;
+}
+// Whoever may review drops: staff or a referee (null for anyone else)
+export const getReviewer = req => getStaff(req) || getReferee(req);
 
 // Writes must come from our own pages (blocks other sites posting with a staff member's cookie)
 export const sameOrigin = req => { const o = req.headers.get("origin"); return !o || o === new URL(req.url).origin; };

@@ -1,15 +1,16 @@
 // /api/bingo/subs
-//   GET   staff:   every pending drop, plus the latest reviewed ones
-//         both:    the drops they logged themselves ("mine") and how each was reviewed
+//   GET   staff and referees: every pending drop, plus the latest reviewed ones
+//         everyone logged in:  the drops they logged themselves ("mine") and how each was reviewed
 //   POST  captain: log a drop for their team { tile, item, player, proof } — it waits for staff approval.
 //         Only once the board is revealed and between the bingo's start and end times (when they're set).
 //         staff:   the same for any team, named in { team }, at any time (e.g. a late drop from just before the end)
 // /api/bingo/review
-//   POST  staff: { id, action: "approve" | "reject" } for a pending drop, or { id, action: "undo" } for an approved one.
-//         Approving adds one completion to the team's tile, puts the drop in the public drop log and announces it on
-//         Discord (if DISCORD_BINGO_WEBHOOK is set); undo takes the progress and log entry back.
-import { getCaptain, getStaff, json, sameOrigin } from "../lib/auth.mjs";
-import { bump, LOG_MAX, newId, readBoard, readSubs, saveBoard, store, teamOfCaptain, text, writeSubs } from "../lib/bingo.mjs";
+//   POST  staff and referees: { id, action: "approve" | "reject" } for a pending drop, or { id, action: "undo" } for an
+//         approved one. Approving adds one completion to the team's tile, puts the drop in the public drop log and
+//         announces it on Discord (if DISCORD_BINGO_WEBHOOK is set); undo takes the progress and log entry back.
+// Pending drops also show on the public board (/api/bingo), so every change here clears the board's CDN copy.
+import { getCaptain, getReviewer, getStaff, json, sameOrigin } from "../lib/auth.mjs";
+import { bump, LOG_MAX, newId, purge, readBoard, readSubs, saveBoard, store, teamOfCaptain, text, writeSubs } from "../lib/bingo.mjs";
 import { announceDrop, announcePending, lines } from "../lib/discord.mjs";
 import { logActivity } from "../lib/activity.mjs";
 
@@ -23,14 +24,13 @@ async function body(req){ try { return await req.json(); } catch { return null; 
 async function subs(req){
   const s = store();
   if (req.method === "GET") {
-    const staff = getStaff(req), cap = getCaptain(req);
-    if (!staff && !cap) return json({ error: "Log in first." }, 401);
+    const reviewer = getReviewer(req), me = reviewer || getCaptain(req);
+    if (!me) return json({ error: "Log in first." }, 401);
     const list = await readSubs(s), out = {};
-    if (staff) {
+    if (reviewer) {
       out.pending = list.filter(x => x.status === "pending");
       out.recent = list.filter(x => x.status !== "pending").slice(-50).reverse();
     }
-    const me = staff || cap;
     out.mine = list.filter(x => x.by.id === me.id).slice(-100).reverse();
     return json(out);
   }
@@ -65,6 +65,7 @@ async function subs(req){
     by: { id: me.id, name: me.name, ...(staff ? { staff: true } : {}) }, status: "pending" };
   list.push(sub);
   await writeSubs(list, s);
+  await purge();
   if (staff) await logActivity(me.name, "submit", `Logged a drop for ${sub.team}: ${sub.player} received ${sub.item} (${sub.tileName})`, s);
   // Let staff know on Discord there's something to review
   await announcePending({ board, sub, waiting: list.filter(x => x.status === "pending").length });
@@ -73,23 +74,26 @@ async function subs(req){
 
 async function review(req){
   if (req.method !== "POST") return json({ error: "Method not allowed." }, 405, { allow: "POST" });
-  const staff = getStaff(req);
-  if (!staff) return json({ error: "Log in with an approved Discord account first." }, 401);
+  const reviewer = getReviewer(req);
+  if (!reviewer) return json({ error: "Only staff and referees can review drops." }, 401);
   if (!sameOrigin(req)) return json({ error: "Bad origin." }, 403);
+  // Referees are marked in the activity log so staff can tell their reviews apart
+  const who = getStaff(req) ? reviewer.name : `${reviewer.name} (referee)`;
   const b = await body(req), s = store();
   const list = await readSubs(s), sub = list.find(x => x.id === b?.id);
   if (!sub) return json({ error: "That drop isn't there any more. Refresh the page." }, 404);
 
   const board = await readBoard(s);
   const team = board.teams.find(t => t.name === sub.team) || teamOfCaptain(board, sub.by.id);
-  const reviewed = { at: Date.now(), reviewer: staff.name };
+  const reviewed = { at: Date.now(), reviewer: reviewer.name };
   const what = `${sub.player}'s ${sub.item} for ${sub.team} (${sub.tileName}, logged by ${sub.by.name})`;
 
   if (b.action === "reject") {
     if (sub.status !== "pending") return json({ error: "That drop has already been reviewed." }, 409);
     Object.assign(sub, { status: "rejected" }, reviewed);
     await writeSubs(list, s);
-    await logActivity(staff.name, "reject", "Rejected " + what, s);
+    await purge();
+    await logActivity(who, "reject", "Rejected " + what, s);
     return json({ sub });
   }
 
@@ -102,9 +106,10 @@ async function review(req){
     board.log = [{ id: sub.id, t: sub.t, team: team.name, tile: sub.tile, tileName: sub.tileName, item: sub.item,
       player: sub.player, proof: sub.proof, by: sub.by.name, ok: reviewed.at }, ...board.log].slice(0, LOG_MAX);
     Object.assign(sub, { status: "approved" }, reviewed);
-    const next = await saveBoard(board, staff.name, s);
+    // Drops first, so the board save's cache clear also drops it from the public pending list
     await writeSubs(list, s);
-    await logActivity(staff.name, "approve", "Approved " + what, s);
+    const next = await saveBoard(board, reviewer.name, s);
+    await logActivity(who, "approve", "Approved " + what, s);
     await announceDrop({ board: next, team, sub, newLines });
     return json({ sub, rev: next.rev });
   }
@@ -115,9 +120,9 @@ async function review(req){
     const t = board.tiles[sub.tile];
     if (team && t) bump(team, sub.tile, t.need, -1);
     Object.assign(sub, { status: "undone" }, reviewed);
-    const next = await saveBoard(board, staff.name, s);
     await writeSubs(list, s);
-    await logActivity(staff.name, "undo", "Undid " + what + " and took the progress back", s);
+    const next = await saveBoard(board, reviewer.name, s);
+    await logActivity(who, "undo", "Undid " + what + " and took the progress back", s);
     return json({ sub, rev: next.rev });
   }
 

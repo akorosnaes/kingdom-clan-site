@@ -168,6 +168,9 @@ select.inp{appearance:none;background-image:linear-gradient(45deg,transparent 50
 .tt .ab{font:600 12px/1 var(--mono);color:var(--mute)}
 .tt.s1{border-color:var(--wip);background:rgba(232,185,35,.16)}
 .tt.s2{border-color:var(--go);background:rgba(52,168,83,.55)}
+/* A drop for this tile is waiting for approval: amber stripes and a dashed edge (it doesn't count yet) */
+.tt.pd{border-style:dashed;border-color:var(--wip);background-image:repeating-linear-gradient(45deg,rgba(232,185,35,.2) 0 3px,transparent 3px 8px)}
+.th span i.pp{font-style:normal;margin-left:5px;color:var(--wip)}
 .tt .cnt{position:absolute;right:2px;bottom:2px;padding:1px 3px;border-radius:3px;background:rgba(0,0,0,.75);font:600 9px/1.1 var(--mono);color:var(--wip)}
 /* Hover card for a team's tile */
 .tip{position:fixed;z-index:50;left:0;top:0;display:flex;gap:12px;align-items:flex-start;width:max-content;max-width:260px;padding:12px 14px;background:#000;border:1px solid var(--line2);border-radius:8px;box-shadow:0 8px 28px rgba(0,0,0,.6);pointer-events:none;opacity:0;transform:translateY(4px);transition:opacity .12s,transform .12s}
@@ -181,6 +184,7 @@ select.inp{appearance:none;background-image:linear-gradient(45deg,transparent 50
 .tip small em{font-style:normal;color:#fff}
 .tip small .k1{color:var(--wip)}
 .tip small .k2{color:var(--go)}
+.tip small .kp{display:block;color:var(--wip)}
 .tt.s2::after{content:"✓";position:absolute;top:2px;right:4px;font:700 10px/1 var(--sans);color:#fff}
 .bg{display:grid;place-items:center;border:1px solid var(--line2);border-radius:6px;font:600 9px/1 var(--mono);letter-spacing:.08em;color:var(--dim);min-height:22px;transition:all .3s}
 /* Row markers are the same strip turned on its side, with the letters stacked: B I N G O */
@@ -194,6 +198,7 @@ select.inp{appearance:none;background-image:linear-gradient(45deg,transparent 50
 .legend i{width:12px;height:12px;border-radius:3px;border:1px solid var(--line2);background:var(--panel2)}
 .legend i.s1{border-color:var(--wip);background:rgba(232,185,35,.16)}
 .legend i.s2{border-color:var(--go);background:rgba(52,168,83,.55)}
+.legend i.pd{border-style:dashed;border-color:var(--wip);background-image:repeating-linear-gradient(45deg,rgba(232,185,35,.35) 0 2px,transparent 2px 5px)}
 
 /* Tile list (the board itself) */
 .board{display:grid;grid-template-columns:repeat(5,1fr);gap:8px}
@@ -298,6 +303,9 @@ textarea.inp{resize:vertical;min-height:96px;font:13px/1.5 var(--mono)}
 .lr a{font:500 12px/1 var(--mono);color:#fff}
 .lr button{background:none;border:1px solid var(--line2);border-radius:5px;color:var(--mute);padding:4px 8px;font:500 11px/1 var(--mono);cursor:pointer}
 .lr button:hover{border-color:#fff;color:#fff}
+.lr.pend{background:rgba(232,185,35,.05)}
+.lr.pend time{color:var(--wip)}
+.lr.pend .stag{margin-left:8px;vertical-align:1px}
 .lr.head{padding:9px 16px;background:var(--panel2);font:500 10px/1 var(--mono);letter-spacing:.14em;text-transform:uppercase;color:var(--dim)}
 @media(max-width:700px){.lr{grid-template-columns:1fr auto;gap:4px 12px}.lr time{grid-column:1/-1}.lr .ld{grid-column:1}.lr .la{grid-row:2/4;grid-column:2}.lr.head{display:none}}
 .more{display:block;margin:12px auto 0}
@@ -353,7 +361,7 @@ body::after{content:"";position:fixed;inset:0;z-index:100;pointer-events:none;op
   <div class="when" id="when" hidden></div>
   <p class="live" id="live" hidden><i></i><span>Live</span></p>
   <div class="who" id="who" hidden></div>
-  <a class="clog" id="clog" href="/auth/login" hidden>Team captain? Log in to submit drops</a>
+  <a class="clog" id="clog" href="/auth/login" hidden>Team captain or referee? Log in to submit or approve drops</a>
 </header>
 <main id="main">
   <details class="setup" id="setup" hidden>
@@ -422,10 +430,11 @@ const rankIcon = n => "https://oldschool.runescape.wiki/images/Clan_icon_-_" + e
 const teamMark = (team, color) => team?.icon ? `<img class="ticon" src="${rankIcon(team.icon)}" alt="" title="${esc(team.icon)}">`
   : `<i class="dot" style="background:${color || "var(--line2)"}"></i>`;
 
-let B = null;          // the board: { rev, title, bonus, tiles, teams:[{name, color, icon, captains:[Discord IDs], p}], log, items:{boss: [names]}, updated, by }
+let B = null;          // the board: { rev, title, bonus, tiles, teams:[{name, color, icon, captains:[Discord IDs], p}], log, pending, items:{boss: [names]}, updated, by }
 let staff = null;      // logged-in staff member, or null
 let captain = null;    // logged-in team captain, or null
-let subs = { pending: [], recent: [], mine: [] };   // submitted drops (staff see pending; captains see their own)
+let referee = null;    // logged-in bingo referee (approves and rejects drops), or null
+let subs = { pending: [], recent: [], mine: [] };   // submitted drops (staff and referees see pending; captains see their own)
 let captains = [];     // staff: everyone in CAPTAIN_DISCORD_IDS, for the captain pickers in setup
 let selTile = null;    // tile open in the editor
 let dirty = false, saving = false, clearLog = false;
@@ -473,6 +482,13 @@ const rowDone = (team, r) => [0,1,2,3,4].every(c => isDone(team, r * 5 + c));
 const colDone = (team, c) => [0,1,2,3,4].every(r => isDone(team, r * 5 + c));
 const bingos = team => LINES.filter(l => l.every(i => isDone(team, i))).length;
 const score = team => B.tiles.reduce((a, t, i) => a + (isDone(team, i) ? t.points : 0), 0) + bingos(team) * bonus();
+// Drops waiting for approval show on the board but don't count until they're approved
+const pendingOn = (team, i) => (B.pending || []).filter(d => d.team === team.name && d.tile === i).length;
+// The team's score if every drop waiting for approval were approved
+function scoreIfApproved(team){
+  const p = team.p.map((v, i) => { const n = pendingOn(team, i); return n ? Math.min(need(B.tiles[i]), Math.max(0, v) + n) : v; });
+  return score({ ...team, p });
+}
 const initials = n => n.split(/\s+/).filter(Boolean).slice(0, 2).map(w => w[0]).join("").toUpperCase() || "?";
 // A tile's picture: the boss icon, the uploaded image for a custom tile, or the tile's initials
 const imgUrl = id => "/api/bingo/images/" + id;
@@ -482,8 +498,8 @@ const face = (t, empty) => t.boss ? `<img src="${icon(t.boss)}" alt="" loading="
 
 // ---------- Rendering ----------
 function teamTile(team, ti, i){
-  const t = B.tiles[i], st = stateOf(team, i), n = need(t), count = Math.max(0, team.p[i]);
-  return `<div class="tt s${st}" data-team="${ti}" data-i="${i}" aria-label="${esc(`${tileName(t) || "Empty tile"}, ${t.points} points, ${STATE[st]}`)}">${face(t, "")}${n > 1 && st === 1 ? `<span class="cnt">${count}/${n}</span>` : ""}</div>`;
+  const t = B.tiles[i], st = stateOf(team, i), n = need(t), count = Math.max(0, team.p[i]), pd = st < 2 && pendingOn(team, i);
+  return `<div class="tt s${st}${pd ? " pd" : ""}" data-team="${ti}" data-i="${i}" aria-label="${esc(`${tileName(t) || "Empty tile"}, ${t.points} points, ${STATE[st]}${pd ? ", drop pending approval" : ""}`)}">${face(t, "")}${n > 1 && st === 1 ? `<span class="cnt">${count}/${n}</span>` : ""}</div>`;
 }
 
 function teamCard(team, ti){
@@ -496,12 +512,12 @@ function teamCard(team, ti){
   for (let c = 0; c < 5; c++) cells.push(`<div class="bg${colDone(team, c) ? " on" : ""}">BINGO</div>`);
   const st = team.p.map((_, i) => stateOf(team, i));
   const done = st.filter(x => x === 2).length, wip = st.filter(x => x === 1).length, bn = bingos(team);
-  const color = colorOf(team, ti);
+  const color = colorOf(team, ti), waiting = (B.pending || []).filter(d => d.team === team.name).length, extra = scoreIfApproved(team) - pts;
   return `<section class="team">
-    <div class="th"><b>${teamMark(team, color)}${esc(team.name)}</b><span><em>${num(pts)}</em> / ${num(tot)}</span></div>
+    <div class="th"><b>${teamMark(team, color)}${esc(team.name)}</b><span><em>${num(pts)}</em>${extra > 0 ? `<i class="pp" title="Points waiting for approval">+${num(extra)}</i>` : ""} / ${num(tot)}</span></div>
     <div class="bar"><i style="width:${pct}%;background:${color}"></i></div>
     <div class="g6">${cells.join("")}</div>
-    <div class="tf">${done} done · ${wip} in progress · ${bn} bingo${bn === 1 ? "" : "s"}</div>
+    <div class="tf">${done} done · ${wip} in progress · ${bn} bingo${bn === 1 ? "" : "s"}${waiting ? ` · ${waiting} pending` : ""}</div>
   </section>`;
 }
 
@@ -568,7 +584,7 @@ function render(){
   $("out").innerHTML = `
     <section class="sec">
       ${edit && !B.revealed ? `<p class="staffnote">Only staff can see the tiles right now. Visitors and captains see them once you click Reveal board to all in Bingo setup.</p>` : ""}
-      <div class="sech"><h2>Teams</h2><div class="legend"><span><i></i>Not started</span><span><i class="s1"></i>In progress</span><span><i class="s2"></i>Completed</span></div></div>
+      <div class="sech"><h2>Teams</h2><div class="legend"><span><i></i>Not started</span><span><i class="s1"></i>In progress</span><span><i class="s2"></i>Completed</span><span><i class="pd"></i>Pending approval</span></div></div>
       ${teams}
     </section>
     <section class="sec">
@@ -689,30 +705,31 @@ async function loadDraft(){
   try { draftTeams = (await api("/api/draft")).teams || []; } catch { draftTeams = []; }
 }
 
-// ---------- Drop log (approved drops, newest first) ----------
+// ---------- Drop log (drops waiting for approval, then approved drops, newest first) ----------
 const when = t => new Date(t).toLocaleString(undefined, { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" });
 const teamColor = name => { const i = B.teams.findIndex(t => t.name === name); return i < 0 ? "var(--dim)" : colorOf(B.teams[i], i); };
 const markOf = name => teamMark(B.teams.find(t => t.name === name), teamColor(name));
 const proofLink = u => `<a href="${esc(u)}" target="_blank" rel="noopener noreferrer nofollow">Proof ↗</a>`;
 function dropLog(){
-  const log = B.log || [];
-  if (!log.length && !staff) return "";
-  return `<section class="sec">
-    <div class="sech"><h2>Drop log</h2><small>${log.length} approved drop${log.length === 1 ? "" : "s"}</small></div>
-    ${log.length ? `<div class="dl"><div class="lr head"><span>Logged</span><span>Team</span><span>Drop</span><span></span></div>
-      ${log.slice(0, logShown).map(d => `<div class="lr"><time datetime="${new Date(d.t).toISOString()}">${when(d.t)}</time>
+  const log = B.log || [], pend = [...(B.pending || [])].sort((a, b) => b.t - a.t);
+  if (!log.length && !pend.length && !staff) return "";
+  const row = (d, p) => `<div class="lr${p ? " pend" : ""}"><time datetime="${new Date(d.t).toISOString()}">${when(d.t)}</time>
         <span class="lt">${markOf(d.team)}${esc(d.team)}</span>
-        <span class="ld"><b>${esc(d.player)}</b> received <b>${esc(d.item)}</b><small>${esc(d.tileName)}</small></span>
-        <span class="la">${d.proof ? proofLink(d.proof) : ""}${staff ? `<button type="button" data-undo="${esc(d.id)}" title="Remove from the log and take the progress back">Undo</button>` : ""}</span></div>`).join("")}</div>
+        <span class="ld"><b>${esc(d.player)}</b> received <b>${esc(d.item)}</b>${p ? '<span class="stag pending">Pending</span>' : ""}<small>${esc(d.tileName)}</small></span>
+        <span class="la">${d.proof ? proofLink(d.proof) : ""}${!p && (staff || referee) ? `<button type="button" data-undo="${esc(d.id)}" title="Remove from the log and take the progress back">Undo</button>` : ""}</span></div>`;
+  return `<section class="sec">
+    <div class="sech"><h2>Drop log</h2><small>${log.length} approved drop${log.length === 1 ? "" : "s"}${pend.length ? ` · ${pend.length} pending` : ""}</small></div>
+    ${log.length || pend.length ? `<div class="dl"><div class="lr head"><span>Logged</span><span>Team</span><span>Drop</span><span></span></div>
+      ${pend.map(d => row(d, true)).join("")}${log.slice(0, logShown).map(d => row(d, false)).join("")}</div>
       ${log.length > logShown ? `<button class="ghost more" id="logmore" type="button">Show ${Math.min(25, log.length - logShown)} more</button>` : ""}`
     : '<div class="msg">Approved drops will appear here.</div>'}
   </section>`;
 }
 
-// ---------- Pending drops (staff) ----------
+// ---------- Pending drops (staff and referees) ----------
 function renderReview(){
   const el = $("review");
-  if (!staff) { el.innerHTML = ""; return; }
+  if (!staff && !referee) { el.innerHTML = ""; return; }
   const list = subs.pending || [];
   el.innerHTML = `<section class="sec">
     <div class="sech"><h2>Pending drops${list.length ? `<span class="count">${list.length}</span>` : ""}</h2></div>
@@ -726,7 +743,7 @@ function renderReview(){
 }
 
 async function reviewDrop(id, action, btn){
-  if (action === "reject" && !confirm("Reject this drop? The captain will see it was rejected.")) return;
+  if (action === "reject" && !confirm("Reject this drop? It comes off the board and the captain will see it was rejected.")) return;
   if (action === "undo" && !confirm("Undo this drop? It's removed from the drop log and the team loses that progress.")) return;
   if (btn) btn.disabled = true;
   try {
@@ -766,7 +783,7 @@ function renderCaptain(){
   const tog = `<button class="ghost sm tog" id="logtog" type="button" aria-expanded="${!logHidden}">${logHidden ? "Show" : "Hide"}</button>`;
   const head = staff ? `<div class="sech"><h2>Drop submission</h2>${B.teams.length ? `<label class="logteam"><span>For</span><select class="inp" id="logteam" aria-label="Team">
       ${B.teams.map(t => `<option${t === team ? " selected" : ""}>${esc(t.name)}</option>`).join("")}</select></label>` : ""}<small>drops go to the pending list for approval</small>${tog}</div>`
-    : `<div class="sech"><h2>Drop submission</h2>${team ? `<small>${markOf(team.name)}${esc(team.name)} · drops go to staff for approval</small>` : ""}${tog}</div>`;
+    : `<div class="sech"><h2>Drop submission</h2>${team ? `<small>${markOf(team.name)}${esc(team.name)} · drops show on the board as pending until approved</small>` : ""}${tog}</div>`;
   if (logHidden) { el.innerHTML = `<section class="sec">${head}</section>`; return; }
 
   // Captains can only log while the bingo is running; staff can log any time, so they just get a reminder
@@ -829,7 +846,8 @@ async function submitDrop(i){
     r.querySelectorAll("[data-f]").forEach(x => x.value = "");
     await loadSubs();
     const again = $("cap").querySelector(`.cr[data-ct="${i}"] .cm`);
-    if (again) { again.textContent = "Sent! It'll show in the drop log once staff approve it."; again.className = "cm good"; }
+    if (again) { again.textContent = "Sent! It shows on the board as pending until staff or a referee approve it."; again.className = "cm good"; }
+    refreshBoard().catch(() => {});
   } catch (e) {
     say(e.status === 401 ? "Your login expired. Log in again." : e.message, "bad"); btn.disabled = false;
   }
@@ -853,7 +871,7 @@ function wireCaptain(){
 let rosterTeam = null;   // the team whose draft players were last loaded
 
 async function loadSubs(){
-  if (!staff && !captain) return;
+  if (!staff && !captain && !referee) return;
   try {
     const r = await api("/api/bingo/subs");
     subs = { pending: r.pending || [], recent: r.recent || [], mine: r.mine || [] };
@@ -876,7 +894,7 @@ async function flush(){
           starts: B.starts || 0, ends: B.ends || 0, track: B.track || "", revealed: !!B.revealed }) });
       // A reset also cleared every submitted drop on the server, so refresh the pending and "your drops" lists
       if (clearLog) { clearLog = false; loadSubs(); }
-      B.rev = res.rev; B.updated = res.updated; B.by = res.by; B.log = res.log;
+      B.rev = res.rev; B.updated = res.updated; B.by = res.by; B.log = res.log; B.pending = res.pending;
       // A newly picked boss brings its item list back with the save; show it in the open tile editor
       const newItems = JSON.stringify(res.items) !== JSON.stringify(B.items);
       B.items = res.items;
@@ -1120,10 +1138,10 @@ let tipFor = null;
 function showTip(el){
   const team = B.teams[el.dataset.team], i = +el.dataset.i, t = B.tiles[i];
   if (!team || !t) return;
-  const st = stateOf(team, i), n = need(t), count = Math.max(0, team.p[i]);
+  const st = stateOf(team, i), n = need(t), count = Math.max(0, team.p[i]), pd = st < 2 ? pendingOn(team, i) : 0;
   const tip = $("tip");
   tip.innerHTML = `${face(t, "?")}<div><b>${esc(tileName(t) || "Empty tile")}</b>${t.desc ? `<span class="d">${esc(t.desc)}</span>` : ""}
-    <small><em>${num(t.points)} pts</em> · <span class="k${st}">${STATE[st]}${n > 1 ? ` ${count}/${n}` : ""}</span></small></div>`;
+    <small><em>${num(t.points)} pts</em> · <span class="k${st}">${STATE[st]}${n > 1 ? ` ${count}/${n}` : ""}</span>${pd ? `<span class="kp">${pd} drop${pd === 1 ? "" : "s"} pending approval</span>` : ""}</small></div>`;
   // Above the tile if there's room, otherwise below; kept inside the screen
   const r = el.getBoundingClientRect(), w = tip.offsetWidth, h = tip.offsetHeight;
   const x = Math.max(8, Math.min(innerWidth - w - 8, r.left + r.width / 2 - w / 2));
@@ -1161,8 +1179,10 @@ function setLive(ok){
 async function refreshBoard(){
   const b = await api(url());
   // Only move forward: an older copy (e.g. from a cache that hasn't cleared yet) is ignored.
-  // At the start time the board is revealed without a new revision, so a change in "hidden" counts too.
-  if ((b.rev > B.rev || (b.rev === B.rev && b.hidden !== B.hidden)) && !saving && !dirty) {
+  // At the start time the board is revealed without a new revision, so a change in "hidden" counts too, and so do
+  // drops being submitted or rejected (they change the pending list but not the board).
+  const same = b.rev === B.rev && b.hidden === B.hidden && JSON.stringify(b.pending || []) === JSON.stringify(B.pending || []);
+  if (b.rev >= B.rev && !same && !saving && !dirty) {
     const track = B.track; B = b; if (staff) syncSetup(); render();
     if (B.track !== track) { comp = null; loadComp(); }
   }
@@ -1186,7 +1206,7 @@ function wireBoard(){
     }
     if (e.target.id === "logmore") { logShown += 25; render(); return; }
     const lb = e.target.dataset.lball; if (lb) { lbAll[lb] = !lbAll[lb]; render(); return; }
-    const u = e.target.dataset.undo; if (u && staff) reviewDrop(u, "undo", e.target);
+    const u = e.target.dataset.undo; if (u && (staff || referee)) reviewDrop(u, "undo", e.target);
   });
   $("review").addEventListener("click", e => { const { rev, id } = e.target.dataset; if (rev && id) reviewDrop(id, rev, e.target); });
 }
@@ -1196,17 +1216,19 @@ async function start(){
   try { B = await api("/api/bingo"); }
   catch { $("out").innerHTML = '<div class="msg">Couldn\'t load the bingo board. Try refreshing.</div>'; return; }
   try { staff = await api("/api/me"); } catch { staff = null; }
-  try { captain = await api("/api/captain"); } catch { captain = null; }
+  // /api/captain answers for captains and referees, saying which they are (someone can be both)
+  try { const me = await api("/api/captain"); captain = me.captain ? me : null; referee = me.referee ? me : null; } catch { captain = referee = null; }
   if (staff) {
     $("who").innerHTML = avatar(staff) + `Editing as <b>${esc(staff.name)}</b> · <a href="admin.html">Staff console</a> · <a href="/auth/logout">Log out</a><span class="save" id="savestate"></span>`;
     try { B = await api(url()); } catch {}
     try { captains = await api("/api/bingo/captains"); } catch { captains = []; }
     wireEditing();
-  } else if (captain) {
-    $("who").innerHTML = avatar(captain) + `Logged in as <b>${esc(captain.name)}</b>, team captain · <a href="/auth/logout?to=bingo">Log out</a>`;
+  } else if (captain || referee) {
+    const me = captain || referee, role = [captain && "team captain", referee && "referee"].filter(Boolean).join(" and ");
+    $("who").innerHTML = avatar(me) + `Logged in as <b>${esc(me.name)}</b>, ${role} · <a href="/auth/logout?to=bingo">Log out</a>`;
   }
-  $("who").hidden = !staff && !captain;
-  $("clog").hidden = !!(staff || captain);
+  $("who").hidden = !staff && !captain && !referee;
+  $("clog").hidden = !!(staff || captain || referee);
   if (staff || captain) wireCaptain();
   await Promise.all([loadSubs(), loadDraft()]);
   render(); wireTips(); wireBoard();
@@ -1214,8 +1236,8 @@ async function start(){
   setInterval(poll, POLL_MS);
   setInterval(renderWhen, 1000);
   setInterval(() => { if (!document.hidden && B.track) loadComp(); }, 3e5);
-  // Staff watch for new drops to approve; captains watch for their drops being reviewed
-  if (staff || captain) setInterval(() => { if (!document.hidden) loadSubs(); }, staff ? 5000 : 10000);
+  // Staff and referees watch for new drops to approve; captains watch for their drops being reviewed
+  if (staff || captain || referee) setInterval(() => { if (!document.hidden) loadSubs(); }, staff || referee ? 5000 : 10000);
   document.addEventListener("visibilitychange", () => { if (!document.hidden) { poll(); loadSubs(); } });
 }
 start();

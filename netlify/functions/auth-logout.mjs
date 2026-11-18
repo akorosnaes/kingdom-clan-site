@@ -1,4 +1,4 @@
-// /auth/logout: clears the login session. ?to=bingo sends captains back to the Bingo page instead of the console.
+// /auth/logout: clears the login session. ?to=bingo sends captains and referees back to the Bingo page instead of the console.
 import { redirect, setCookie, SESSION_COOKIE, staffHint } from "../lib/auth.mjs";
 
 export default async req =>
