@@ -29,18 +29,27 @@ async function cached(key, fn, ttl = TTL){
     throw e;
   }
 }
-export const clearRoleCache = () => cache.clear();
+// After staff save new roles: forget the old settings and members' roles (Discord's server and role lists can stay)
+export const clearRoleCache = () => [...cache.keys()].forEach(k => { if (!k.startsWith("get:") && !k.startsWith("members:")) cache.delete(k); });
 
 export class DiscordError extends Error {
   constructor(status, code, path){ super(`Discord ${path} ${status}${code ? " (" + code + ")" : ""}`); this.status = status; this.code = code; }
 }
-// GET from Discord as the bot; null for "not found" (e.g. someone who isn't in the server)
+// GET from Discord as the bot; null for "not found" (e.g. someone who isn't in the server).
+// When Discord says to slow down (429), waits as long as it asks (up to 5s) and tries again, twice at most.
 export async function discord(path){
-  const r = await fetch(api() + path, { headers: { authorization: "Bot " + botToken() } });
-  if (r.status === 404) return null;
-  if (!r.ok) { const b = await r.json().catch(() => ({})); throw new DiscordError(r.status, b.code, path.split("?")[0]); }
-  return r.json();
+  for (let tries = 0; ; tries++) {
+    const r = await fetch(api() + path, { headers: { authorization: "Bot " + botToken() } });
+    if (r.status === 404) return null;
+    if (r.ok) return r.json();
+    const b = await r.json().catch(() => ({}));
+    const wait = Number(b.retry_after ?? r.headers.get("retry-after")) || 1;
+    if (r.status === 429 && tries < 2 && wait <= 5) { await new Promise(res => setTimeout(res, wait * 1000 + 100)); continue; }
+    throw new DiscordError(r.status, b.code, path.split("?")[0]);
+  }
 }
+// The same, but reusing an answer from the last minute (the bot's own details, its servers, a server's roles)
+export const discordCached = path => cached("get:" + path, () => discord(path));
 
 export async function readRoleSettings(s = store()){
   const v = await s.get("roles", { type: "json" });
