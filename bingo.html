@@ -120,6 +120,7 @@ select.inp{appearance:none;background-image:linear-gradient(45deg,transparent 50
 .tcaps{display:flex;align-items:center;gap:6px;flex-wrap:wrap;min-height:30px;font:13px/1.3 var(--sans);letter-spacing:0;text-transform:none;color:#fff}
 .tcaps .clab{font:500 10px/1 var(--mono);letter-spacing:.14em;text-transform:uppercase;color:var(--mute);margin-right:4px}
 .tcaps .cnone{color:var(--dim);font-size:12px}
+.tcaps .cnone a{color:var(--mute)}
 .ctag{display:inline-flex;align-items:center;gap:4px;padding:3px 4px 3px 9px;border:1px solid var(--line2);border-radius:999px;background:var(--panel2);color:#fff}
 .ctag button{width:20px;height:20px;padding:0;border:0;border-radius:50%;background:none;color:var(--mute);font:14px/1 var(--sans);cursor:pointer}
 .ctag button:hover{background:var(--line2);color:#fff}
@@ -478,7 +479,7 @@ let staff = null;      // logged-in staff member, or null
 let captain = null;    // logged-in team captain, or null
 let referee = null;    // logged-in bingo referee (approves and rejects drops), or null
 let subs = { pending: [], recent: [], mine: [] };   // submitted drops (staff and referees see pending; captains see their own)
-let captains = [];     // staff: everyone in CAPTAIN_DISCORD_IDS, for the captain pickers in setup
+let captains = [];     // staff: everyone with the captain role in Discord (plus team captains who've lost it, "gone"), for the captain pickers in setup
 let selTile = null;    // tile open in the editor
 let dirty = false, saving = false, clearLog = false;
 let logShown = 25;
@@ -1131,16 +1132,16 @@ function syncSetup(force){
   $("revealbtn").className = B.revealed ? "ghost" : "primary";
   $("revealmsg").textContent = B.revealed ? "Everyone can see the board." : "Only staff can see the tiles. Everyone else sees the team names until you reveal it.";
   if (!force && $("tlist").contains(document.activeElement)) return;
-  const capName = c => c.name || "Discord ID …" + c.id.slice(-4);
+  const capName = c => (c.name || "Discord ID …" + c.id.slice(-4)) + (c.gone ? " (no captain role)" : "");
   // A team's captains (each can log drops for it) as removable tags, plus a menu to add another.
-  // The menu lists every captain in CAPTAIN_DISCORD_IDS who isn't on this team; picking one from another team moves them.
+  // The menu lists everyone with the captain role in Discord who isn't on this team; picking one from another team moves them.
   const capPick = (t, i) => {
     const mine = t.captains || [], byId = id => captains.find(c => c.id === id);
-    const others = captains.filter(c => !mine.includes(c.id));
+    const others = captains.filter(c => !mine.includes(c.id) && !c.gone);
     const tags = mine.map(id => `<span class="ctag">${esc(byId(id) ? capName(byId(id)) : "Removed captain")}<button type="button" data-tcapdel="${i}" data-id="${esc(id)}" title="Remove captain" aria-label="Remove captain">×</button></span>`).join("");
-    const add = captains.length ? (others.length ? `<select class="inp" data-tcapadd="${i}" aria-label="Add a captain to team ${i + 1}"><option value="">${mine.length ? "Add another captain…" : "Add captain…"}</option>
+    const add = captains.some(c => !c.gone) ? (others.length ? `<select class="inp" data-tcapadd="${i}" aria-label="Add a captain to team ${i + 1}"><option value="">${mine.length ? "Add another captain…" : "Add captain…"}</option>
       ${others.map(c => { const on = B.teams.find(x => (x.captains || []).includes(c.id)); return `<option value="${c.id}">${esc(capName(c))}${on ? ` (${esc(on.name)})` : ""}</option>`; }).join("")}</select>` : "")
-      : '<span class="cnone">Add captain Discord IDs to CAPTAIN_DISCORD_IDS in Netlify first</span>';
+      : '<span class="cnone">Nobody has the captain role yet. Set it under Bingo roles in the <a href="admin.html">staff console</a>, then give it to captains in Discord</span>';
     return `<div class="tcaps"><span class="clab">Captains</span>${tags || (captains.length ? '<span class="cnone">None yet</span>' : "")}${add}</div>`;
   };
   $("tlist").innerHTML = B.teams.map((t, i) => `<div class="tteam"><div class="trow"><input type="color" data-tc="${i}" value="${colorOf(t, i)}" title="Team colour" aria-label="Team ${i + 1} colour"><button type="button" class="icobtn" data-tico="${i}" title="${t.icon ? "Team icon: " + esc(t.icon) : "Pick a team icon"}" aria-label="Team ${i + 1} icon">${t.icon ? `<img src="${rankIcon(t.icon)}" alt="">` : "☺"}</button><input class="inp" data-tn="${i}" maxlength="40" value="${esc(t.name)}" aria-label="Team ${i + 1} name"><button type="button" data-tdel="${i}" title="Remove team" aria-label="Remove team">×</button></div>${capPick(t, i)}</div>`).join("")

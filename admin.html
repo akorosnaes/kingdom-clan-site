@@ -86,6 +86,13 @@ main{animation-delay:.1s}
 .primary{background:#fff;color:#000;border:0;border-radius:6px;padding:11px 22px;font:600 14px/1.2 var(--sans);cursor:pointer}
 .primary:hover{background:#ddd}
 .primary:disabled{opacity:.5;cursor:default}
+.rform{display:grid;grid-template-columns:repeat(3,minmax(0,1fr)) auto;gap:16px;align-items:end;padding:24px 0;border-bottom:1px solid var(--line)}
+@media(max-width:760px){.rform{grid-template-columns:1fr}}
+.rform label{display:grid;gap:8px;min-width:0;font:500 11px/1 var(--mono);letter-spacing:.14em;text-transform:uppercase;color:var(--mute)}
+.rform select{width:100%;background:var(--bg);border:1px solid var(--line2);border-radius:6px;color:#fff;padding:9px 12px;font:14px/1.3 var(--sans);letter-spacing:0;text-transform:none;color-scheme:dark}
+.rform select:disabled{opacity:.5}
+.rnote{margin:0;padding:24px 0;border-bottom:1px solid var(--line);color:var(--mute);font-size:14px;max-width:720px}
+.rnote a,.upmsg a{color:#fff}
 .preview{grid-column:1/-1;max-width:420px;border:1px solid var(--line);border-radius:6px}
 .upmsg{grid-column:1/-1;margin:0;font-size:14px;color:var(--mute)}
 .upmsg.bad{color:#fff}
@@ -167,6 +174,11 @@ body::after{content:"";position:fixed;inset:0;z-index:100;pointer-events:none;op
       <div class="acts"><a href="bingo-stats.html">Open bingo stats</a></div></div>
   </section>
 
+  <section class="sec" id="rolesec" hidden>
+    <div class="sech"><h2>Bingo roles</h2><small>Who can log and review drops · from your Discord server</small></div>
+    <div id="roles"><div class="msg">Loading roles…</div></div>
+  </section>
+
   <section class="sec" id="backupsec" hidden>
     <div class="sech"><h2>Bingo backups</h2><small>Taken every 6 hours · the latest 10 are kept</small></div>
     <div class="bkbar"><button class="primary" id="bknow" type="button">Back up now</button>
@@ -193,7 +205,7 @@ const ago = t => { const m = Math.max(1, Math.round((Date.now() - t) / 6e4));
   return m < 60 ? m + "m ago" : m < 1440 ? Math.round(m / 60) + "h ago" : Math.round(m / 1440) + "d ago"; };
 const ERRORS = {
   setup: "The staff console isn't set up yet: the Discord login settings still need adding in Netlify.",
-  denied: "That Discord account isn't on the staff, bingo captain or bingo referee list. Ask an admin to add your Discord user ID.",
+  denied: "That Discord account isn't on the staff list and doesn't have the bingo captain or referee role in the clan's Discord server.",
   cancelled: "Login cancelled.",
   expired: "That login took too long or was started elsewhere. Try again.",
   discord: "Discord didn't respond properly. Try again in a moment."
@@ -311,9 +323,55 @@ $("bkfile").addEventListener("change", async e => {
   restore({ data }, data.t);
 });
 
+// ---------- Bingo roles ----------
+// Captains and referees are whoever has the chosen roles in the server; changes apply within a minute
+let R = null;
+const ROLE_HELP = "Captains log drops for their team (you pick each one's team in Bingo setup). Referees approve and reject any team's drops. "
+  + "Give or take away the roles in Discord; the site catches up within a minute.";
+function showRoles(note = "", bad = false){
+  const box = $("roles");
+  if (!R.bot) {
+    box.innerHTML = `<p class="rnote">Captains and referees come from roles in your Discord server. To turn this on, add the bot's token to Netlify as <b>DISCORD_BOT_TOKEN</b> and redeploy.</p>`;
+    return;
+  }
+  if (!R.guilds.length && !R.problem) {
+    box.innerHTML = `<p class="rnote">${esc(R.botName || "The bot")} isn't in any server yet. <a href="${esc(R.invite)}" target="_blank" rel="noopener">Invite it to the clan's server</a>, then reload this page.</p>`;
+    return;
+  }
+  const same = R.guild === R.saved.guild;
+  const opts = (sel, none) => `<option value="">${none}</option>` + R.roles.map(r =>
+    `<option value="${r.id}"${r.id === sel ? " selected" : ""}>${esc(r.name)}${r.count != null ? ` · ${plural(r.count, "member")}` : ""}</option>`).join("");
+  const off = !R.roles.length ? " disabled" : "";
+  box.innerHTML = `<form class="rform" id="rform">
+      <label>Discord server<select id="rguild"><option value="">Pick a server…</option>${R.guilds.map(g => `<option value="${g.id}"${g.id === R.guild ? " selected" : ""}>${esc(g.name)}</option>`).join("")}</select></label>
+      <label>Captain role<select id="rcap"${off}>${opts(same ? R.saved.captain : "", "No captain role")}</select></label>
+      <label>Referee role<select id="rref"${off}>${opts(same ? R.saved.referee : "", "No referee role")}</select></label>
+      <button class="primary" id="rsave" type="submit"${R.guild ? "" : " disabled"}>Save</button>
+      <p class="upmsg${bad || R.problem ? " bad" : ""}" id="rmsg">${esc(R.problem || note || ROLE_HELP)}</p></form>
+    <p class="actfoot"><span>Bot not in the right server? <a href="${esc(R.invite)}" target="_blank" rel="noopener" style="color:inherit">Invite it</a></span></p>`;
+}
+async function loadRoles(guild = ""){
+  try { R = await api("/api/bingo/roles" + (guild ? "?guild=" + guild : "")); showRoles(); }
+  catch (e) { $("roles").innerHTML = `<div class="msg">${esc(e.message || "Couldn't load the bingo roles. Try refreshing.")}</div>`; }
+}
+$("roles").addEventListener("change", e => {
+  if (e.target.id !== "rguild") return;
+  $("rmsg").className = "upmsg"; $("rmsg").textContent = "Loading the server's roles…";
+  loadRoles(e.target.value);
+});
+$("roles").addEventListener("submit", async e => {
+  e.preventDefault();
+  const body = { guild: $("rguild").value, captain: $("rcap").value, referee: $("rref").value };
+  $("rsave").disabled = true; $("rmsg").className = "upmsg"; $("rmsg").textContent = "Saving…";
+  try {
+    R = await api("/api/bingo/roles", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(body) });
+    showRoles("Saved. Captains and referees will have access within a minute."); loadActivity();
+  } catch (err) { $("rmsg").className = "upmsg bad"; $("rmsg").textContent = err.message; $("rsave").disabled = false; }
+});
+
 // ---------- Staff activity ----------
 const ACT_KINDS = { approve: "Approved", reject: "Rejected", undo: "Undo", submit: "Logged", reveal: "Board", reset: "Reset", clear: "Cleared",
-  dates: "Dates", team: "Teams", items: "Items", backup: "Backup", restore: "Restore" };
+  dates: "Dates", team: "Teams", items: "Items", backup: "Backup", restore: "Restore", roles: "Roles" };
 let activity = [];
 function showActivity(){
   $("actlist").innerHTML = activity.map(a => `<div class="arow"><time datetime="${new Date(a.t).toISOString()}">${when(a.t)}</time>
@@ -340,8 +398,8 @@ async function start(){
     const me = await api("/api/me");
     $("who").innerHTML = (me.avatar ? `<img src="https://cdn.discordapp.com/avatars/${me.id}/${me.avatar}.png?size=48" alt="">` : "")
       + `Logged in as <b>${esc(me.name)}</b> · <a href="/auth/logout">Log out</a>`;
-    $("who").hidden = false; $("console").hidden = false; $("draftsec").hidden = false; $("backupsec").hidden = false; $("actsec").hidden = false;
-    loadBackups(); loadActivity();
+    $("who").hidden = false; $("console").hidden = false; $("draftsec").hidden = false; $("rolesec").hidden = false; $("backupsec").hidden = false; $("actsec").hidden = false;
+    loadRoles(); loadBackups(); loadActivity();
     calendars = await api("/api/calendars?staff=1");
     showList(); setDefaultMonth();
   } catch (e) {

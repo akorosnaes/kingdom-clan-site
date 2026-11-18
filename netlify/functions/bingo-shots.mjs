@@ -25,7 +25,7 @@ export default async (req, context) => {
   }
 
   if (req.method !== "POST") return json({ error: "Method not allowed." }, 405, { allow: "POST" });
-  const me = getStaff(req) || getCaptain(req);
+  const me = getStaff(req) || await getCaptain(req);
   if (!me) return json({ error: "Only team captains and staff can upload screenshots." }, 401);
   if (!sameOrigin(req)) return json({ error: "Bad origin." }, 403);
 

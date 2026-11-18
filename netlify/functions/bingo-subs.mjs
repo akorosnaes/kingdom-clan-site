@@ -25,7 +25,7 @@ async function body(req){ try { return await req.json(); } catch { return null; 
 async function subs(req){
   const s = store();
   if (req.method === "GET") {
-    const reviewer = getReviewer(req), me = reviewer || getCaptain(req);
+    const reviewer = await getReviewer(req), me = reviewer || await getCaptain(req);
     if (!me) return json({ error: "Log in first." }, 401);
     const list = await readSubs(s), out = {};
     if (reviewer) {
@@ -37,7 +37,7 @@ async function subs(req){
   }
 
   if (req.method !== "POST") return json({ error: "Method not allowed." }, 405, { allow: "GET, POST" });
-  const staff = getStaff(req), cap = getCaptain(req), me = staff || cap;
+  const staff = getStaff(req), cap = await getCaptain(req), me = staff || cap;
   if (!me) return json({ error: "Only team captains and staff can log drops." }, 401);
   if (!sameOrigin(req)) return json({ error: "Bad origin." }, 403);
 
@@ -87,7 +87,7 @@ async function subs(req){
 
 async function review(req){
   if (req.method !== "POST") return json({ error: "Method not allowed." }, 405, { allow: "POST" });
-  const reviewer = getReviewer(req);
+  const reviewer = await getReviewer(req);
   if (!reviewer) return json({ error: "Only staff and referees can review drops." }, 401);
   if (!sameOrigin(req)) return json({ error: "Bad origin." }, 403);
   // Referees are marked in the activity log so staff can tell their reviews apart

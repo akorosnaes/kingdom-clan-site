@@ -1,6 +1,7 @@
 // Staff activity log, kept in the "bingo" Blobs store as "activity": [{ t, by, kind, text }], newest first.
 // Records the things staff do that change the bingo for everyone: reviewing drops, logging drops for a team,
-// revealing or hiding the board, resetting or clearing it, changing its dates, editing item lists, and backups.
+// revealing or hiding the board, resetting or clearing it, changing its dates, editing item lists, backups, and
+// changing which Discord roles make someone a captain or referee.
 // Ordinary board edits (tile names, points, colours) aren't logged; they happen dozens of times while setting up.
 import { store } from "./bingo.mjs";
 
