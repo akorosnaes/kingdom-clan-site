@@ -37,6 +37,31 @@ test("a key with literal \\n or wrapping quotes becomes a usable PEM", () => {
   assert.ok(signJwt({ email: "a@b.c", key: normalizeKey(flat) }).split(".").length === 3);
 });
 
+test("a key that lost its line breaks, or came with CRLF, single quotes or as the whole JSON file, still signs", () => {
+  const body = pem.replace(/-----[A-Z ]+-----/g, "").replace(/\s+/g, "");
+  const shapes = {
+    "spaces instead of line breaks": pem.trim().replace(/\n/g, " "),
+    "CRLF line breaks": pem.trim().replace(/\n/g, "\r\n"),
+    "single quotes": "'" + pem.trim().replace(/\n/g, "\\n") + "'",
+    "one line, no breaks at all": "-----BEGIN PRIVATE KEY-----" + body + "-----END PRIVATE KEY-----",
+    "whole service-account JSON": JSON.stringify({ type: "service_account", client_email: "a@b.c", private_key: pem }),
+  };
+  for (const [name, raw] of Object.entries(shapes)) {
+    assert.equal(normalizeKey(raw), pem.trim(), name);
+    assert.equal(signJwt({ email: "a@b.c", key: normalizeKey(raw) }).split(".").length, 3, name);
+  }
+});
+
+test("a key that cannot be read gives a clear message and never echoes the key", () => {
+  const broken = "-----BEGIN PRIVATE KEY-----\nTHISISNOTAKEY\n-----END PRIVATE KEY-----";
+  assert.throws(() => signJwt({ email: "a@b.c", key: normalizeKey(broken) }), err => {
+    assert.match(err.message, /GOOGLE_SA_KEY is not a valid private key/);
+    assert.ok(!err.message.includes("THISISNOTAKEY") && !/DECODER|openssl/i.test(err.message));
+    return true;
+  });
+  assert.throws(() => signJwt({ email: "a@b.c", key: normalizeKey("not a key at all") }), /not a valid private key/);
+});
+
 test("readRange fetches a token once and reuses it", async () => {
   process.env.GOOGLE_SA_EMAIL = "bot@example.com";
   process.env.GOOGLE_SA_KEY = pem.trim().replace(/\n/g, "\\n");
@@ -87,25 +112,25 @@ test("readRange throws on a Google error and returns [] for an empty range", asy
   } finally { globalThis.fetch = realFetch; }
 });
 
-test("readGrid asks for cell text and fill only, and turns Google's 0..1 floats into #rrggbb", async () => {
+test("readGrid asks for cell text, note and fill only, and turns Google's 0..1 floats into #rrggbb", async () => {
   process.env.GOOGLE_SA_EMAIL = "bot@example.com";
   process.env.GOOGLE_SA_KEY = pem;
   const realFetch = globalThis.fetch, urls = [];
   const grid = { sheets: [{ data: [{ rowData: [
     { values: [{ formattedValue: "2026-11-19T14:00:00Z" }, { formattedValue: "Alice" },
-      { formattedValue: "✓", userEnteredFormat: { backgroundColor: { red: 217 / 255, green: 85 / 255, blue: 47 / 255 } } },
+      { formattedValue: "✓", note: "2026-11-19T14:03:22Z", userEnteredFormat: { backgroundColor: { red: 217 / 255, green: 85 / 255, blue: 47 / 255 } } },
       { formattedValue: "✓", userEnteredFormat: { backgroundColor: { green: 1 } } }, {}] },
     {},
   ] }] }] };
   globalThis.fetch = async url => { urls.push(String(url)); return String(url).includes("oauth2") ? Response.json({ access_token: "t", expires_in: 3600 }) : Response.json(grid); };
   try {
     const rows = await readGrid("sheet1", "'Progress'!A2:AC");
-    assert.deepEqual(rows, [[{ v: "2026-11-19T14:00:00Z", bg: null }, { v: "Alice", bg: null }, { v: "✓", bg: "#d9552f" }, { v: "✓", bg: "#00ff00" }, { v: "", bg: null }], []]);
+    assert.deepEqual(rows, [[{ v: "2026-11-19T14:00:00Z", bg: null, note: "" }, { v: "Alice", bg: null, note: "" }, { v: "✓", bg: "#d9552f", note: "2026-11-19T14:03:22Z" }, { v: "✓", bg: "#00ff00", note: "" }, { v: "", bg: null, note: "" }], []]);
     const read = new URL(urls.find(u => u.includes("sheets.googleapis.com")));
     assert.equal(read.pathname, "/v4/spreadsheets/sheet1");
     assert.equal(read.searchParams.get("includeGridData"), "true");
     assert.equal(read.searchParams.get("ranges"), "'Progress'!A2:AC");
-    assert.equal(read.searchParams.get("fields"), "sheets(data(rowData(values(formattedValue,userEnteredFormat(backgroundColor)))))");
+    assert.equal(read.searchParams.get("fields"), "sheets(data(rowData(values(formattedValue,note,userEnteredFormat(backgroundColor)))))");
     globalThis.fetch = async url => String(url).includes("oauth2") ? Response.json({ access_token: "t", expires_in: 3600 }) : Response.json({ sheets: [{ data: [{}] }] });
     assert.deepEqual(await readGrid("sheet1", "A2:AC"), []);
   } finally { globalThis.fetch = realFetch; }

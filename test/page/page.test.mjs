@@ -102,9 +102,9 @@ function boot({ api }){
 }
 
 const px = v => (v * 100).toFixed(3) + "%";
-const player = (rsn, icon, progress, color = "#d9552f") => ({ rsn, icon, color, progress, reachedAt: null });
+const player = (rsn, icon, progress, color = "#d9552f", extra = {}) => ({ rsn, icon, color, progress, bonus: false, startedAt: null, reachedAt: null, endedAt: null, ...extra });
 const drops = [{ n: 1, name: "Dragon pickaxe" }, { n: 2, name: "Abyssal whip" }];
-const find = (tk, tipText) => tk.find(e => e.querySelector(".tip").textContent === tipText);
+const find = (tk, rsn, n) => tk.find(e => e.querySelector(".tip").textContent.split("\n").slice(0, 2).join("|") === `${rsn}|${n}/26 tiles`);
 
 test("first load places turkeys without walking and fills the table, spots and Start stack", async () => {
   const data = { players: [player("Dee", 4, 26), player("Amy", 5, 3), player("Bo", 6, 3), player("Cy", 7, 0)], drops };
@@ -114,19 +114,19 @@ test("first load places turkeys without walking and fills the table, spots and S
   assert.equal(page.tk().length, 3);
   assert.equal(page.idle().length, 2);
   assert.equal(page.board.children.filter(c => c.cls.has("sp")).length, 27);
-  const amy = find(page.tk(), "Amy - 3/26");
-  assert.ok(amy && find(page.tk(), "Bo - 3/26") && find(page.tk(), "Dee - 26/26"));
+  const amy = find(page.tk(), "Amy", 3);
+  assert.ok(amy && find(page.tk(), "Bo", 3) && find(page.tk(), "Dee", 26));
   assert.match(amy.style.left, /^\d+\.\d+%$/);
   assert.equal(amy.querySelector("b").textContent, "A");
-  assert.equal(amy.attrs["aria-label"], "Amy - 3/26");
+  assert.equal(amy.attrs["aria-label"], "Amy, 3 of 26 tiles");
   assert.equal(amy.tabIndex, 0);
   assert.equal(amy.cls.has("r"), S.spots[3].faceIn === "right");
   assert.equal(page.idle()[0].attrs["aria-hidden"], "true");
   assert.equal(page.idle()[0].tabIndex, -1);
   const spotTips = page.board.children.filter(c => c.cls.has("sp")).map(page.tip);
-  assert.deepEqual([spotTips[0], spotTips[1], spotTips[2], spotTips[3]], ["Start", "#1 Dragon pickaxe", "#2 Abyssal whip", "#3"]);
+  assert.deepEqual([spotTips[0], spotTips[1], spotTips[2], spotTips[3]], ["Start", "#1 - Dragon pickaxe", "#2 - Abyssal whip", "#3"]);
   const text = el => String(el.textContent || "") + el.children.map(text).join("");
-  assert.deepEqual(page.byId.rows.children.map(r => r.children.map(text)), [["1", "Dee", "26/26"], ["2", "Amy", "3/26"], ["3", "Bo", "3/26"]]);
+  assert.deepEqual(page.byId.rows.children.map(r => r.children.slice(0, 3).map(text)), [["1", "Dee", "26/26"], ["2", "Amy", "3/26"], ["3", "Bo", "3/26"]]);
   assert.equal(page.byId.results.hidden, false);
   assert.equal(page.byId.empty.hidden, true);
   assert.equal(page.timers.length, 1);
@@ -149,9 +149,9 @@ test("later changes walk along the route and an idle turkey takes over for a new
   assert.equal(page.idle().length, 2);
   assert.ok(!page.idle().includes(idle1));
   assert.ok(page.tk().includes(idle1), "the front idle turkey became a player");
-  const amy = find(page.tk(), "Amy - 5/26"), cy = find(page.tk(), "Cy - 1/26"), di = find(page.tk(), "Di - 4/26");
+  const amy = find(page.tk(), "Amy", 5), cy = find(page.tk(), "Cy", 1), di = find(page.tk(), "Di", 4);
   assert.ok(amy && cy && di, page.tk().map(page.tip).join(", "));
-  assert.equal(find(page.tk(), "Bo - 3/26"), undefined);
+  assert.equal(find(page.tk(), "Bo", 3), undefined);
   assert.equal(amy.cls.has("walking"), false);
   const hook = {};
   vm.runInNewContext(read("turkey-trot/board/board-hook.js"), { window: hook });
@@ -172,7 +172,7 @@ test("with reduced motion nothing walks", async () => {
   data = { players: [player("Amy", 5, 9), player("New", 6, 2)], drops };
   await page.poll();
   assert.equal(page.frames.length, 0);
-  assert.ok(find(page.tk(), "Amy - 9/26") && find(page.tk(), "New - 2/26"));
+  assert.ok(find(page.tk(), "Amy", 9) && find(page.tk(), "New", 2));
 });
 
 test("a player who moves back jumps and one at 0 leaves the board", async () => {
@@ -182,7 +182,7 @@ test("a player who moves back jumps and one at 0 leaves the board", async () => 
   data = { players: [player("Amy", 5, 2), player("Bo", 6, 0)], drops };
   await page.poll();
   assert.equal(page.frames.length, 0);
-  assert.deepEqual(page.tk().map(page.tip), ["Amy - 2/26"]);
+  assert.deepEqual(page.tk().map(page.tip), ["Amy\n2/26 tiles"]);
 });
 
 test("a failed refresh keeps the board and says so; a failed first load says so too", async () => {
@@ -214,7 +214,7 @@ test("text from the API only goes in through textContent", async () => {
   await page.settle();
   assert.ok(El.html.every(h => !h.includes("<img")), "never in innerHTML");
   const t = page.tk()[0];
-  assert.equal(page.tip(t), `${evil} - 4/26`);
+  assert.equal(page.tip(t), `${evil}\n4/26 tiles`);
   const dot = page.byId.rows.children[0].children[1].children[0];
   assert.equal(dot.style.background, "#888888");
 });
@@ -227,4 +227,77 @@ test("polling stops while the tab is hidden and resumes on return", async () => 
   page.doc.hidden = false; page.listeners.visibilitychange();
   await page.settle();
   assert.equal(page.calls.length, before + 1);
+});
+
+const at = (h, m = 0) => new Date(Date.UTC(2026, 10, 19, 14) + (h * 60 + m) * 60000).toISOString();
+
+test("a turkey's tooltip has the RSN, the tiles and the elapsed time, and an aria-label on one line", async () => {
+  const page = boot({ api: () => ({ drops, players: [
+    player("Run", 3, 5, "#d9552f", { startedAt: at(0), reachedAt: at(3, 12) }),
+    player("Day", 4, 7, "#d9552f", { startedAt: at(0), reachedAt: at(52, 12) }),
+    player("Min", 5, 2, "#d9552f", { startedAt: at(0), reachedAt: at(0, 45) }),
+    player("Quick", 6, 1, "#d9552f", { startedAt: at(0), reachedAt: at(0, 0) }),
+    player("Hour", 7, 4, "#d9552f", { startedAt: at(0), reachedAt: at(1, 0) }),
+    player("Done", 8, 26, "#d9552f", { startedAt: at(0), reachedAt: at(80), endedAt: at(26, 30) }),
+    player("NoStart", 9, 3, "#d9552f", { reachedAt: at(2) }),
+  ] }) });
+  await page.settle();
+  const tipOf = rsn => page.tk().find(e => page.tip(e).startsWith(rsn + "\n"));
+  assert.equal(page.tip(tipOf("Run")), "Run\n5/26 tiles\nElapsed 3h 12m");
+  assert.equal(tipOf("Run").attrs["aria-label"], "Run, 5 of 26 tiles, elapsed 3h 12m");
+  assert.equal(page.tip(tipOf("Day")), "Day\n7/26 tiles\nElapsed 2d 4h 12m");
+  assert.equal(page.tip(tipOf("Min")), "Min\n2/26 tiles\nElapsed 45m");
+  assert.equal(page.tip(tipOf("Quick")), "Quick\n1/26 tiles\nElapsed <1m");
+  assert.equal(page.tip(tipOf("Hour")), "Hour\n4/26 tiles\nElapsed 1h 0m");
+  assert.equal(page.tip(tipOf("Done")), "Done\n26/26 tiles\nElapsed 1d 2h 30m", "a finisher uses the end time");
+  assert.equal(page.tip(tipOf("NoStart")), "NoStart\n3/26 tiles");
+  assert.equal(tipOf("NoStart").attrs["aria-label"], "NoStart, 3 of 26 tiles");
+});
+
+test("the tooltip follows the player's tiles while the elapsed time uses the new data", async () => {
+  let data = { drops, players: [player("Amy", 5, 3, "#d9552f", { startedAt: at(0), reachedAt: at(1) })] };
+  const page = boot({ api: () => data });
+  await page.settle();
+  data = { drops, players: [player("Amy", 5, 4, "#d9552f", { startedAt: at(0), reachedAt: at(2, 30) })] };
+  page.motion.matches = true;
+  await page.poll();
+  assert.equal(page.tip(page.tk()[0]), "Amy\n4/26 tiles\nElapsed 2h 30m");
+});
+
+test("spot labels read '#n - name', '#n' without a name, and Start", async () => {
+  const page = boot({ api: () => ({ players: [], drops: [{ n: 5, name: "Molch Pearl" }] }) });
+  await page.settle();
+  const tips = page.board.children.filter(c => c.cls.has("sp")).map(page.tip);
+  assert.deepEqual([tips[0], tips[4], tips[5], tips[26]], ["Start", "#4", "#5 - Molch Pearl", "#26"]);
+});
+
+test("the table has a Bonus column with disabled checkboxes, lists bonus-only players and keeps the API order", async () => {
+  const page = boot({ api: () => ({ drops, players: [
+    player("Fin", 1, 26, "#d9552f", { bonus: true }),
+    player("Tied2", 2, 9, "#d9552f", { reachedAt: at(5) }),
+    player("Tied1", 3, 9, "#d9552f", { reachedAt: at(4), bonus: true }),
+    player("OnlyBonus", 4, 0, "#d9552f", { bonus: true }),
+    player("Nothing", 5, 0),
+  ] }) });
+  await page.settle();
+  assert.match(html, /<th class="num" scope="col">Bonus<\/th>/);
+  const rows = page.byId.rows.children;
+  assert.deepEqual(rows.map(r => r.children[1].children[1]?.textContent ?? r.children[1].children.at(-1).textContent), ["Fin", "Tied2", "Tied1", "OnlyBonus"]);
+  const boxes = rows.map(r => r.children[3].children[0]);
+  assert.ok(boxes.every(b => b.type === "checkbox" && b.disabled === true));
+  assert.deepEqual(boxes.map(b => b.checked), [true, false, true, true]);
+  assert.deepEqual(boxes.map(b => b.attrs["aria-label"]), ["Bonus completed", "Bonus not completed", "Bonus completed", "Bonus completed"]);
+  assert.equal(rows[3].children[2].textContent, "0/26");
+  assert.equal(page.tk().length, 3, "players with no tile are not on the board");
+});
+
+test("a table with only bonus-only players still shows, and nothing at all shows the empty message", async () => {
+  const only = boot({ api: () => ({ drops, players: [player("OnlyBonus", 4, 0, "#d9552f", { bonus: true })] }) });
+  await only.settle();
+  assert.equal(only.byId.results.hidden, false);
+  assert.equal(only.byId.empty.hidden, true);
+  const none = boot({ api: () => ({ drops, players: [player("Nothing", 4, 0)] }) });
+  await none.settle();
+  assert.equal(none.byId.results.hidden, true);
+  assert.equal(none.byId.empty.hidden, false);
 });

@@ -4,15 +4,21 @@ import { TURKEY_COLORS } from "../../netlify/lib/turkey-colors.mjs";
 import { iconForColor, parseDrops, parseProgress, parseRow, parseSheet, rankPlayers, sampleResult } from "../../netlify/lib/turkey-trot.mjs";
 
 const START = "2026-11-19T14:00:00Z", END = "2026-11-21T09:00:00Z";
-const cell = (v = "", bg = null) => ({ v, bg });
+const cell = (v = "", bg = null, note = "") => ({ v, bg, note });
+// The time tile number n (1 to 26) was reached in the default fixture: n hours after the start
+const noteAt = n => new Date(Date.parse(START) + n * 3600000).toISOString();
 
-// A Progress grid row: Start Time, RSN, 26 position cells, Bonus, End Time. Reached cells hold a tick and the player's colour.
-const row = ({ rsn = "Alice", ticks = 0, icon = 1, bg, start = START, end = "", bonus = false } = {}) =>
-  [cell(start), cell(rsn), ...Array.from({ length: 26 }, (_, i) => i < ticks ? cell("✓", bg === undefined ? TURKEY_COLORS[icon - 1] : bg) : cell()), cell(bonus ? "✓" : ""), cell(end)];
+// A Progress grid row: Start Time, RSN, 26 position cells, Bonus, End Time. Reached cells hold a tick, the player's colour and a note with the time.
+// notes overrides the per-tile notes (an array indexed from tile 1).
+const row = ({ rsn = "Alice", ticks = 0, icon = 1, bg, start = START, end = "", bonus = false, notes } = {}) =>
+  [cell(start), cell(rsn),
+    ...Array.from({ length: 26 }, (_, i) => i < ticks ? cell("✓", bg === undefined ? TURKEY_COLORS[icon - 1] : bg, notes ? notes[i] ?? "" : noteAt(i + 1)) : cell()),
+    cell(bonus ? "✓" : "", bonus ? TURKEY_COLORS[icon - 1] : null), cell(end)];
 
-test("a normal row: ticks are the progress and the fill gives the icon and colour", () => {
+test("a normal row: ticks are the progress, the fill gives the icon and colour, notes give the times", () => {
   assert.deepEqual(parseRow(row({ rsn: "Alice", ticks: 5, icon: 17 })),
-    { rsn: "Alice", icon: 17, color: TURKEY_COLORS[16], progress: 5, reachedAt: "2026-11-19T14:00:00.000Z" });
+    { rsn: "Alice", icon: 17, color: TURKEY_COLORS[16], progress: 5, bonus: false,
+      startedAt: "2026-11-19T14:00:00.000Z", reachedAt: noteAt(5), endedAt: null });
 });
 
 test("every accent maps to its own icon, and one step off per channel still matches", () => {
@@ -33,18 +39,21 @@ test("progress counts only the leading ticks", () => {
   assert.equal(parseRow(row({ ticks: 3 }).slice(0, 5)).progress, 3);
 });
 
-test("a bonus tick in AC never changes progress", () => {
+test("a bonus tick in AC sets bonus and never changes progress", () => {
   assert.equal(parseRow(row({ ticks: 3, bonus: true })).progress, 3);
-  assert.equal(parseRow(row({ ticks: 0, bonus: true })).progress, 0);
+  assert.equal(parseRow(row({ ticks: 3, bonus: true })).bonus, true);
+  assert.equal(parseRow(row({ ticks: 3 })).bonus, false);
+  const bonusOnly = parseRow(row({ ticks: 0, bonus: true, icon: 12 }));
+  assert.equal(bonusOnly.progress, 0);
+  assert.equal(bonusOnly.icon, 12, "a player with no tile takes their colour from the bonus cell");
   const finisher = parseRow(row({ ticks: 26, bonus: true, end: END }));
   assert.equal(finisher.progress, 26);
-  assert.equal(finisher.reachedAt, "2026-11-21T09:00:00.000Z");
+  assert.equal(finisher.endedAt, "2026-11-21T09:00:00.000Z");
 });
 
-test("the bonus does not affect ordering", () => {
-  const out = parseProgress([row({ rsn: "NoBonus", ticks: 9, start: "2026-11-19T10:00:00Z" }), row({ rsn: "Bonus", ticks: 9, bonus: true, start: "2026-11-19T11:00:00Z" }),
-    row({ rsn: "BonusOnly", ticks: 8, bonus: true, start: "2026-11-19T09:00:00Z" })]);
-  assert.deepEqual(out.map(p => p.rsn), ["NoBonus", "Bonus", "BonusOnly"]);
+test("a bonus-only row survives parsing and sorts after everyone with a tile", () => {
+  const out = parseProgress([row({ rsn: "Zed", ticks: 0, bonus: true }), row({ rsn: "Amy", ticks: 0, bonus: true }), row({ rsn: "Bo", ticks: 1 }), row({ rsn: "Cy", ticks: 0 })]);
+  assert.deepEqual(out.map(p => [p.rsn, p.progress, p.bonus]), [["Bo", 1, false], ["Amy", 0, true], ["Cy", 0, false], ["Zed", 0, true]]);
 });
 
 test("the colour is the first reached cell's fill, even if later cells differ", () => {
@@ -61,12 +70,16 @@ test("no usable fill falls back to the row's place among the data rows", () => {
   assert.deepEqual(Object.fromEntries(out.map(p => [p.rsn, p.icon])), { A: 1, C: 3 });
 });
 
-test("reachedAt: End Time for a finisher, else Start Time, else null", () => {
-  assert.equal(parseRow(row({ ticks: 26, end: END })).reachedAt, "2026-11-21T09:00:00.000Z");
-  assert.equal(parseRow(row({ ticks: 26, end: "" })).reachedAt, "2026-11-19T14:00:00.000Z");
-  assert.equal(parseRow(row({ ticks: 7, end: END })).reachedAt, "2026-11-19T14:00:00.000Z");
-  assert.equal(parseRow(row({ ticks: 7, start: "" })).reachedAt, null);
-  assert.equal(parseRow(row({ ticks: 7, start: "soon" })).reachedAt, null);
+test("times: reachedAt is the last tile's note, else a finisher's end, else the start", () => {
+  assert.equal(parseRow(row({ ticks: 7 })).reachedAt, noteAt(7));
+  assert.equal(parseRow(row({ ticks: 7, notes: [] })).reachedAt, "2026-11-19T14:00:00.000Z", "no notes: the start time");
+  assert.equal(parseRow(row({ ticks: 7, notes: ["junk", "", "x", "", "", "", "no"] })).reachedAt, "2026-11-19T14:00:00.000Z");
+  assert.equal(parseRow(row({ ticks: 26, notes: [], end: END })).reachedAt, "2026-11-21T09:00:00.000Z", "a finisher with no notes: the end time");
+  assert.equal(parseRow(row({ ticks: 7, notes: [], end: END })).reachedAt, "2026-11-19T14:00:00.000Z", "only a finisher falls back to the end");
+  assert.equal(parseRow(row({ ticks: 7, notes: [], start: "" })).reachedAt, null);
+  assert.equal(parseRow(row({ ticks: 7, start: "soon" })).startedAt, null);
+  assert.equal(parseRow(row({ ticks: 26, end: END })).endedAt, "2026-11-21T09:00:00.000Z");
+  assert.equal(parseRow(row({ ticks: 0 })).reachedAt, "2026-11-19T14:00:00.000Z");
 });
 
 test("bad RSN, empty and junk rows are skipped", () => {
@@ -75,22 +88,34 @@ test("bad RSN, empty and junk rows are skipped", () => {
   assert.equal(parseRow(row({ rsn: "Zezima_1-2" })).rsn, "Zezima_1-2");
 });
 
-test("only the five public fields are output", () => {
+test("only the public fields are output", () => {
   const out = parseSheet([row({ ticks: 3 }), row({ rsn: "Bob", ticks: 9 })], [["1", "Dragon pickaxe"]]);
-  assert.deepEqual(Object.keys(out.players[0]).sort(), ["color", "icon", "progress", "reachedAt", "rsn"]);
+  assert.deepEqual(Object.keys(out.players[0]).sort(), ["bonus", "color", "endedAt", "icon", "progress", "reachedAt", "rsn", "startedAt"]);
 });
 
-test("ordering: finishers by time, then spaces, then who got there first", () => {
-  const p = (rsn, progress, reachedAt) => ({ rsn, icon: 1, color: "#000000", progress, reachedAt });
+test("ordering: finishers by end time, then tiles, then who reached theirs first, then RSN; no tile last", () => {
+  const p = (rsn, progress, reachedAt, endedAt = null, bonus = false) => ({ rsn, icon: 1, color: "#000000", progress, bonus, startedAt: null, reachedAt, endedAt });
   const ranked = rankPlayers([
     p("Late", 10, "2026-11-20T12:00:00.000Z"),
-    p("FinishB", 26, "2026-11-22T10:00:00.000Z"),
+    p("FinishB", 26, "2026-11-22T10:00:00.000Z", "2026-11-22T10:00:00.000Z"),
     p("Most", 20, "2026-11-23T10:00:00.000Z"),
     p("Early", 10, "2026-11-20T09:00:00.000Z"),
-    p("FinishA", 26, "2026-11-21T10:00:00.000Z"),
+    p("TieB", 10, "2026-11-20T09:00:00.000Z"),
+    p("FinishA", 26, "2026-11-23T10:00:00.000Z", "2026-11-21T10:00:00.000Z"),
     p("Zero", 0, null),
+    p("BonusZero", 0, null, null, true),
+    p("Bonus", 10, "2026-11-20T12:00:00.000Z", null, true),
   ]);
-  assert.deepEqual(ranked.map(x => x.rsn), ["FinishA", "FinishB", "Most", "Early", "Late", "Zero"]);
+  assert.deepEqual(ranked.map(x => x.rsn), ["FinishA", "FinishB", "Most", "Early", "TieB", "Bonus", "Late", "BonusZero", "Zero"]);
+});
+
+test("ties on a tile are broken by who reached it first, in parsed rows too", () => {
+  const out = parseProgress([
+    row({ rsn: "Second", ticks: 3, notes: ["", "", "2026-11-19T18:00:00Z"] }),
+    row({ rsn: "First", ticks: 3, bonus: true, notes: ["", "", "2026-11-19T16:00:00Z"] }),
+    row({ rsn: "Ahead", ticks: 4 }),
+  ]);
+  assert.deepEqual(out.map(p => p.rsn), ["Ahead", "First", "Second"]);
 });
 
 test("bad rows are skipped and a repeated RSN keeps the first row", () => {
@@ -115,9 +140,29 @@ test("the sample is valid and moves over time", () => {
   const a = sampleResult(1_000_000), b = sampleResult(1_000_000 + 60_000);
   assert.equal(a.drops.length, 26);
   assert.ok(a.players.length > 20);
-  assert.deepEqual(parseProgress(a.players.map(p => row({ ...p, ticks: p.progress }))).length, a.players.length);
+  assert.equal(parseProgress(a.players.map(p => row({ ...p, ticks: p.progress }))).length, a.players.length);
   assert.ok(a.players.every(p => p.color === TURKEY_COLORS[p.icon - 1]));
   assert.notDeepEqual(a.players.map(p => p.progress).sort(), b.players.map(p => p.progress).sort());
+});
+
+test("the moving sample has bonuses, times, finishers over time and ties on a tile with different times", () => {
+  const seen = { bonus: false, finished: false };
+  for (let t = 0; t < 360; t += 5) {
+    const r = sampleResult(1_000_000_000 + t * 1000);
+    seen.bonus ||= r.players.some(p => p.bonus);
+    seen.finished ||= r.players.some(p => p.progress === 26 && p.endedAt);
+    for (const p of r.players) {
+      assert.equal(typeof p.bonus, "boolean");
+      if (p.progress > 0) assert.ok(Date.parse(p.startedAt) < Date.parse(p.reachedAt), p.rsn);
+      else assert.equal(p.reachedAt, null);
+    }
+  }
+  assert.deepEqual(seen, { bonus: true, finished: true });
+  const r = sampleResult(1_000_000_000 + 200_000), byRsn = Object.fromEntries(r.players.map(p => [p.rsn, p]));
+  assert.equal(byRsn.Birch.progress, byRsn.Ashen.progress);
+  assert.ok(Date.parse(byRsn.Birch.reachedAt) > Date.parse(byRsn.Ashen.reachedAt));
+  const order = r.players.map(p => p.rsn);
+  if (byRsn.Ashen.progress > 0 && byRsn.Ashen.progress < 26) assert.ok(order.indexOf("Ashen") < order.indexOf("Birch"));
 });
 
 test("a still sample puts n players on different random spaces, the same for the same seed", () => {

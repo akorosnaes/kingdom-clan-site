@@ -87,7 +87,7 @@ main{max-width:1680px;padding:12px 16px 72px}
 .sp{position:absolute;width:2.6%;aspect-ratio:1;transform:translate(-50%,-50%);border-radius:50%;z-index:1}
 .sp:hover,.sp:focus{z-index:60;outline:none}
 .sp:focus-visible{outline:2px solid #fff}
-.tip{display:none;position:absolute;left:50%;bottom:100%;transform:translateX(-50%);background:var(--panel);border:1px solid var(--line2);border-radius:6px;padding:2px 8px;white-space:nowrap;font:12px/1.5 var(--sans);color:#fff;pointer-events:none}
+.tip{display:none;position:absolute;left:50%;bottom:100%;transform:translateX(-50%);background:var(--panel);border:1px solid var(--line2);border-radius:6px;padding:2px 8px;white-space:pre;font:12px/1.5 var(--sans);color:#fff;pointer-events:none}
 .tk:hover .tip,.tk:focus .tip,.sp:hover .tip,.sp:focus .tip{display:block}
 .plus{position:absolute;transform:translate(-50%,-50%);background:var(--panel);color:#fff;border:1px solid #fff;border-radius:999px;font:700 12px/1.4 var(--sans);padding:1px 7px;z-index:3;pointer-events:none}
 
@@ -101,6 +101,7 @@ main{max-width:1680px;padding:12px 16px 72px}
 .tbl th.num{font:500 11px/1 var(--mono)}
 .tbl .name{font-weight:600;max-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .tbl .rk{width:1%;color:var(--dim)}
+.tbl input{margin:0;accent-color:#fff;vertical-align:middle}
 .dot{display:inline-block;width:10px;height:10px;margin-right:10px;border-radius:50%}
 @media(max-width:600px){.tbl th,.tbl td{padding:10px 12px}}
 </style>
@@ -120,7 +121,7 @@ main{max-width:1680px;padding:12px 16px 72px}
   <div class="card" id="results" hidden>
     <table class="tbl">
       <caption class="sr">Turkey Trot standings</caption>
-      <thead><tr><th class="rk" scope="col">#</th><th scope="col">Player</th><th class="num" scope="col">Spaces</th></tr></thead>
+      <thead><tr><th class="rk" scope="col">#</th><th scope="col">Player</th><th class="num" scope="col">Spaces</th><th class="num" scope="col">Bonus</th></tr></thead>
       <tbody id="rows"></tbody>
     </table>
   </div>
@@ -163,7 +164,19 @@ main{max-width:1680px;padding:12px 16px 72px}
     const b = el.querySelector("b");
     b.textContent = label; b.style.color = pal.tan;
   }
-  function setTip(el, text){ el.querySelector(".tip").textContent = text; el.setAttribute("aria-label", text); }
+  function setTip(el, text, label = text){ el.querySelector(".tip").textContent = text; el.setAttribute("aria-label", label); }
+  // 2d 4h 12m, 3h 12m, 45m or <1m
+  function elapsed(ms){
+    const m = Math.floor(Math.max(0, ms) / 60000), d = Math.floor(m / 1440), h = Math.floor(m % 1440 / 60);
+    return m < 1 ? "<1m" : d ? `${d}d ${h}h ${m % 60}m` : h ? `${h}h ${m % 60}m` : `${m}m`;
+  }
+  // RSN, tiles, and the time from the first tile to the last (or to the end for a finisher); no third line without a start time
+  function playerTip(p){
+    const end = p.shown >= TOTAL ? p.endedAt ?? p.reachedAt : p.reachedAt;
+    const lines = [p.rsn, `${p.shown}/${TOTAL} tiles`];
+    if (p.startedAt != null && end != null) lines.push("Elapsed " + elapsed(end - p.startedAt));
+    return [lines.join("\n"), `${p.rsn}, ${p.shown} of ${TOTAL} tiles` + (lines[2] ? ", " + lines[2].toLowerCase() : "")];
+  }
   function setFace(el, f){
     el.classList.toggle("r", f === "right");
     el.querySelector("b").style.left = px(f === "right" ? 1 - BELLY.x : BELLY.x);
@@ -204,7 +217,7 @@ main{max-width:1680px;padding:12px 16px 72px}
     labelSpots();
   }
   function labelSpots(){
-    spotEls.forEach((el, n) => setTip(el, n === 0 ? "Start" : `#${n} ${drops.get(n) || ""}`.trim()));
+    spotEls.forEach((el, n) => setTip(el, n === 0 ? "Start" : drops.get(n) ? `#${n} - ${drops.get(n)}` : `#${n}`));
   }
 
   // Put every turkey that is not walking where the layout says, and the idle ones on Start
@@ -216,7 +229,7 @@ main{max-width:1680px;padding:12px 16px 72px}
       const pl = L.place[p.rsn];
       p.el.hidden = !!pl.hidden;
       if (!pl.hidden) { put(p.el, pl.x, pl.y); p.el.style.zIndex = 2 + Math.round(pl.y / 10); }
-      setTip(p.el, `${p.rsn} - ${p.shown}/${TOTAL}`);
+      setTip(p.el, ...playerTip(p));
     }
     L.badges.forEach(b => {
       const e = document.createElement("div");
@@ -262,14 +275,17 @@ main{max-width:1680px;padding:12px 16px 72px}
   }
 
   function renderTable(list){
-    const ranked = list.filter(p => p.progress > 0), rows = $("rows");
+    const ranked = list.filter(p => p.progress > 0 || p.bonus), rows = $("rows");
     rows.replaceChildren(...ranked.map((p, i) => {
-      const tr = document.createElement("tr"), dot = document.createElement("span");
+      const tr = document.createElement("tr"), dot = document.createElement("span"), box = document.createElement("input");
       dot.className = "dot"; dot.style.background = p.color;
-      const cells = ["td", "td", "td"].map(() => document.createElement("td"));
+      box.type = "checkbox"; box.disabled = true; box.checked = p.bonus;
+      box.setAttribute("aria-label", p.bonus ? "Bonus completed" : "Bonus not completed");
+      const cells = ["td", "td", "td", "td"].map(() => document.createElement("td"));
       cells[0].className = "rk"; cells[0].textContent = i + 1;
       cells[1].className = "name"; cells[1].append(dot, p.rsn);
       cells[2].className = "num"; cells[2].textContent = `${p.progress}/${TOTAL}`;
+      cells[3].className = "num"; cells[3].append(box);
       tr.append(...cells);
       return tr;
     }));
@@ -280,11 +296,13 @@ main{max-width:1680px;padding:12px 16px 72px}
   // Keeps only well-formed players and drops from the API
   function clean(data){
     const int = (v, lo, hi) => Number.isInteger(v) && v >= lo && v <= hi;
+    const time = v => { const t = typeof v === "string" ? Date.parse(v) : NaN; return Number.isNaN(t) ? null : t; };
     const list = Array.isArray(data?.players) ? data.players : [];
     const dl = Array.isArray(data?.drops) ? data.drops : [];
     return {
       players: list.filter(p => p && typeof p.rsn === "string" && p.rsn && int(p.icon, 1, 50) && int(p.progress, 0, TOTAL))
-        .map(p => ({ rsn: p.rsn, icon: p.icon, progress: p.progress, color: COLOR.test(p.color) ? p.color : "#888888" })),
+        .map(p => ({ rsn: p.rsn, icon: p.icon, progress: p.progress, color: COLOR.test(p.color) ? p.color : "#888888", bonus: p.bonus === true,
+          startedAt: time(p.startedAt), reachedAt: time(p.reachedAt), endedAt: time(p.endedAt) })),
       drops: new Map(dl.filter(d => d && int(d.n, 1, TOTAL) && typeof d.name === "string").map(d => [d.n, d.name])),
     };
   }
@@ -297,7 +315,7 @@ main{max-width:1680px;padding:12px 16px 72px}
       let p = players.get(d.rsn);
       if (!p) players.set(d.rsn, p = { rsn: d.rsn, shown: 0, target: 0, el: null, face: "right", busy: false, gone: false });
       if (p.el && p.icon !== d.icon && PAL[d.icon]) skin(p.el, p.rsn[0].toUpperCase(), PAL[d.icon]);   // a changed colour in the sheet recolours the turkey too
-      p.icon = d.icon; p.target = d.progress;
+      Object.assign(p, { icon: d.icon, target: d.progress, startedAt: d.startedAt, reachedAt: d.reachedAt, endedAt: d.endedAt });
       pump(p);
     }
     for (const [rsn, p] of players) if (!seen.has(rsn)) { p.gone = true; p.el?.remove(); players.delete(rsn); }

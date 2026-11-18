@@ -1,17 +1,17 @@
 // Turkey Trot sheet parser. Pure: rows in, the public leaderboard out.
 //
-// "Progress" is read as a grid (readGrid in google.mjs): rows of cells { v, bg }, v the text and bg the fill as "#rrggbb" or null.
-//   Header: Start Time, RSN, 1..26, Bonus, End Time. Columns: A start, B RSN, C..AB positions 1..26, AC bonus, AD end.
-//   The bonus tick in AC does not count toward progress or ordering.
-//   Progress is the number of leading "✓" cells. The player's colour is the fill of their reached cells; it is one of the
-//   50 turkey accents (turkey-colors.mjs), which gives the icon. There are no progress, colour or icon columns.
+// "Progress" is read as a grid (readGrid in google.mjs): rows of cells { v, bg, note }, v the text, bg the fill as "#rrggbb" or null.
+//   Header: Start Time, RSN, 1..26, Bonus - 27, End Time. Columns: A start, B RSN, C..AB positions 1..26, AC bonus, AD end.
+//   Progress is the number of leading "✓" cells in C..AB. Each reached cell has a note with the ISO time the player reached that tile.
+//   The player's colour is the fill of their reached cells (the bonus cell if they have none); it is one of the 50 turkey accents
+//   (turkey-colors.mjs), which gives the icon. The bonus tick in AC never counts toward progress or ordering.
 // "Drops" rows are plain values: position, name.
 import { TURKEY_COLORS } from "./turkey-colors.mjs";
 
 export const TOTAL = 26;
 
 const RSN = /^[A-Za-z0-9 _-]{1,12}$/;
-const COL = { start: 0, rsn: 1, tick: 2, end: 29 };
+const COL = { start: 0, rsn: 1, tick: 2, bonus: 28, end: 29 };
 const TOLERANCE = 1;   // Google hands back fills as 0..1 floats; allow one step per channel after rounding
 
 const text = c => String(c?.v ?? "").trim();
@@ -44,24 +44,28 @@ function reached(row){
   return cells;
 }
 
-// One Progress row as { rsn, icon, color, progress, reachedAt }, or null when there is no valid RSN.
+// One Progress row as { rsn, icon, color, progress, bonus, startedAt, reachedAt, endedAt }, or null when there is no valid RSN.
+// Times are ISO strings or null. reachedAt is the note of the last reached tile, else the end time of a finisher, else the start time.
 // index is the row's place among the data rows: with no usable fill the icon is index % 50 + 1.
 export function parseRow(row, index = 0){
   if (!Array.isArray(row)) return null;
   const rsn = text(row[COL.rsn]);
   if (!RSN.test(rsn)) return null;
-  const cells = reached(row), progress = cells.length;
-  const icon = iconForColor(cells.find(c => c.bg)?.bg) || index % 50 + 1;
-  const at = progress >= TOTAL ? toIso(text(row[COL.end])) : null;
-  return { rsn, icon, color: TURKEY_COLORS[icon - 1], progress, reachedAt: at || toIso(text(row[COL.start])) };
+  const cells = reached(row), progress = cells.length, bonusCell = row[COL.bonus];
+  const bonus = text(bonusCell).includes("✓");
+  const icon = iconForColor(cells.find(c => c.bg)?.bg || (bonus && bonusCell.bg)) || index % 50 + 1;
+  const startedAt = toIso(text(row[COL.start])), endedAt = toIso(text(row[COL.end]));
+  const reachedAt = toIso(cells.at(-1)?.note) || (progress >= TOTAL && endedAt) || startedAt;
+  return { rsn, icon, color: TURKEY_COLORS[icon - 1], progress, bonus, startedAt, reachedAt, endedAt };
 }
 
-// Finishers first by completion time, then most spaces covered, then whoever got there first
+// Finishers first by end time, then most tiles, then whoever reached theirs first; players with no tile last, by RSN. The bonus plays no part.
 export function rankPlayers(players){
-  const at = p => p.reachedAt ? Date.parse(p.reachedAt) : Infinity;
-  const done = p => p.progress >= TOTAL;
-  return players.slice().sort((a, b) =>
-    done(b) - done(a) || (done(a) ? 0 : b.progress - a.progress) || at(a) - at(b) || a.rsn.localeCompare(b.rsn));
+  const t = v => v ? Date.parse(v) : Infinity;
+  const group = p => p.progress >= TOTAL ? 0 : p.progress > 0 ? 1 : 2;
+  return players.slice().sort((a, b) => group(a) - group(b) ||
+    (group(a) === 0 ? t(a.endedAt ?? a.reachedAt) - t(b.endedAt ?? b.reachedAt)
+      : group(a) === 1 ? b.progress - a.progress || t(a.reachedAt) - t(b.reachedAt) : 0) || a.rsn.localeCompare(b.rsn));
 }
 
 const same = rsn => rsn.toLowerCase().replace(/[_-]/g, " ");
@@ -95,26 +99,41 @@ const SAMPLE_NAMES = ["Ashen", "Birch", "Cedar", "Dusk", "Ember", "Fable", "Gale
 // A small seeded random generator, so a sample can be reproduced from its seed
 const seeded = seed => { let a = (seed >>> 0) || 1; return () => { a = (a + 0x6D2B79F5) >>> 0; let t = a; t = Math.imul(t ^ (t >>> 15), t | 1); t ^= t + Math.imul(t ^ (t >>> 7), t | 61); return ((t ^ (t >>> 14)) >>> 0) / 4294967296; }; };
 
+const stamp = ms => new Date(ms).toISOString();
+
+// A sample player with believable times: the last tile reached at reachedMs, the first one `progress * 9 + 12` minutes before
+const samplePlayer = (rsn, icon, progress, bonus, reachedMs) => ({
+  rsn, icon, color: TURKEY_COLORS[icon - 1], progress, bonus,
+  startedAt: progress ? stamp(reachedMs - (progress * 9 + 12) * 60000) : null,
+  reachedAt: progress ? stamp(reachedMs) : null,
+  endedAt: progress >= TOTAL ? stamp(reachedMs) : null,
+});
+const sampleDrops = () => Array.from({ length: TOTAL }, (_, i) => ({ n: i + 1, name: `Sample drop ${i + 1}` }));
+
 // A still sample: `n` players (1 to 24) on different random spaces, the same for the same seed
 function stillSample(n, seed, nowMs){
   const rnd = seeded(seed), spaces = Array.from({ length: TOTAL }, (_, i) => i + 1), icons = Array.from({ length: 50 }, (_, i) => i);
   const pick = list => list.splice(Math.floor(rnd() * list.length), 1)[0];
-  const players = Array.from({ length: Math.min(24, Math.max(1, n | 0)) }, (_, i) => {
-    const icon = pick(icons);
-    return { rsn: SAMPLE_NAMES[i], icon: icon + 1, color: TURKEY_COLORS[icon], progress: pick(spaces), reachedAt: new Date(nowMs - i * 60000).toISOString() };
-  });
-  return { total: TOTAL, drops: Array.from({ length: TOTAL }, (_, i) => ({ n: i + 1, name: `Sample drop ${i + 1}` })), players: rankPlayers(players) };
+  const players = Array.from({ length: Math.min(24, Math.max(1, n | 0)) }, (_, i) =>
+    samplePlayer(SAMPLE_NAMES[i], pick(icons) + 1, pick(spaces), i % 3 === 0, nowMs - i * 60000));
+  return { total: TOTAL, drops: sampleDrops(), players: rankPlayers(players) };
 }
 
 // Made-up players for building the page before the sheet exists. With opts.n it is a still picture of n players on random
-// spaces (opts.seed repeats it); without, 24 players that keep moving.
+// spaces (opts.seed repeats it); without, 24 players that keep moving. Every third has the bonus; players 1, 3 and 5 tie with
+// the one before them on the same tile, a minute and a half after.
 export function sampleResult(nowMs = Date.now(), opts = {}){
   if (opts.n) return stillSample(opts.n, Number.isFinite(opts.seed) ? opts.seed : Math.floor(Math.random() * 2 ** 32), nowMs);
   const t = nowMs / 1000, cycle = 360;
-  const players = SAMPLE_NAMES.map((name, i) => {
+  const base = SAMPLE_NAMES.map((name, i) => {
     const step = cycle / (TOTAL + 1 + (i % 5) * 3), phase = (t + i * 47) % cycle;
-    const progress = Math.min(TOTAL, Math.floor(phase / step));
-    return { rsn: name, icon: (i % 50) + 1, color: TURKEY_COLORS[i % 50], progress, reachedAt: new Date(nowMs - (phase % step) * 1000).toISOString() };
+    return { progress: Math.min(TOTAL, Math.floor(phase / step)), reachedMs: nowMs - (phase % step) * 1000 };
   });
-  return { total: TOTAL, drops: Array.from({ length: TOTAL }, (_, i) => ({ n: i + 1, name: `Sample drop ${i + 1}` })), players: rankPlayers(players) };
+  for (const k of [0, 1, 2]) {
+    const lead = base[2 * k], at = lead.reachedMs;
+    lead.reachedMs = at - 90000;
+    base[2 * k + 1] = { progress: lead.progress, reachedMs: at };
+  }
+  const players = SAMPLE_NAMES.map((name, i) => samplePlayer(name, (i % 50) + 1, base[i].progress, i % 3 === 0, base[i].reachedMs));
+  return { total: TOTAL, drops: sampleDrops(), players: rankPlayers(players) };
 }

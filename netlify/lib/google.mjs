@@ -13,8 +13,17 @@ const REFRESH_MARGIN_S = 60;
 
 export const configured = () => !!(env("GOOGLE_SA_EMAIL") && env("GOOGLE_SA_KEY"));
 
-// The PEM from an env var: drops wrapping quotes and turns literal "\n" into newlines
-export const normalizeKey = raw => String(raw).trim().replace(/^"|"$/g, "").replace(/\\n/g, "\n");
+// The PEM from an env var, whatever shape it was pasted in: real line breaks, a literal "\n", spaces where the line breaks were
+// lost, CRLF, wrapping quotes, or the whole service-account JSON file. The base64 body is rebuilt in 64-character lines.
+export function normalizeKey(raw){
+  let text = String(raw).trim();
+  if (text.startsWith("{")) { try { text = JSON.parse(text).private_key ?? text; } catch { /* not JSON: use it as is */ } }
+  text = text.replace(/^["']|["']$/g, "").replace(/\\n/g, "\n");
+  const m = text.match(/-----BEGIN ([A-Z0-9 ]+)-----([\s\S]*?)-----END \1-----/);
+  if (!m) return text;
+  const body = m[2].replace(/\s+/g, "");
+  return `-----BEGIN ${m[1]}-----\n${body.match(/.{1,64}/g)?.join("\n") ?? ""}\n-----END ${m[1]}-----`;
+}
 
 const b64url = v => Buffer.from(typeof v === "string" ? v : JSON.stringify(v)).toString("base64url");
 
@@ -22,7 +31,12 @@ const b64url = v => Buffer.from(typeof v === "string" ? v : JSON.stringify(v)).t
 export function signJwt({ email, key, scope = SCOPE, now = Math.floor(Date.now() / 1000) }){
   const input = b64url({ alg: "RS256", typ: "JWT" }) + "." +
     b64url({ iss: email, scope, aud: TOKEN_URL, iat: now, exp: now + 3600 });
-  return input + "." + createSign("RSA-SHA256").update(input).sign(key, "base64url");
+  try {
+    return input + "." + createSign("RSA-SHA256").update(input).sign(key, "base64url");
+  } catch {
+    // OpenSSL's own message ("DECODER routines::unsupported") says nothing useful and must not echo the key
+    throw new Error("GOOGLE_SA_KEY is not a valid private key. Paste the whole key, from the BEGIN line to the END line.");
+  }
 }
 
 let cached = null;   // { token, exp (seconds) }
@@ -63,12 +77,12 @@ export async function readRange(sheetId, range){
 
 const channel = c => Math.round((Number(c) || 0) * 255).toString(16).padStart(2, "0");
 const hex = bg => bg && typeof bg === "object" ? "#" + channel(bg.red) + channel(bg.green) + channel(bg.blue) : null;
-const FIELDS = "sheets(data(rowData(values(formattedValue,userEnteredFormat(backgroundColor)))))";
+const FIELDS = "sheets(data(rowData(values(formattedValue,note,userEnteredFormat(backgroundColor)))))";
 
-// The cells of one A1 range with their fill colour: rows of [{ v, bg }], v the shown text and bg "#rrggbb" or null.
+// The cells of one A1 range with their fill colour and note: rows of [{ v, bg, note }], v the shown text, bg "#rrggbb" or null, note "" when none.
 // Google leaves out empty trailing cells, and rows with nothing in them come back as [].
 export async function readGrid(sheetId, range){
   const body = await sheetsGet(`${SHEETS}${encodeURIComponent(sheetId)}?includeGridData=true&ranges=${encodeURIComponent(range)}&fields=${encodeURIComponent(FIELDS)}`);
   const rows = body.sheets?.[0]?.data?.[0]?.rowData;
-  return Array.isArray(rows) ? rows.map(r => (r?.values || []).map(c => ({ v: c?.formattedValue ?? "", bg: hex(c?.userEnteredFormat?.backgroundColor) }))) : [];
+  return Array.isArray(rows) ? rows.map(r => (r?.values || []).map(c => ({ v: c?.formattedValue ?? "", bg: hex(c?.userEnteredFormat?.backgroundColor), note: c?.note ?? "" }))) : [];
 }
