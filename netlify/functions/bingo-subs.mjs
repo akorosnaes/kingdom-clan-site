@@ -4,6 +4,7 @@
 //   POST  captain: log a drop for their team { tile, item, player, proof } — it waits for staff approval.
 //         Only once the board is revealed and between the bingo's start and end times (when they're set).
 //         staff:   the same for any team, named in { team }, at any time (e.g. a late drop from just before the end)
+//         { cancel: id }: withdraw a drop you logged yourself while it's still waiting for approval
 // /api/bingo/review
 //   POST  staff and referees: { id, action: "approve" | "reject" } for a pending drop, or { id, action: "undo" } for an
 //         approved one. Approving adds one completion to the team's tile, puts the drop in the public drop log and
@@ -41,6 +42,18 @@ async function subs(req){
   if (!sameOrigin(req)) return json({ error: "Bad origin." }, 403);
 
   const b = await body(req), board = await readBoard(s), now = Date.now();
+
+  // Withdrawing your own drop (e.g. the wrong player or tile) before anyone has reviewed it
+  if (b?.cancel) {
+    const list = await readSubs(s), sub = list.find(x => x.id === b.cancel);
+    if (!sub || sub.by.id !== me.id) return json({ error: "That drop isn't there any more. Refresh the page." }, 404);
+    if (sub.status !== "pending") return json({ error: "That drop has already been reviewed, so it can't be withdrawn." }, 409);
+    Object.assign(sub, { status: "cancelled", at: now });
+    await writeSubs(list, s);
+    await purge();
+    return json({ sub });
+  }
+
   if (!staff) {
     if (!board.revealed) return json({ error: "The board hasn't been revealed yet." }, 403);
     if (board.starts && now < board.starts) return json({ error: "The bingo hasn't started yet. Drops can be logged once it starts." }, 403);
