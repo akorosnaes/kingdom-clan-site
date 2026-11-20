@@ -79,13 +79,15 @@ main{max-width:1680px;padding:12px 16px 72px}
 .tk[hidden]{display:none}
 .tk.idle{pointer-events:none}
 .tk.fade{opacity:0}
-.tk:hover,.tk:focus{z-index:50!important;outline:none}
+/* Turkeys stack by how far down the map they stand (2 + y/10, in map pixels, so into the hundreds); whatever is hovered
+   or focused goes above all of them, so its tooltip is never covered */
+.tk:hover,.tk:focus{z-index:10000!important;outline:none}
 .tk:focus-visible{outline:2px solid #fff;outline-offset:2px;border-radius:50%}
 .tk svg{display:block;width:100%;height:auto}
 .tk.r svg{transform:scaleX(-1)}
 .tk b{position:absolute;top:var(--by);left:var(--bx);transform:translate(-50%,-50%);font:800 24cqw/1 var(--sans);pointer-events:none;text-shadow:0 1px 2px #0008}
 .sp{position:absolute;width:2.6%;aspect-ratio:1;transform:translate(-50%,-50%);border-radius:50%;z-index:1}
-.sp:hover,.sp:focus{z-index:60;outline:none}
+.sp:hover,.sp:focus{z-index:10001;outline:none}
 .sp:focus-visible{outline:2px solid #fff}
 .tip{display:none;position:absolute;left:50%;bottom:100%;transform:translateX(-50%);background:var(--panel);border:1px solid var(--line2);border-radius:6px;padding:2px 8px;white-space:pre;font:12px/1.5 var(--sans);color:#fff;pointer-events:none}
 .tk:hover .tip,.tk:focus .tip,.sp:hover .tip,.sp:focus .tip{display:block}
