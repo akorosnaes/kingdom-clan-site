@@ -106,6 +106,27 @@ main{max-width:1680px;padding:12px 16px 72px}
 .tbl input{margin:0;accent-color:#fff;vertical-align:middle}
 .dot{display:inline-block;width:10px;height:10px;margin-right:10px;border-radius:50%}
 @media(max-width:600px){.tbl th,.tbl td{padding:10px 12px}}
+
+/* Objectives: a card that pulls out from the right edge, listing every tile's drop */
+.objtab{position:fixed;right:0;top:50%;z-index:20;transform:translateY(-50%);writing-mode:vertical-rl;background:var(--panel);color:#fff;border:1px solid var(--line2);border-right:0;border-radius:8px 0 0 8px;padding:16px 9px;font:500 12px/1 var(--mono);letter-spacing:.14em;text-transform:uppercase;cursor:pointer;transition:background .15s,right .25s ease}
+.objtab:hover{background:var(--panel2)}
+@media(max-width:600px){.objtab{padding:12px 6px;font-size:10px;letter-spacing:.1em}}
+.objtab:focus-visible{outline:2px solid #fff;outline-offset:2px}
+.obj{position:fixed;top:0;right:0;bottom:0;z-index:20;width:min(340px,86vw);display:flex;flex-direction:column;background:var(--panel);border-left:1px solid var(--line2);box-shadow:-12px 0 32px #0009;transform:translateX(100%);visibility:hidden;transition:transform .25s ease,visibility 0s .25s;padding-bottom:env(safe-area-inset-bottom,0px)}
+.obj.open{transform:none;visibility:visible;transition:transform .25s ease}
+body.objopen .objtab{right:min(340px,86vw)}
+.objh{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:calc(16px + env(safe-area-inset-top,0px)) 18px 14px;border-bottom:1px solid var(--line)}
+.objh h2{margin:0;font:600 20px/1.1 var(--sans);letter-spacing:-.02em}
+.objx{background:none;border:1px solid var(--line2);border-radius:6px;color:#fff;width:32px;height:32px;font:18px/1 var(--sans);cursor:pointer}
+.objx:hover{border-color:#fff}
+.objl{margin:0;padding:6px 0;list-style:none;overflow-y:auto;overscroll-behavior:contain;scrollbar-width:thin;scrollbar-color:var(--line2) transparent}
+.objl li{display:flex;align-items:baseline;gap:12px;padding:9px 18px;border-bottom:1px solid var(--line);font-size:14px}
+.objl li:last-child{border:0}
+.objl .n{flex:none;min-width:24px;font:500 13px/1 var(--mono);color:var(--dim);text-align:right}
+.objl .it{flex:1;min-width:0}
+.objl .here{flex:none;font:500 11px/1 var(--mono);color:var(--mute);white-space:nowrap}
+.objl .none{display:block;padding:18px;color:var(--mute);border:0}
+@media(prefers-reduced-motion:reduce){.obj,.obj.open,.objtab{transition:none}}
 </style>
 </head>
 <body>
@@ -130,6 +151,11 @@ main{max-width:1680px;padding:12px 16px 72px}
   <div class="card msg" id="empty" hidden>No turkeys are out on the route yet.</div>
   </div>
 </main>
+<button type="button" class="objtab" id="objtab" aria-controls="obj" aria-expanded="false">Objectives</button>
+<aside class="obj" id="obj" aria-labelledby="objtitle">
+  <div class="objh"><h2 id="objtitle">Objectives</h2><button type="button" class="objx" id="objx" aria-label="Close objectives">×</button></div>
+  <ol class="objl" id="objlist"><li class="none">The objectives show here once the event has started.</li></ol>
+</aside>
 <footer><span class="fsoc"><a href="https://x.com/Kingdom_OSRS" target="_blank" rel="noopener" aria-label="Kingdom on X (Twitter)" title="X (Twitter)"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg></a><a href="https://wiseoldman.net/groups/1152" target="_blank" rel="noopener" aria-label="Kingdom on Wise Old Man" title="Wise Old Man"><img src="wom.png" alt=""></a><a href="https://templeosrs.com/groups/overview.php?id=1710" target="_blank" rel="noopener" aria-label="Kingdom on TempleOSRS" title="TempleOSRS"><img src="temple.png" alt=""></a></span>Kingdom · <a class="staff" href="admin.html">Staff</a></footer>
 
 <script src="turkey-trot/board/board-hook.js"></script>
@@ -172,12 +198,15 @@ main{max-width:1680px;padding:12px 16px 72px}
     const m = Math.floor(Math.max(0, ms) / 60000), d = Math.floor(m / 1440), h = Math.floor(m % 1440 / 60);
     return m < 1 ? "<1m" : d ? `${d}d ${h}h ${m % 60}m` : h ? `${h}h ${m % 60}m` : `${m}m`;
   }
-  // RSN, tiles, and the time from the first tile to the last (or to the end for a finisher); no third line without a start time
+  // RSN, tiles, the drop on the tile they're standing on (as that tile's own tooltip names it; none on Start or before the
+  // drops are known), and the time from the first tile to the last (or to the end for a finisher; none without a start time)
   function playerTip(p){
     const end = p.shown >= TOTAL ? p.endedAt ?? p.reachedAt : p.reachedAt;
-    const lines = [p.rsn, `${p.shown}/${TOTAL} tiles`];
-    if (p.startedAt != null && end != null) lines.push("Elapsed " + elapsed(end - p.startedAt));
-    return [lines.join("\n"), `${p.rsn}, ${p.shown} of ${TOTAL} tiles` + (lines[2] ? ", " + lines[2].toLowerCase() : "")];
+    const item = drops.get(p.shown);
+    const time = p.startedAt != null && end != null ? elapsed(end - p.startedAt) : "";
+    const lines = [p.rsn, `${p.shown}/${TOTAL} tiles`, item && `#${p.shown} - ${item}`, time && "Elapsed " + time].filter(Boolean);
+    const said = [`${p.rsn}, ${p.shown} of ${TOTAL} tiles`, item && `on #${p.shown}, ${item}`, time && "elapsed " + time].filter(Boolean);
+    return [lines.join("\n"), said.join(", ")];
   }
   function setFace(el, f){
     el.classList.toggle("r", f === "right");
@@ -220,7 +249,40 @@ main{max-width:1680px;padding:12px 16px 72px}
   }
   function labelSpots(){
     spotEls.forEach((el, n) => setTip(el, n === 0 ? "Start" : drops.get(n) ? `#${n} - ${drops.get(n)}` : `#${n}`));
+    renderObjectives();
   }
+
+  // The Objectives card: every tile's drop, and how many turkeys are standing on it right now
+  let objSig = "";
+  function renderObjectives(){
+    if (!drops.size) return;
+    const here = new Map();
+    for (const p of players.values()) if (p.el && !p.busy && p.shown > 0) here.set(p.shown, (here.get(p.shown) || 0) + 1);
+    const sig = JSON.stringify([...drops, ...here]);
+    if (sig === objSig) return;
+    objSig = sig;
+    const list = $("objlist");
+    list.replaceChildren(...Array.from({ length: TOTAL }, (_, i) => {
+      const n = i + 1, li = document.createElement("li"), c = here.get(n) || 0;
+      li.innerHTML = '<span class="n"></span><span class="it"></span><span class="here"></span>';
+      li.children[0].textContent = n;
+      li.children[1].textContent = drops.get(n) || "—";
+      li.children[2].textContent = c ? `${c} here` : "";
+      return li;
+    }));
+  }
+  // Open or closed is remembered for the next visit
+  function setObjectives(open, focus){
+    $("obj").classList.toggle("open", open);
+    document.body.classList.toggle("objopen", open);
+    $("objtab").setAttribute("aria-expanded", open);
+    try { localStorage.setItem("kingdom-trot-objectives", open ? "1" : ""); } catch {}
+    if (focus) (open ? $("objx") : $("objtab")).focus();
+  }
+  $("objtab").addEventListener("click", () => setObjectives(!$("obj").classList.contains("open"), true));
+  $("objx").addEventListener("click", () => setObjectives(false, true));
+  document.addEventListener("keydown", e => { if (e.key === "Escape" && $("obj").classList.contains("open")) setObjectives(false, true); });
+  try { if (localStorage.getItem("kingdom-trot-objectives") === "1") setObjectives(true, false); } catch {}
 
   // Put every turkey that is not walking where the layout says, and the idle ones on Start
   function settle(){
@@ -240,6 +302,7 @@ main{max-width:1680px;padding:12px 16px 72px}
       board.append(e); badges.push(e);
     });
     idle.forEach((el, i) => put(el, L.stack[i].x, L.stack[i].y));
+    renderObjectives();
   }
 
   // Walk along the drawn route from one spot to another; the last hop into the cluster slot is a short CSS transition
